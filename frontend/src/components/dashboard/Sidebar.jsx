@@ -16,7 +16,6 @@ export const Sidebar = () => {
   const { user } = useAuth();
   const { sidebarOpen, setSidebar } = useUIStore();
 
-  if (!sidebarOpen) return null;
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen p-4">
@@ -48,7 +47,8 @@ export const Sidebar = () => {
                   ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
               }`}
-              onClick={() => setSidebar(false)}
+              // You can also remove this onClick if you don't want auto-close on mobile
+              // onClick={() => setSidebar(false)}
             >
               <span className="mr-3 text-lg">{item.icon}</span>
               {item.name}
