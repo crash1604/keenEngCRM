@@ -8,7 +8,7 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
-    register,
+    register, // Make sure this is included
     logout,
     updateProfile,
     clearError,
@@ -25,7 +25,7 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
-    register,
+    register, // Make sure this is returned
     logout,
     updateProfile,
     clearError,

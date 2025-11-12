@@ -3,9 +3,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import Layout from './components/layout/Layout';
-import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Clients from './pages/Clients/Clients';
+import Login from './pages/auth/Login';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -46,6 +47,15 @@ export const AppRouter = () => {
         element={
           <PublicRoute>
             <Login />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/auth/register"
+        element={
+          <PublicRoute>
+            <Register />
           </PublicRoute>
         }
       />
