@@ -31,9 +31,18 @@ RUN pip install -r /app/requirements.txt
 COPY . .
 
 # ============================
-# Create non-root user
+# Create directories and non-root user
 # ============================
+# Create directories that need write access
+RUN mkdir -p /app/staticfiles /app/media
+
+# Create non-root user
 RUN adduser --disabled-password django
+
+# Change ownership of the entire /app directory to django user
+RUN chown -R django:django /app
+
+# Switch to non-root user
 USER django
 
 # ============================
