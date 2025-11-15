@@ -1,16 +1,47 @@
-# backend/Dockerfile
-FROM python:3.11-slim
+# ============================
+# Base image
+# ============================
+FROM python:3.12-slim
 
+# Prevent Python from writing .pyc files + enable unbuffered mode
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Set work directory
 WORKDIR /app
-COPY backend/requirements/production.txt .
-RUN pip install --no-cache-dir -r production.txt
 
-COPY backend/ .
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# collect static (ensure static settings use env var)
-RUN python manage.py collectstatic --noinput
+# ============================
+# Install dependencies
+# ============================
+# Copy only requirements first for better caching
+COPY requirements/requirements.txt /app/requirements.txt
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+RUN pip install --upgrade pip
+RUN pip install -r /app/requirements.txt
+
+# ============================
+# Copy project files
+# ============================
+COPY . .
+
+# ============================
+# Create non-root user
+# ============================
+RUN adduser --disabled-password django
+USER django
+
+# ============================
+# Expose port
+# ============================
+EXPOSE 8000
+
+# ============================
+# Run Django with Gunicorn
+# ============================
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

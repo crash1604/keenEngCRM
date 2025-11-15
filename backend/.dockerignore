@@ -1,0 +1,145 @@
+# ============================
+# Python / Django
+# ============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+local_settings.py
+
+# Keep migrations but ignore pycache
+**/migrations/__pycache__/
+
+# ============================
+# Testing
+# ============================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+nosetests.xml
+coverage.xml
+.cache
+
+# ============================
+# IDEs and Editors
+# ============================
+.vscode/
+.idea/
+*.iml
+*.iws
+.idea_modules/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ============================
+# Documentation
+# ============================
+docs/
+*.md
+README.md
+LICENSE
+CHANGELOG.md
+
+# Keep essential docs (uncomment if needed)
+# !README.md
+
+# ============================
+# Git
+# ============================
+.git/
+.gitignore
+.gitattributes
+
+# ============================
+# CI/CD
+# ============================
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+azure-pipelines.yml
+
+# ============================
+# Docker
+# ============================
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# ============================
+# Development files
+# ============================
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ============================
+# Backup and temporary files
+# ============================
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+*.swp
+
+# ============================
+# OS specific
+# ============================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+desktop.ini
+
+# ============================
+# Dependencies (will be installed in container)
+# ============================
+# Don't ignore requirements.txt - we need it!
+# requirements/
+node_modules/

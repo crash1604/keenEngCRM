@@ -1,0 +1,246 @@
+# ============================
+# Python / Django
+# ============================
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+.hypothesis/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# Django migrations (optional - uncomment if you want to ignore migrations)
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# ============================
+# Environment Variables
+# ============================
+.env
+.env.local
+.env.*.local
+*.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ============================
+# Node / React / Frontend
+# ============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build outputs
+/frontend/dist/
+/frontend/build/
+/frontend/.vite/
+
+# Testing
+/frontend/coverage
+
+# Production
+/frontend/.env.production.local
+/frontend/.env.local
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================
+# IDEs and Editors
+# ============================
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VSCode
+.history/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================
+# Operating System
+# ============================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================
+# Docker
+# ============================
+# Don't ignore docker-compose.yml and Dockerfiles
+# But ignore docker volumes data if mounted locally
+postgres_data/
+mysql_data/
+redis_data/
+
+# ============================
+# AWS / Cloud
+# ============================
+*.pem
+*.key
+*.ppk
+
+# ============================
+# Logs and Databases
+# ============================
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# ============================
+# Backup files
+# ============================
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+
+# ============================
+# Jupyter Notebook
+# ============================
+.ipynb_checkpoints
+*.ipynb
+
+# ============================
+# Celery
+# ============================
+celerybeat-schedule
+celerybeat.pid
+
+# ============================
+# Documentation
+# ============================
+docs/_build/
+docs/.doctrees/
+site/
+
+# ============================
+# Testing
+# ============================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================
+# Security / Secrets
+# ============================
+secrets.json
+credentials.json
+serviceAccountKey.json
+*.pem
+*.key
+.boto
+.aws/
+
+# ============================
+# Package managers
+# ============================
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Optionally keep lockfiles (recommended for production)
+# Uncomment the lines below if you want to track lockfiles
+# !package-lock.json
+# !yarn.lock
+# !pnpm-lock.yaml
+
+BRDkeenEng.docx
+~$DkeenEng.docx

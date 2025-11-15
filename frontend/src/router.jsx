@@ -6,7 +6,7 @@ import Layout from './components/layout/Layout';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Clients from './pages/Clients/Clients';
-import Login from './pages/auth/Login';
+import Login from './pages/Auth/Login';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
