@@ -1,6 +1,10 @@
 from django.apps import AppConfig
 
-
 class ActivityConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "activity"
+    name = "apps.activity"
+    verbose_name = "Activity"
+    
+    def ready(self):
+        # Import and connect signals
+        from . import signals

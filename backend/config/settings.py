@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'apps.clients',
     'apps.architects',
     'apps.projects',
+    'apps.activity',
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'apps.activity.middleware.ActivityLogMiddleware',
 ]
 
 ROOT_URLCONF = "config.urls"
