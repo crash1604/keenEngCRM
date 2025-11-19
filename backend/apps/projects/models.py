@@ -3,8 +3,21 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 
+import random
+import string
+
 def default_due_date():
     return timezone.now().date() + timedelta(weeks=2)
+
+def generate_job_number():
+    """Generate a unique job number in format: YYYY-XXXX"""
+    year = timezone.now().year
+    # Try to find an available job number
+    while True:
+        random_part = ''.join(random.choices(string.digits, k=4))
+        job_number = f"{year}-{random_part}"
+        if not Project.objects.filter(job_number=job_number).exists():
+            return job_number
 
 class Project(models.Model):
     # Project Type Choices with multiple selection capability
@@ -31,7 +44,12 @@ class Project(models.Model):
     
     # Basic Information
     year = models.IntegerField(default=timezone.now().year)
-    job_number = models.CharField(max_length=50, unique=True)
+    job_number = models.CharField(
+        max_length=50, 
+        unique=True,
+        default=generate_job_number,  # Add this line
+        editable=False  # Prevents manual editing
+    )
     project_name = models.CharField(max_length=255)
     
     # Project Type (multiple selection using CharField with comma-separated values)
@@ -78,6 +96,26 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_status_change = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def is_overdue(self):
+        """Check if project is overdue"""
+        if self.due_date and self.status in ['not_started', 'in_progress', 'submitted']:
+            return self.due_date < timezone.now().date()
+        return False
+
+    @property
+    def days_until_due(self):
+        """Calculate days until due date"""
+        if self.due_date:
+            delta = self.due_date - timezone.now().date()
+            return delta.days
+        return None
+
+    @property
+    def project_types_list(self):
+        """Return project types as a list"""
+        return [pt.strip() for pt in self.project_type.split(',')] if self.project_type else []
     
     def __str__(self):
         return f"{self.job_number} - {self.project_name}"
