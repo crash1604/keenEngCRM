@@ -187,7 +187,7 @@ export const Register = () => {
             </div>
 
             {/* Phone Field */}
-            <div>
+            {/* <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Phone Number (Optional)
               </label>
@@ -201,7 +201,7 @@ export const Register = () => {
                 placeholder="+1 (555) 123-4567"
                 disabled={isLoading}
               />
-            </div>
+            </div> */}
 
             {/* Role Field */}
             <div>
@@ -220,6 +220,7 @@ export const Register = () => {
                 <option value="client">Client</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
+                <option value="architect">Architect</option>
               </select>
               <p className="mt-1 text-xs text-gray-500">
                 Choose your role in the system

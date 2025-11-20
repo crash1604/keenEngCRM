@@ -1,16 +1,18 @@
+// src/router.jsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
-import LoadingSpinner from './components/common/LoadingSpinner';
+import { useAuthStore } from './stores/auth.store';
 import Layout from './components/layout/Layout';
+import LoadingSpinner from './components/common/LoadingSpinner';
+import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Clients from './pages/Clients/Clients';
-import Login from './pages/Auth/Login';
+import Projects from './pages/Projects/Projects';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -25,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
 
 // Public Route Component (redirect to dashboard if authenticated)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -38,7 +40,7 @@ const PublicRoute = ({ children }) => {
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 };
 
-export const AppRouter = () => {
+const AppRouter = () => {
   return (
     <Routes>
       {/* Public Routes */}
@@ -60,45 +62,23 @@ export const AppRouter = () => {
         }
       />
 
-      {/* Protected Routes */}
+      {/* Protected Routes with Layout */}
       <Route
-        path="/dashboard"
+        path="/"
         element={
           <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
+            <Layout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="clients" element={<Clients />} />
+      </Route>
 
-      <Route
-        path="/clients"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Clients />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/projects"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <div className="p-6">
-                <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-                <p className="text-gray-600 mt-2">Projects page coming soon...</p>
-              </div>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Default redirect - Remove this duplicate route */}
+      {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> */}
       
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
