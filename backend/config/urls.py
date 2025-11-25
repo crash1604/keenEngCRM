@@ -22,7 +22,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('api/auth/', include('apps.users.urls')),
     path('api/projects/', include('apps.projects.urls')),
-    
+    path('api/activity/', include('apps.activity.urls')),
     
     # JWT Authentication endpoints 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

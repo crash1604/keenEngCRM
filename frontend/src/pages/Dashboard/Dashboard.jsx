@@ -2,8 +2,9 @@
 import React, { useEffect } from 'react';
 import { useAuthStore } from '../../stores/auth.store';
 import { useProjectStore } from '../../stores/project.store';
+import { useActivityStore } from '../../stores/activity.store'; // Import the new store
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { capitalizeFirst, formatDate } from '../../utils/helpers';
+import { capitalizeFirst, formatDate, formatRelativeTime } from '../../utils/helpers';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -11,11 +12,19 @@ const Dashboard = () => {
     dashboardStats, 
     overdueProjects, 
     upcomingInspections, 
-    loading, 
+    loading: projectsLoading, 
     fetchDashboardStats,
     fetchOverdueProjects,
     fetchUpcomingInspections 
   } = useProjectStore();
+
+  const {
+    activityLogs,
+    myActivity,
+    loading: activityLoading,
+    fetchActivityLogs,
+    fetchMyActivity
+  } = useActivityStore();
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -29,13 +38,64 @@ const Dashboard = () => {
     loadDashboardData();
   }, [fetchDashboardStats, fetchOverdueProjects, fetchUpcomingInspections]);
 
-  // Mock recent activities (you can replace with real activity logs later)
-  const recentActivities = [
-    { id: 1, action: 'Project status updated', project: 'Website Redesign', time: '2 hours ago' },
-    { id: 2, action: 'New project created', project: 'Office Building', time: '4 hours ago' },
-    { id: 3, action: 'Inspection scheduled', project: 'Mobile App', time: '1 day ago' },
-    { id: 4, action: 'Client meeting', project: 'Team Sync', time: '2 days ago' },
-  ];
+  useEffect(() => {
+    const loadActivityData = async () => {
+      if (user?.role === 'admin' || user?.role === 'manager') {
+        // Admin/Manager: Show all activity logs
+        await fetchActivityLogs({ page_size: 5 });
+      } else {
+        // Other users: Show only their activity
+        await fetchMyActivity({ page_size: 5 });
+      }
+    };
+
+    loadActivityData();
+  }, [user, fetchActivityLogs, fetchMyActivity]);
+
+  // Get the appropriate activity data based on user role
+  const getRecentActivities = () => {
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      return activityLogs;
+    } else {
+      return myActivity;
+    }
+  };
+
+  const recentActivities = getRecentActivities();
+
+  // Format activity for display
+  const formatActivity = (activity) => {
+    const timeAgo = formatRelativeTime(activity.timestamp);
+    
+    return {
+      id: activity.id,
+      action: activity.description,
+      project: activity.project_name || activity.project_job_number,
+      time: timeAgo,
+      user: activity.user_name,
+      type: activity.action_type_display,
+      icon: getActivityIcon(activity.action_type)
+    };
+  };
+
+  // Get appropriate icon for activity type
+  const getActivityIcon = (actionType) => {
+    const icons = {
+      'status_change': '🔄',
+      'note_added': '📝',
+      'field_updated': '✏️',
+      'inspection_scheduled': '📅',
+      'due_date_changed': '⏰',
+      'project_created': '🆕',
+      'project_updated': '📊',
+      'client_changed': '👥',
+      'architect_changed': '🏗️',
+      'manager_changed': '👨‍💼'
+    };
+    return icons[actionType] || '📋';
+  };
+
+  const loading = projectsLoading || activityLoading;
 
   if (loading && !dashboardStats) {
     return (
@@ -148,22 +208,51 @@ const Dashboard = () => {
 
         {/* Recent Activities */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activities</h2>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-              >
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                  <p className="text-sm text-gray-600">{activity.project}</p>
-                  <p className="text-xs text-gray-500">{activity.time}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Recent Activities</h2>
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              {user?.role === 'admin' || user?.role === 'manager' ? 'All Activities' : 'My Activities'}
+            </span>
           </div>
+          
+          {activityLoading ? (
+            <div className="flex justify-center py-4">
+              <LoadingSpinner size="sm" text="Loading activities..." />
+            </div>
+          ) : recentActivities.length > 0 ? (
+            <div className="space-y-4">
+              {recentActivities.map((activity) => {
+                const formattedActivity = formatActivity(activity);
+                return (
+                  <div
+                    key={activity.id}
+                    className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <div className="text-lg">{formattedActivity.icon}</div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{formattedActivity.action}</p>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <span>{formattedActivity.project}</span>
+                        {(user?.role === 'admin' || user?.role === 'manager') && formattedActivity.user && (
+                          <>
+                            <span>•</span>
+                            <span>by {formattedActivity.user}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">{formattedActivity.time}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-4xl mb-2">📋</div>
+              <p className="text-gray-500">No recent activities</p>
+              <p className="text-sm text-gray-400 mt-1">Activities will appear here as they happen</p>
+            </div>
+          )}
         </div>
       </div>
 
