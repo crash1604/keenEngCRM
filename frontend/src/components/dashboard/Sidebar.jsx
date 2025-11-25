@@ -14,13 +14,11 @@ const baseNavigation = [
 const roleNavigation = {
   admin: [
     { name: 'Clients', href: '/clients', icon: '👥' },
-    { name: 'Sales', href: '/sales', icon: '💰' },
     { name: 'Admin', href: '/admin', icon: '⚙️' },
     { name: 'Users', href: '/users', icon: '👤' },
   ],
   manager: [
     { name: 'Clients', href: '/clients', icon: '👥' },
-    { name: 'Sales', href: '/sales', icon: '💰' },
     { name: 'Reports', href: '/reports', icon: '📈' },
   ],
   employee: [
