@@ -255,6 +255,34 @@ export const useProjectStore = create((set, get) => ({
     }
   },
 
+  // Update single field
+  updateProjectField: async (id, fieldName, value) => {
+  set({ loading: true, error: null });
+  try {
+    const updateData = { [fieldName]: value };
+    const data = await projectService.updateProject(id, updateData);
+    
+    set((state) => ({
+      projects: state.projects.map(project => 
+        project.id === id ? { ...project, ...data, [fieldName]: value } : project
+      ),
+      currentProject: state.currentProject?.id === id ? 
+        { ...state.currentProject, ...data, [fieldName]: value } : state.currentProject,
+      loading: false,
+      error: null
+    }));
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in updateProjectField:', error);
+    const errorMessage = error.response?.data?.detail || 
+                        error.response?.data?.message || 
+                        'Failed to update project field';
+    set({ error: errorMessage, loading: false });
+    return { success: false, error: errorMessage };
+  }
+},
+
   // Export
   exportProjects: async () => {
     set({ loading: true, error: null });

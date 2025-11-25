@@ -88,3 +88,19 @@ class ProjectStatusUpdateSerializer(serializers.ModelSerializer):
         if value not in valid_statuses:
             raise serializers.ValidationError("Invalid status")
         return value
+    
+
+class ProjectUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for project updates (all fields allowed)"""
+    
+    class Meta:
+        model = Project
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'updated_at', 'job_number']
+    
+    def update(self, instance, validated_data):
+        """Handle partial updates"""
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

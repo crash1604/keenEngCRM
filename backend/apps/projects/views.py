@@ -66,8 +66,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'retrieve':
             return ProjectDetailSerializer
-        elif self.action in ['create', 'update', 'partial_update']:
+        elif self.action == 'create':
             return ProjectCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            # Use ProjectSerializer for updates since it has all fields
+            return ProjectSerializer
         elif self.action == 'update_status':
             return ProjectStatusUpdateSerializer
         return ProjectSerializer
@@ -90,6 +93,55 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # Store old instance for change tracking
         self._old_instance = Project.objects.get(pk=instance.pk)
         serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        """
+        Override update to debug validation errors and handle partial updates
+        """
+        print("=== UPDATE REQUEST DEBUG ===")
+        print("URL:", request.path)
+        print("Method:", request.method)
+        print("User:", request.user.username)
+        print("User role:", request.user.role)
+        print("Request data:", request.data)
+        print("Content type:", request.content_type)
+        
+        instance = self.get_object()
+        print("Project being updated:", instance.id, instance.project_name)
+        
+        # For partial updates, use partial=True
+        partial = kwargs.pop('partial', False)
+        if request.method == 'PATCH':
+            partial = True
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        print("=== SERIALIZER VALIDATION ===")
+        print("Serializer is valid:", serializer.is_valid())
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            self.perform_update(serializer)
+            print("=== UPDATE SUCCESS ===")
+            print("Updated data:", serializer.data)
+            return Response(serializer.data)
+        except Exception as e:
+            print("=== UPDATE ERROR ===")
+            print("Exception:", str(e))
+            print("Exception type:", type(e))
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Handle PATCH requests for partial updates
+        """
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
@@ -146,13 +198,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ).count(),
         }
         
-        # Add manager-specific stats - FIXED User reference
+        # Add manager-specific stats
         if user.role in ['manager', 'admin']:
             stats['by_manager'] = {
                 manager.get_full_name() or manager.username: queryset.filter(
                     mechanical_manager=manager
                 ).count()
-                for manager in User.objects.filter(role__in=['manager', 'employee'])  # Fixed User reference
+                for manager in User.objects.filter(role__in=['manager', 'employee'])
             }
 
         return Response(stats)

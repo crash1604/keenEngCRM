@@ -48,9 +48,21 @@ export const projectService = {
   },
 
   updateProject: async (id, projectData) => {
-    const response = await api.put(`/projects/${id}/`, projectData);
+  try {
+    console.log('Making PATCH request for project:', id);
+    console.log('PATCH data:', projectData);
+    
+    // Use PATCH for partial updates instead of PUT
+    const response = await api.patch(`/projects/${id}/`, projectData);
+    
+    console.log('PATCH response:', response.data);
     return response.data;
-  },
+  } catch (error) {
+    console.error('PATCH project error:', error);
+    console.error('Error response data:', error.response?.data);
+    throw error;
+  }
+},
 
   partialUpdateProject: async (id, projectData) => {
     const response = await api.patch(`/projects/${id}/`, projectData);
@@ -67,6 +79,22 @@ export const projectService = {
     const response = await api.post(`/projects/${id}/update_status/`, statusData);
     return response.data;
   },
+  updateProject: async (id, projectData) => {
+  try {
+    console.log('Making PATCH request for project:', id);
+    console.log('PATCH data:', projectData);
+    
+    // Use PATCH for partial updates instead of PUT
+    const response = await api.patch(`/projects/${id}/`, projectData);
+    
+    console.log('PATCH response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('PATCH project error:', error);
+    console.error('Error response data:', error.response?.data);
+    throw error;
+  }
+},
 
   getDashboardStats: async () => {
     const response = await api.get('/projects/dashboard_stats/');

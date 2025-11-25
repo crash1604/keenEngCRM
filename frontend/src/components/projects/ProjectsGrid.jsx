@@ -10,6 +10,7 @@ import StatusRenderer from './StatusRenderer';
 import ActionsRenderer from './ActionsRenderer';
 import AddressRenderer from './AddressRenderer';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { useProjectStore } from '../../stores/project.store'; // Add this import
 
 // Register all community modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -21,6 +22,9 @@ const ProjectsGrid = ({ projects, loading, onStatusChange }) => {
   const [tooltipContent, setTooltipContent] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
+  // Add this line to get the update method from store
+  const { updateProjectField } = useProjectStore();
+
   const columnDefs = useColumnDefs(onStatusChange);
 
   const defaultColDef = useMemo(() => ({
@@ -29,15 +33,14 @@ const ProjectsGrid = ({ projects, loading, onStatusChange }) => {
     resizable: true,
     floatingFilter: true,
     suppressMovable: true,
-    suppressSizeToFit: true, // Add this to prevent auto-sizing
-    suppressAutoSize: true,   // Add this to prevent auto-sizing
+    suppressSizeToFit: true,
+    suppressAutoSize: true,
   }), []);
 
   const customTheme = useMemo(() => {
     return themeQuartz.withParams({});
   }, []);
 
-  // Define framework components for AG Grid
   const frameworkComponents = useMemo(() => ({
     projectNameRenderer: ProjectNameRenderer,
     statusRenderer: StatusRenderer,
@@ -55,11 +58,35 @@ const ProjectsGrid = ({ projects, loading, onStatusChange }) => {
     setEditingField(fieldName);
   }, []);
 
-  const handleSave = useCallback((fieldName) => {
-    setSelectedProject(prev => ({ ...prev, [fieldName]: formData[fieldName] }));
-    setEditingField(null);
-    // Add API call here to save changes
-  }, [formData]);
+  // ONLY CHANGE THIS FUNCTION - Add API call here
+  const handleSave = useCallback(async (fieldName) => {
+    if (!selectedProject) return;
+
+    try {
+      // Call the store method to update the field via API
+      const result = await updateProjectField(selectedProject.id, fieldName, formData[fieldName]);
+      
+      if (result.success) {
+        // Update local state with the response data
+        setSelectedProject(prev => ({ 
+          ...prev, 
+          [fieldName]: formData[fieldName],
+          ...result.data // Include any additional data from backend
+        }));
+        setEditingField(null);
+        
+        console.log(`Successfully updated ${fieldName}`);
+      } else {
+        // Handle error - revert the change
+        console.error('Failed to update field:', result.error);
+        setFormData(prev => ({ ...prev, [fieldName]: selectedProject[fieldName] }));
+      }
+    } catch (error) {
+      console.error('Error saving field:', error);
+      // Revert on error
+      setFormData(prev => ({ ...prev, [fieldName]: selectedProject[fieldName] }));
+    }
+  }, [selectedProject, formData, updateProjectField]);
 
   const handleCancel = useCallback(() => {
     setFormData(selectedProject);
@@ -152,7 +179,7 @@ const ProjectsGrid = ({ projects, loading, onStatusChange }) => {
         editingField={editingField}
         onClose={handleClose}
         onEdit={handleEdit}
-        onSave={handleSave}
+        onSave={handleSave} // This now calls the API
         onCancel={handleCancel}
         onChange={handleChange}
       />
