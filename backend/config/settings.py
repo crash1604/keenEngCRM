@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.architects',
     'apps.projects',
     'apps.activity',
+    'apps.communication',
 ]
 
 MIDDLEWARE = [

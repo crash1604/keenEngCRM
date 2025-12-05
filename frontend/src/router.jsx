@@ -9,6 +9,7 @@ import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Clients from './pages/Clients/Clients';
 import Projects from './pages/Projects/Projects';
+import Communication from './pages/Communication/Communication';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -75,6 +76,7 @@ const AppRouter = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="projects" element={<Projects />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="communication" element={<Communication />} />
       </Route>
 
       {/* Default redirect - Remove this duplicate route */}

@@ -24,8 +24,9 @@ urlpatterns = [
     path('api/projects/', include('apps.projects.urls')),
     path('api/activity/', include('apps.activity.urls')),
     path('api/clients/', include('apps.clients.urls')),
-    
-    # JWT Authentication endpoints 
+    path('api/communication/', include('apps.communication.urls')),
+
+    # JWT Authentication endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
