@@ -15,14 +15,14 @@ export const useProjectStore = create((set, get) => ({
   pagination: {
     current: 1,
     total: 0,
-    page_size: 20
+    page_size: 100
   },
   filters: {
     status: '',
     search: '',
     ordering: '-created_at',
     page: 1,
-    page_size: 20
+    page_size: 100
   },
 
   // Actions
@@ -30,13 +30,13 @@ export const useProjectStore = create((set, get) => ({
     filters: { ...state.filters, ...newFilters } 
   })),
 
-  clearFilters: () => set({ 
+  clearFilters: () => set({
     filters: {
       status: '',
       search: '',
       ordering: '-created_at',
       page: 1,
-      page_size: 20
+      page_size: 100
     }
   }),
 
