@@ -1,6 +1,9 @@
-import { useEffect } from 'react';
 import { useAuthStore } from '../stores/auth.store';
 
+/**
+ * Custom hook for authentication
+ * Note: Auth is initialized in App.jsx, so we don't need to call checkAuth here
+ */
 export const useAuth = () => {
   const {
     user,
@@ -8,16 +11,12 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
-    register, // Make sure this is included
+    register,
     logout,
     updateProfile,
     clearError,
     checkAuth,
   } = useAuthStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   return {
     user,
@@ -25,9 +24,10 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
-    register, // Make sure this is returned
+    register,
     logout,
     updateProfile,
     clearError,
+    checkAuth,
   };
 };

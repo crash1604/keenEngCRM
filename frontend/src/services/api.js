@@ -4,23 +4,20 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:8000/api';
 
 // Create axios instance with default config
+// withCredentials: true enables sending/receiving HTTP-only cookies
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 10000,
+  withCredentials: true, // Enable cookies for cross-origin requests
 });
 
-// Request interceptor to add auth token
+// Request interceptor (no longer needs to add token from localStorage)
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn('No access token found in localStorage');
-    }
+    // Cookies are automatically sent with withCredentials: true
     return config;
   },
   (error) => {
@@ -36,41 +33,30 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     console.error('API Error:', {
       status: error.response?.status,
       data: error.response?.data,
       url: originalRequest?.url
     });
 
+    // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem('refresh_token');
-      
-      if (refreshToken) {
-        try {
-          const response = await axios.post(`${BASE_URL}/token/refresh/`, {
-            refresh: refreshToken,
-          });
-          
-          const newAccessToken = response.data.access;
-          localStorage.setItem('access_token', newAccessToken);
-          
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          // Refresh failed, logout user
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
-          window.location.href = '/auth/login';
-          return Promise.reject(refreshError);
-        }
-      } else {
-        console.warn('No refresh token available');
+      try {
+        // Try to refresh the token (cookies are sent automatically)
+        await axios.post(`${BASE_URL}/auth/token/refresh/`, {}, {
+          withCredentials: true,
+        });
+
+        // Retry the original request (new cookies are set automatically)
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // Refresh failed, redirect to login
         window.location.href = '/auth/login';
+        return Promise.reject(refreshError);
       }
     }
 

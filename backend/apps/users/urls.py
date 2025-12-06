@@ -6,7 +6,8 @@ from .views import (
     UserLoginView,
     UserLogoutView,
     UserProfileView,
-    CustomTokenRefreshView
+    CustomTokenRefreshView,
+    AuthStatusView,
 )
 
 app_name = 'users'
@@ -16,6 +17,7 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('profile/', UserProfileView.as_view(), name='profile'),
+    path('status/', AuthStatusView.as_view(), name='auth_status'),
     path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]

@@ -1,10 +1,187 @@
-# KEEN Engineering Spartan
+# KEEN Engineering CRM
 
+A comprehensive Customer Relationship Management system designed for engineering firms, specifically tailored for managing mechanical, electrical, plumbing, and fire protection projects.
 
+## Overview
 
-# KeenEng CRM - Docker Setup Guide
+KEEN Engineering CRM (Spartan) is a full-stack web application that helps engineering firms manage their projects, clients, architects, and communications efficiently. The system provides role-based access control, activity tracking, and email communication features.
 
-## 🚀 Quick Start
+## Technology Stack
+
+### Backend
+- **Framework**: Django 5.2.8 with Django REST Framework 3.15.0
+- **Authentication**: JWT (Simple JWT)
+- **Database**: PostgreSQL
+- **Task Queue**: Celery with Redis
+- **Python Version**: 3.14
+
+### Frontend
+- **Framework**: React 19.2.0 with Vite
+- **State Management**: Zustand + MobX
+- **UI Library**: Material-UI (MUI) 7.3.6
+- **Data Grid**: AG Grid
+- **Styling**: Tailwind CSS
+- **Forms**: Formik + Yup validation
+- **HTTP Client**: Axios
+
+## Project Structure
+
+```
+keenEngCRM/
+├── backend/                 # Django REST API
+│   ├── apps/
+│   │   ├── users/          # User authentication & management
+│   │   ├── clients/        # Client management
+│   │   ├── architects/     # Architect/Designer management
+│   │   ├── projects/       # Project management
+│   │   ├── activity/       # Activity logging & audit trail
+│   │   └── communication/  # Email templates & communication
+│   ├── config/             # Django settings & configuration
+│   ├── requirements/       # Python dependencies
+│   └── manage.py
+├── frontend/               # React SPA
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API service layer
+│   │   ├── stores/         # Zustand state stores
+│   │   ├── hooks/          # Custom React hooks
+│   │   └── utils/          # Utility functions
+│   └── package.json
+├── docker-compose.yml      # Docker orchestration
+├── docs/                   # Documentation
+├── infrastructure/         # Infrastructure configs
+├── scripts/                # Utility scripts
+└── tests/                  # Integration tests
+```
+
+## Features
+
+### User Management
+- Role-based access control (Admin, Manager, Employee, Client, Architect)
+- JWT authentication with token refresh
+- User profile management
+
+### Client Management
+- Full CRUD operations with soft delete
+- Advanced search and filtering
+- Bulk import/export (CSV, Excel)
+- Document uploads
+- Activity tracking
+
+### Project Management
+- Comprehensive project tracking
+- Multiple project types (Mechanical, Electrical, Plumbing, Energy Modelling, Fire Protection, Tenant Improvement)
+- Status management with workflow
+- Due date tracking and overdue alerts
+- Inspection scheduling (rough-in, final)
+- Auto-generated job numbers
+
+### Architect/Designer Management
+- Professional information tracking
+- License and affiliation management
+- Project association
+
+### Activity Logging
+- Automatic tracking of all changes
+- Audit trail for compliance
+- Role-based activity visibility
+
+### Communication
+- Email template management
+- Variable substitution in templates
+- Email history and tracking
+- Support for CC/BCC
+
+## Quick Start
+
+### Prerequisites
+- Docker Desktop installed and running
+- PostgreSQL database (or use Docker)
+
+### Local Development
+
+#### Backend Setup
+```bash
+cd backend
+python -m venv virtualenv
+source virtualenv/bin/activate  # On Windows: virtualenv\Scripts\activate
+pip install -r requirements/requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+#### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Environment Variables
+
+### Backend (.env)
+```bash
+SECRET_KEY=your-secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database
+DB_NAME=keenengcrm
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_HOST=localhost
+DB_PORT=5432
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/auth/` | Authentication (login, register, logout) |
+| `/api/token/` | JWT token endpoints |
+| `/api/projects/` | Project CRUD operations |
+| `/api/clients/clients/` | Client management |
+| `/api/activity/activity-logs/` | Activity logs |
+| `/api/communication/` | Email templates and logs |
+
+## User Roles
+
+| Role | Permissions |
+|------|-------------|
+| Admin | Full access to all features |
+| Manager | Manage projects, clients, view all data |
+| Employee | View and work on assigned projects |
+| Client | View own projects only |
+| Architect | View associated projects only |
+
+## Development
+
+For detailed development documentation, see:
+- [Backend Documentation](./backend/README.md)
+- [Frontend Documentation](./frontend/README.md)
+
+## Production Deployment
+
+1. Set `DEBUG=False` in backend/.env
+2. Update `ALLOWED_HOSTS` to your domain
+3. Update `CORS_ALLOWED_ORIGINS` to your frontend URL
+4. Use a strong `SECRET_KEY`
+5. Enable HTTPS
+6. Configure proper logging and monitoring
+
+## License
+
+Proprietary - KEEN Engineering
+
+---
+
+# Docker Setup Guide
+
+## Quick Start
 
 ### Prerequisites
 - Docker Desktop installed and running
@@ -17,18 +194,18 @@ Ensure you have these files in place:
 ```
 crm-system/
 ├── backend/
-│   ├── Dockerfile ✅ (you already have this)
-│   ├── .env ✅ (you already have this)
+│   ├── Dockerfile
+│   ├── .env
 │   ├── requirements/
 │   │   └── requirements.txt
 │   ├── manage.py
 │   └── config/
 ├── frontend/
-│   ├── Dockerfile ✅ (you already have this)
-│   ├── nginx.conf ✅ (simplified version)
+│   ├── Dockerfile
+│   ├── nginx.conf
 │   ├── package.json
 │   └── src/
-└── docker-compose.yml ⬅️ (place in root)
+└── docker-compose.yml
 ```
 
 ### 2. Update Your backend/.env
@@ -64,7 +241,7 @@ docker-compose build
 docker-compose up
 ```
 
-**That's it!** 🎉
+**That's it!**
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000/api/
@@ -78,7 +255,7 @@ If you need to create a superuser:
 docker-compose exec backend python manage.py createsuperuser
 ```
 
-## 📋 Common Commands
+## Common Commands
 
 ### View Logs
 ```bash
@@ -135,7 +312,7 @@ docker-compose exec backend python manage.py shell
 docker-compose exec backend python manage.py startapp newapp
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Backend won't start
 **Check logs:**
@@ -193,13 +370,13 @@ services:
   backend:
     ports:
       - "8001:8000"  # Change to 8001
-  
+
   frontend:
     ports:
       - "3001:80"    # Change to 3001
 ```
 
-## 🎯 Development Workflow
+## Development Workflow
 
 ### Backend Development
 1. Make changes to Python files in `backend/`
@@ -224,7 +401,7 @@ npm run dev
 
 Update your React app to use `http://localhost:8000` for API calls in development.
 
-## 🚢 Production Notes
+## Production Notes
 
 When deploying to production:
 
@@ -237,7 +414,7 @@ When deploying to production:
 7. **Use proper gunicorn workers**: `--workers 4`
 8. **Set up monitoring and logging**
 
-## 📦 Clean Start
+## Clean Start
 
 If things get messy:
 
@@ -256,7 +433,7 @@ docker-compose build --no-cache
 docker-compose up
 ```
 
-## 🆘 Still Having Issues?
+## Still Having Issues?
 
 Check:
 1. Docker is running: `docker ps`

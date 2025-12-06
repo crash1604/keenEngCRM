@@ -1,6 +1,339 @@
-# Keen Engineering CRM - Project Management API Documentation
+# KEEN Engineering CRM - Backend API
 
-## 📋 Table of Contents
+Django REST Framework backend providing comprehensive APIs for the KEEN Engineering CRM system.
+
+## Technology Stack
+
+- **Django**: 5.2.8
+- **Django REST Framework**: 3.15.0
+- **Authentication**: Simple JWT (djangorestframework-simplejwt 5.3.1)
+- **Database**: PostgreSQL (psycopg2-binary 2.9.9)
+- **Task Queue**: Celery 5.3.6 with Redis
+- **WSGI Server**: Gunicorn 21.2.0
+- **Filtering**: django-filter
+- **CORS**: django-cors-headers
+
+## Project Structure
+
+```
+backend/
+├── apps/
+│   ├── users/          # User authentication & management
+│   ├── clients/        # Client CRUD & management
+│   ├── architects/     # Architect/Designer management
+│   ├── projects/       # Project management
+│   ├── activity/       # Activity logging & audit
+│   └── communication/  # Email templates & communications
+├── config/
+│   ├── settings.py     # Django settings
+│   ├── urls.py         # Root URL configuration
+│   └── wsgi.py         # WSGI configuration
+├── requirements/
+│   └── requirements.txt
+├── manage.py
+└── Dockerfile
+```
+
+---
+
+## Apps Documentation
+
+### 1. Users App (`apps.users`)
+
+Handles user authentication, registration, and profile management with role-based access control.
+
+#### Model: User
+
+Extends Django's `AbstractUser` with custom fields.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | CharField | User role: admin, manager, employee, client, architect |
+| `phone` | CharField | Phone number |
+| `created_at` | DateTimeField | Account creation timestamp |
+| `updated_at` | DateTimeField | Last update timestamp |
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register/` | Register new user |
+| POST | `/api/auth/login/` | User login, returns JWT tokens |
+| POST | `/api/auth/logout/` | Logout, blacklists refresh token |
+| GET | `/api/auth/profile/` | Get current user profile |
+| PUT | `/api/auth/profile/` | Update user profile |
+| POST | `/api/auth/token/refresh/` | Refresh access token |
+| POST | `/api/auth/token/verify/` | Verify token validity |
+
+---
+
+### 2. Clients App (`apps.clients`)
+
+Full client management with CRUD operations, bulk import/export, and document handling.
+
+#### Model: Client
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | CharField | Client name |
+| `contact_email` | EmailField | Primary email |
+| `phone` | CharField | Phone number |
+| `address` | TextField | Street address |
+| `user_account` | OneToOneField | Optional link to User |
+| `company_name` | CharField | Company name |
+| `contact_person` | CharField | Primary contact |
+| `billing_address` | TextField | Billing address |
+| `notes` | TextField | Additional notes |
+| `is_active` | BooleanField | Active status (soft delete) |
+| `archived_at` | DateTimeField | Archive timestamp |
+| `archived_by` | ForeignKey | User who archived |
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/clients/clients/` | List all clients (paginated) |
+| POST | `/api/clients/clients/` | Create new client |
+| GET | `/api/clients/clients/{id}/` | Get client details |
+| PUT/PATCH | `/api/clients/clients/{id}/` | Update client |
+| DELETE | `/api/clients/clients/{id}/` | Soft delete (archive) |
+| GET | `/api/clients/clients/search/?q=` | Advanced search |
+| GET | `/api/clients/clients/stats/` | Client statistics |
+| POST | `/api/clients/clients/bulk-create/` | Bulk import clients |
+| GET | `/api/clients/clients/export/?format=csv` | Export (csv/xlsx/json) |
+| POST | `/api/clients/clients/{id}/upload-document/` | Upload document |
+| GET | `/api/clients/clients/{id}/activities/` | Client activity history |
+
+#### Query Parameters
+
+- `search`: Search across name, email, company, phone
+- `is_active`: Filter by active status
+- `ordering`: Sort by name, company_name, created_at
+
+---
+
+### 3. Architects App (`apps.architects`)
+
+Manages architect and designer professional information.
+
+#### Model: Architect
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | CharField | Architect name |
+| `contact_email` | EmailField | Primary email |
+| `phone` | CharField | Phone number |
+| `address` | TextField | Office address |
+| `company_name` | CharField | Firm name |
+| `license_number` | CharField | Professional license |
+| `professional_affiliations` | TextField | Professional memberships |
+| `user_account` | OneToOneField | Optional link to User |
+| `website` | URLField | Website URL |
+| `notes` | TextField | Additional notes |
+| `is_active` | BooleanField | Active status |
+
+---
+
+### 4. Projects App (`apps.projects`)
+
+Core project management with comprehensive tracking, filtering, and dashboard statistics.
+
+#### Model: Project
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `year` | IntegerField | Project year |
+| `job_number` | CharField | Auto-generated: YYYY-XXXX |
+| `project_name` | CharField | Project name |
+| `project_type` | CharField | Comma-separated: M,E,P,EM,FP,TI,VI |
+| `status` | CharField | Project status |
+| `current_sub_status` | CharField | Sub-status details |
+| `current_open_items` | TextField | Open items |
+| `current_action_items` | TextField | Action items |
+| `client` | ForeignKey | Client reference |
+| `architect_designer` | ForeignKey | Architect reference |
+| `mechanical_manager` | ForeignKey | Assigned manager |
+| `due_date` | DateField | Due date |
+| `rough_in_date` | DateField | Rough-in inspection |
+| `final_inspection_date` | DateField | Final inspection |
+| `address` | TextField | Project address |
+| `legal_address` | TextField | Parcel/Block/Lot info |
+| `billing_info` | TextField | Billing information |
+
+#### Project Types
+
+| Code | Description |
+|------|-------------|
+| M | Mechanical |
+| E | Electrical |
+| P | Plumbing |
+| EM | Energy Modelling |
+| FP | Fire Protection |
+| TI | Tenant Improvement |
+| VI | Verification Pending |
+
+#### Project Statuses
+
+| Status | Description |
+|--------|-------------|
+| not_started | Not Started |
+| in_progress | In Progress |
+| submitted | Submitted |
+| completed | Completed |
+| closed_paid | Closed & Paid |
+| cancelled | Cancelled / Voided |
+| on_hold | On Hold |
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/` | List projects (paginated) |
+| POST | `/api/projects/` | Create project |
+| GET | `/api/projects/{id}/` | Get project details |
+| PUT/PATCH | `/api/projects/{id}/` | Update project |
+| DELETE | `/api/projects/{id}/` | Delete project |
+| POST | `/api/projects/{id}/update_status/` | Update status only |
+| GET | `/api/projects/dashboard_stats/` | Dashboard statistics |
+| GET | `/api/projects/overdue/` | Overdue projects |
+| GET | `/api/projects/upcoming_inspections/` | Upcoming inspections |
+| GET | `/api/projects/{id}/activity_logs/` | Project history |
+| GET | `/api/projects/export/` | Export to CSV |
+
+---
+
+### 5. Activity App (`apps.activity`)
+
+Automatic activity logging and audit trail for compliance.
+
+#### Model: ActivityLog
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `project` | ForeignKey | Related project |
+| `action_type` | CharField | Type of action |
+| `description` | TextField | Action description |
+| `old_value` | TextField | Previous value |
+| `new_value` | TextField | New value |
+| `changed_field` | CharField | Field that changed |
+| `user` | ForeignKey | User who made change |
+| `timestamp` | DateTimeField | When change occurred |
+| `ip_address` | GenericIPAddressField | User's IP address |
+
+#### Action Types
+
+- `status_change`, `note_added`, `field_updated`
+- `inspection_scheduled`, `due_date_changed`
+- `project_created`, `project_updated`
+- `client_changed`, `architect_changed`, `manager_changed`
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/activity/activity-logs/` | List all activity logs |
+| GET | `/api/activity/activity-logs/{id}/` | Get specific log |
+| GET | `/api/activity/activity-logs/my_activity/` | Current user's activities |
+| GET | `/api/activity/activity-logs/project_activity/` | Activities for accessible projects |
+
+---
+
+### 6. Communication App (`apps.communication`)
+
+Email template management with variable substitution and communication history.
+
+#### Model: EmailTemplate
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | CharField | Template name |
+| `template_type` | CharField | Template category |
+| `subject` | CharField | Email subject with `{{variables}}` |
+| `body_html` | TextField | HTML body with variables |
+| `body_text` | TextField | Plain text body |
+| `is_active` | BooleanField | Active status |
+| `is_default` | BooleanField | Default for type |
+| `available_variables` | JSONField | Documented variables |
+
+#### Template Types
+
+- `status_update`, `inspection_reminder`, `project_completion`
+- `general_update`, `invoice_notification`, `delay_notification`, `custom`
+
+#### Available Template Variables
+
+**Project:** `{{project.project_name}}`, `{{project.job_number}}`, `{{project.status}}`, `{{project.due_date}}`
+
+**Client:** `{{client.name}}`, `{{client.company_name}}`, `{{client.contact_email}}`
+
+**Manager:** `{{manager.first_name}}`, `{{manager.last_name}}`, `{{manager.email}}`
+
+**System:** `{{system.current_date}}`, `{{system.company_name}}`
+
+#### Model: EmailLog
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `project` | ForeignKey | Related project |
+| `template` | ForeignKey | Template used |
+| `recipient_email` | EmailField | Recipient |
+| `cc_emails` | JSONField | CC recipients |
+| `bcc_emails` | JSONField | BCC recipients |
+| `subject` | CharField | Final subject |
+| `body_html` | TextField | Final HTML body |
+| `sent_by` | ForeignKey | Sender |
+| `status` | CharField | sent/failed/pending/bounced/delivered |
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/communication/templates/` | List templates |
+| POST | `/api/communication/templates/` | Create template |
+| GET | `/api/communication/templates/{id}/` | Get template |
+| PUT | `/api/communication/templates/{id}/` | Update template |
+| POST | `/api/communication/templates/{id}/duplicate/` | Duplicate template |
+| GET | `/api/communication/templates/{id}/variables/` | Available variables |
+| GET | `/api/communication/logs/` | List email logs |
+| GET | `/api/communication/logs/statistics/` | Email statistics |
+| POST | `/api/communication/actions/send_email/` | Send email |
+| POST | `/api/communication/actions/preview_email/` | Preview email |
+
+---
+
+## JWT Authentication
+
+### Token Configuration
+
+- **Access Token Lifetime**: 180 minutes (3 hours)
+- **Refresh Token Lifetime**: 3 days
+- **Token Rotation**: Enabled (refresh tokens rotate on use)
+- **Blacklisting**: Old refresh tokens are blacklisted
+
+### Usage
+
+```bash
+# Include token in requests
+Authorization: Bearer <access_token>
+```
+
+---
+
+## Role-Based Permissions
+
+| Role | Clients | Projects | Activity | Communication |
+|------|---------|----------|----------|---------------|
+| Admin | Full CRUD | Full CRUD | View All | Full CRUD |
+| Manager | Full CRUD | Full CRUD | View All | Full CRUD |
+| Employee | Read | View/Edit Own | Own | Limited |
+| Client | Own Only | View Own | Own | Limited |
+| Architect | Read | View Associated | Associated | Limited |
+
+---
+
+# Testing & API Documentation
+
+## Table of Contents
 1. [Project Overview](#project-overview)
 2. [System Architecture](#system-architecture)
 3. [API Endpoints](#api-endpoints)
@@ -12,7 +345,7 @@
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 The Keen Engineering CRM is a comprehensive project management system designed for engineering firms specializing in Mechanical, Electrical, Plumbing, Fire Protection, and related services. The system provides role-based access control, project tracking, activity logging, and comprehensive reporting capabilities.
 
@@ -27,14 +360,7 @@ The Keen Engineering CRM is a comprehensive project management system designed f
 
 ---
 
-## 🏗️ System Architecture
-
-### Tech Stack
-- **Backend**: Django 4.2 + Django REST Framework
-- **Database**: PostgreSQL
-- **Authentication**: JWT Tokens
-- **Filtering**: Django Filter
-- **API Documentation**: Auto-generated via DRF
+## System Architecture
 
 ### Architecture Diagram
 ```
@@ -43,29 +369,11 @@ The Keen Engineering CRM is a comprehensive project management system designed f
        |                     +--> [Authentication (JWT)]
        |                     +--> [Filtering & Search]
        |                     +--> [Activity Logging]
-``` 
-
+```
 
 ---
 
-### Repo Structure
-```
-backend/
-│── apps/
-│   ├── users/                # User management app
-│   ├── projects/             # Project management app
-|   ├── architects/          # Architect management app
-|   ├── clients/             # Client management app
-|   ├── activity
-│   └── ...                   # Other apps for Future Expansion
-│── config/                  # Django project settings
-│── requirements
-|   ├── requirements.txt          # Python dependencies
-│── manage.py                 # Django management script
-└── README.md                 # Project documentation
-
-
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Authentication Endpoints
 | Method | Endpoint | Description |
@@ -97,17 +405,17 @@ backend/
 
 ---
 
-## 🔐 Authentication
+## Authentication
 
 ### User Roles & Permissions
 
 | Role | Project Access | Create/Edit | Delete |
 |------|----------------|-------------|---------|
-| **Admin** | All projects | ✅ All operations | ✅ All |
-| **Manager** | All projects | ✅ All operations | ❌ Limited |
-| **Employee** | Assigned projects | ✅ Own projects | ❌ None |
-| **Client** | Own projects | ❌ View only | ❌ None |
-| **Architect** | Associated projects | ❌ View only | ❌ None |
+| **Admin** | All projects | All operations | All |
+| **Manager** | All projects | All operations | Limited |
+| **Employee** | Assigned projects | Own projects | None |
+| **Client** | Own projects | View only | None |
+| **Architect** | Associated projects | View only | None |
 
 ### JWT Token Flow
 1. **Register/Login** to obtain access/refresh tokens
@@ -137,7 +445,7 @@ curl -H "Authorization: Bearer $ACCESS_TOKEN" \
 
 ---
 
-## 🧪 Testing Methodology
+## Testing Methodology
 
 ### 1. User Registration & Authentication Testing
 
@@ -152,7 +460,7 @@ curl -X POST http://localhost:8000/api/auth/register/ \
     "password": "password123",
     "password2": "password123",
     "first_name": "Test",
-    "last_name": "User", 
+    "last_name": "User",
     "phone": "+1234567890",
     "role": "employee"
   }'
@@ -225,64 +533,7 @@ curl -X PATCH "http://localhost:8000/api/projects/1/" \
   }'
 ```
 
-### 3. Field Validation Testing
-
-**Objective**: Ensure data integrity through proper validation
-
-#### Date Validation
-```bash
-# Should FAIL - Past date
-curl -X POST "http://localhost:8000/api/projects/" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "project_name": "Invalid Project",
-    "project_type": "M",
-    "status": "not_started", 
-    "client": 1,
-    "due_date": "2024-01-01",  # Past date
-    "address": "123 Test"
-  }'
-
-# Expected Error:
-{"due_date":["Due date cannot be in the past"]}
-```
-
-#### Project Type Validation
-```bash
-# Should FAIL - Invalid project type
-curl -X POST "http://localhost:8000/api/projects/" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{
-    "project_type": "M,INVALID",  # Invalid type
-    ...
-  }'
-
-# Expected Error:
-{"project_type":["Invalid project type: INVALID"]}
-```
-
-### 4. Role-based Access Testing
-
-**Objective**: Verify permissions work correctly for different user roles
-
-```bash
-# As Manager - Should SUCCEED
-export MANAGER_TOKEN="manager_jwt_token"
-curl -X POST "http://localhost:8000/api/projects/" \
-  -H "Authorization: Bearer $MANAGER_TOKEN" \
-  -d '{...}'
-
-# As Client - Should FAIL
-export CLIENT_TOKEN="client_jwt_token" 
-curl -X POST "http://localhost:8000/api/projects/" \
-  -H "Authorization: Bearer $CLIENT_TOKEN" \
-  -d '{...}'
-
-# Expected Error: 403 Forbidden
-```
-
-### 5. Activity Logging Testing
+### 3. Activity Logging Testing
 
 **Objective**: Verify all changes are tracked in activity logs
 
@@ -301,7 +552,7 @@ curl -X GET "http://localhost:8000/api/projects/1/activity_logs/" \
     "timestamp": "2025-11-18T10:00:00Z"
   },
   {
-    "id": 2, 
+    "id": 2,
     "action_type": "status_change",
     "description": "Status changed from not_started to in_progress",
     "user_name": "John Doe",
@@ -312,83 +563,7 @@ curl -X GET "http://localhost:8000/api/projects/1/activity_logs/" \
 
 ---
 
-## 🗃️ Database Models
-
-### Project Model
-```python
-class Project(models.Model):
-    PROJECT_TYPE_CHOICES = [
-        ('M', 'Mechanical'),
-        ('E', 'Electrical'), 
-        ('P', 'Plumbing'),
-        ('EM', 'Energy Modelling'),
-        ('FP', 'Fire Protection'),
-        ('TI', 'Tenant Improvement'),
-        ('VI', 'Verification Pending'),
-    ]
-    
-    STATUS_CHOICES = [
-        ('not_started', 'Not Started'),
-        ('in_progress', 'In Progress'),
-        ('submitted', 'Submitted'),
-        ('completed', 'Completed'),
-        ('closed_paid', 'Closed & Paid'),
-        ('cancelled', 'Cancelled / Voided'),
-        ('on_hold', 'On Hold'),
-    ]
-    
-    # Core fields
-    year = models.IntegerField(default=timezone.now().year)
-    job_number = models.CharField(max_length=50, unique=True)
-    project_name = models.CharField(max_length=255)
-    project_type = models.CharField(max_length=50)  # Comma-separated types
-    
-    # Status tracking
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    current_sub_status = models.CharField(max_length=200, blank=True, null=True)
-    current_open_items = models.TextField(blank=True, null=True)
-    current_action_items = models.TextField(blank=True, null=True)
-    
-    # Relationships
-    client = models.ForeignKey('clients.Client', on_delete=models.PROTECT)
-    architect_designer = models.ForeignKey('architects.Architect', on_delete=models.SET_NULL, null=True, blank=True)
-    mechanical_manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    
-    # Dates
-    due_date = models.DateField()
-    rough_in_date = models.DateField(blank=True, null=True)
-    final_inspection_date = models.DateField(blank=True, null=True)
-    
-    # Address information
-    address = models.TextField()
-    legal_address = models.TextField(blank=True, null=True)
-    billing_info = models.TextField(blank=True, null=True)
-```
-
-### Activity Log Model
-```python
-class ActivityLog(models.Model):
-    ACTION_CHOICES = [
-        ('status_change', 'Status Change'),
-        ('note_added', 'Note Added'),
-        ('field_updated', 'Field Updated'),
-        ('project_created', 'Project Created'),
-        # ... more actions
-    ]
-    
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
-    description = models.TextField()
-    old_value = models.TextField(blank=True, null=True)
-    new_value = models.TextField(blank=True, null=True)
-    changed_field = models.CharField(max_length=100, blank=True, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-```
-
----
-
-## ⚙️ Setup & Installation
+## Setup & Installation
 
 ### 1. Environment Setup
 ```bash
@@ -398,7 +573,7 @@ source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate  # Windows
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 ```
 
 ### 2. Database Configuration
@@ -434,7 +609,7 @@ python manage.py runserver
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues & Solutions
 
@@ -469,25 +644,16 @@ job_number = models.CharField(max_length=50, unique=True, default=generate_job_n
 # Managers/Admins can modify, Clients/Architects can only view
 ```
 
-#### 5. Import Errors
-**Problem**: `Import "rest_framework.routers" could not be resolved`
-```bash
-# Solution: Install required packages
-pip install djangorestframework django-filter djangorestframework-simplejwt
-```
-
 ### Debugging Scripts
 
 #### API Health Check
 ```bash
 #!/bin/bash
-# api_health_check.sh
-
-echo "🔍 API Health Check"
-echo "=================="
+echo "API Health Check"
+echo "================"
 
 # Test authentication
-curl -s -X GET "http://localhost:8000/api/auth/user/" \
+curl -s -X GET "http://localhost:8000/api/auth/profile/" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -w "Auth: %{http_code}\n"
 
@@ -500,53 +666,19 @@ curl -s -X GET "http://localhost:8000/api/projects/" \
 python manage.py check
 ```
 
-#### Data Validation Script
-```bash
-#!/bin/bash
-# validate_data.sh
-
-echo "📊 Data Validation Report"
-echo "========================"
-
-python manage.py shell << EOF
-from apps.projects.models import Project
-
-# Check for data issues
-issues = []
-
-# Check projects with empty job numbers
-empty_job = Project.objects.filter(job_number='')
-if empty_job.exists():
-    issues.append(f"Found {empty_job.count()} projects with empty job numbers")
-
-# Check projects with past due dates
-from django.utils import timezone
-past_due = Project.objects.filter(due_date__lt=timezone.now().date())
-if past_due.exists():
-    issues.append(f"Found {past_due.count()} projects with past due dates")
-
-# Report issues
-if issues:
-    for issue in issues:
-        print(f"❌ {issue}")
-else:
-    print("✅ No data issues found")
-EOF
-```
-
 ---
 
-## 📈 Testing Results & Coverage
+## Testing Results & Coverage
 
 ### Test Coverage Summary
-- ✅ **Authentication**: User registration, login, JWT tokens
-- ✅ **Authorization**: Role-based access control
-- ✅ **CRUD Operations**: Full project lifecycle
-- ✅ **Validation**: Date, project type, required fields
-- ✅ **Filtering & Search**: Multi-field filtering capabilities
-- ✅ **Activity Logging**: Complete audit trail
-- ✅ **Error Handling**: Proper error responses
-- ✅ **Pagination**: Large dataset handling
+- **Authentication**: User registration, login, JWT tokens
+- **Authorization**: Role-based access control
+- **CRUD Operations**: Full project lifecycle
+- **Validation**: Date, project type, required fields
+- **Filtering & Search**: Multi-field filtering capabilities
+- **Activity Logging**: Complete audit trail
+- **Error Handling**: Proper error responses
+- **Pagination**: Large dataset handling
 
 ### Performance Metrics
 - **Response Time**: < 200ms for most operations
@@ -556,7 +688,7 @@ EOF
 
 ---
 
-## 🚀 Deployment Notes
+## Deployment Notes
 
 ### Production Checklist
 - [ ] Set `DEBUG = False` in production
@@ -578,4 +710,4 @@ ALLOWED_HOSTS=.yourdomain.com
 CORS_ALLOWED_ORIGINS=https://yourfrontend.com
 ```
 
-This documentation provides a comprehensive guide to understanding, testing, and maintaining the Keen Engineering CRM system. The testing methodology ensures robust functionality across all user roles and project scenarios.
+This documentation provides a comprehensive guide to understanding, testing, and maintaining the Keen Engineering CRM backend.
