@@ -8,6 +8,7 @@ import { useUIStore } from '../../stores/ui.store';
 const baseNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
   { name: 'Projects', href: '/projects', icon: '📁', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
+  { name: 'Activity', href: '/activity', icon: '📋', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
 ];
 
 // Role-specific navigation items
@@ -21,7 +22,6 @@ const roleNavigation = {
   manager: [
     { name: 'Clients', href: '/clients', icon: '👥' },
     { name: 'Communication', href: '/communication', icon: '📧' },
-    { name: 'Reports', href: '/reports', icon: '📈' },
   ],
   employee: [
     { name: 'My Tasks', href: '/tasks', icon: '✅' },

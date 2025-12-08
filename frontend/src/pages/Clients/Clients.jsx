@@ -150,6 +150,10 @@ const Clients = observer(() => {
       borderColor: '#e2e8f0',
       headerBackgroundColor: '#f8fafc',
       headerTextColor: '#0f172a',
+      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: 13,
+      headerFontSize: 13,
+      headerFontWeight: 600,
     });
   }, []);
 
@@ -233,6 +237,9 @@ const Clients = observer(() => {
             suppressRowClickSelection={true}
             enableCellTextSelection={true}
             onGridReady={onGridReady}
+            rowHeight={45}
+            headerHeight={44}
+            floatingFiltersHeight={36}
             loadingOverlayComponent={() => (
               <div className="flex justify-center items-center h-32">
                 <LoadingSpinner size="md" text="Loading clients..." />
