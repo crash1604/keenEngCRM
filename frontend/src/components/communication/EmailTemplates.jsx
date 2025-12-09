@@ -35,8 +35,10 @@ import LoadingSpinner from '../common/LoadingSpinner';
 const TEMPLATE_TYPES = [
   { value: 'status_update', label: 'Status Update' },
   { value: 'inspection_reminder', label: 'Inspection Reminder' },
-  { value: 'completion_notice', label: 'Completion Notice' },
-  { value: 'permit_update', label: 'Permit Update' },
+  { value: 'project_completion', label: 'Project Completion' },
+  { value: 'general_update', label: 'General Update' },
+  { value: 'invoice_notification', label: 'Invoice Notification' },
+  { value: 'delay_notification', label: 'Delay Notification' },
   { value: 'custom', label: 'Custom' },
 ];
 
