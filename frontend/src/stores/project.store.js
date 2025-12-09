@@ -160,15 +160,31 @@ export const useProjectStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await projectService.createProject(projectData);
-      set((state) => ({ 
+      set((state) => ({
         projects: [data, ...state.projects],
         loading: false,
-        error: null 
+        error: null
       }));
       return { success: true, data };
     } catch (error) {
       console.error('Error in createProject:', error);
-      const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Failed to create project';
+      console.error('Error response data:', error.response?.data);
+
+      // Handle Django REST framework validation errors (object with field names as keys)
+      let errorMessage = 'Failed to create project';
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (typeof errorData === 'object' && !errorData.detail && !errorData.message) {
+          // Format field validation errors
+          const fieldErrors = Object.entries(errorData)
+            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+            .join('; ');
+          errorMessage = fieldErrors || errorMessage;
+        } else {
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        }
+      }
+
       set({ error: errorMessage, loading: false });
       return { success: false, error: errorMessage };
     }

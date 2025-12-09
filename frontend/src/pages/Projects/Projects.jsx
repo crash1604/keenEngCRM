@@ -1,8 +1,11 @@
 // src/pages/Projects/Projects.jsx
 import React, { useEffect, useState } from 'react';
+import { Snackbar, Alert, Button } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { useProjectStore } from '../../stores/project.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ProjectsGrid from '../../components/projects/ProjectsGrid';
+import ProjectForm from '../../components/projects/ProjectForm';
 
 const Projects = () => {
   const {
@@ -17,6 +20,18 @@ const Projects = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debugInfo, setDebugInfo] = useState(null);
+
+  // Modal state
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Debug helper (keep your existing debug code)
   const testAPI = async () => {
@@ -47,6 +62,40 @@ const Projects = () => {
     await exportProjects();
   };
 
+  // Modal handlers
+  const handleOpenCreate = () => {
+    setSelectedProject(null);
+    setEditMode(false);
+    setFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setFormOpen(false);
+    setSelectedProject(null);
+    setEditMode(false);
+  };
+
+  const handleFormSuccess = () => {
+    setSnackbar({
+      open: true,
+      message: editMode ? 'Project updated successfully!' : 'Project created successfully!',
+      severity: 'success'
+    });
+    fetchProjects();
+  };
+
+  const handleFormError = (errorMessage) => {
+    setSnackbar({
+      open: true,
+      message: errorMessage || 'Failed to save project',
+      severity: 'error'
+    });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   const statusOptions = [
     { value: '', label: 'All Status' },
     { value: 'not_started', label: 'Not Started' },
@@ -67,25 +116,26 @@ const Projects = () => {
       )}
 
       {/* Header */}
-      {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
           <div className="flex space-x-3">
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-              disabled={loading}
-            >
-              Export CSV
-            </button>
-            <button
-              onClick={() => console.log('Create new project')}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreate}
+              sx={{
+                bgcolor: '#2563eb',
+                '&:hover': { bgcolor: '#1d4ed8' },
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
             >
               New Project
-            </button>
+            </Button>
           </div>
         </div>
-      </div> */}
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -129,6 +179,32 @@ const Projects = () => {
           </div>
         </div>
       )}
+
+      {/* Project Form Modal */}
+      <ProjectForm
+        open={formOpen}
+        onClose={handleCloseForm}
+        project={selectedProject}
+        editMode={editMode}
+        onSuccess={handleFormSuccess}
+        onError={handleFormError}
+      />
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

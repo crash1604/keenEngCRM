@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .models import Project
+
+User = get_user_model()
 
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True)
@@ -49,14 +52,20 @@ class ProjectDetailSerializer(ProjectSerializer):
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
     """Serializer for project creation with validation"""
-    
+    # Make mechanical_manager optional - will be set in perform_create if not provided
+    mechanical_manager = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role__in=['manager', 'employee']),
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Project
         fields = [
             'year', 'project_name', 'project_type', 'status', 'current_sub_status',
             'current_open_items', 'current_action_items', 'client', 'architect_designer',
             'mechanical_manager', 'due_date', 'due_date_note', 'address',
-            'legal_address', 'billing_info'
+            'legal_address', 'billing_info', 'rough_in_date', 'final_inspection_date'
         ]
     
     def validate_project_type(self, value):
