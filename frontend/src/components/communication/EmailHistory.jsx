@@ -192,33 +192,45 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
   return (
     <Box>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2.5}>
         <Box>
           <Typography variant="h6" fontWeight="bold" color="text.primary">
             Email History
           </Typography>
-          <Box display="flex" gap={2} mt={1} alignItems="center">
+          <Box display="flex" gap={2} mt={0.5} alignItems="center">
             <Typography variant="body2" color="text.secondary">
-              Total: {communicationStore.totalCount} emails
+              {communicationStore.totalCount} email{communicationStore.totalCount !== 1 ? 's' : ''} sent
             </Typography>
             {communicationStore.loading && (
-              <Chip label="Refreshing..." size="small" color="primary" />
+              <Chip label="Refreshing..." size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />
             )}
           </Box>
         </Box>
 
         <Button
           variant="outlined"
+          size="small"
           startIcon={<RefreshIcon />}
           onClick={handleRefresh}
           disabled={communicationStore.loading}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
         >
           Refresh
         </Button>
       </Box>
 
       {/* AG Grid */}
-      <Box sx={{ height: 600, width: '100%' }} className="ag-theme-quartz">
+      <Box
+        sx={{
+          height: 550,
+          width: '100%',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          overflow: 'hidden',
+        }}
+        className="ag-theme-quartz"
+      >
         <AgGridReact
           rowData={communicationStore.emailLogs}
           columnDefs={columnDefs}

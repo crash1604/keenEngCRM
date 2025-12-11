@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
   Box,
-  Container,
   Paper,
   Tabs,
   Tab,
@@ -24,7 +23,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`communication-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>}
     </div>
   );
 }
@@ -91,23 +90,60 @@ const Communication = observer(() => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      {/* Header */}
+      <Box
+        sx={{
+          mb: 3,
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}
+      >
+        <Typography
+          variant="h5"
+          component="h1"
+          fontWeight={700}
+          color="text.primary"
+          gutterBottom
+        >
           Communication Center
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body2" color="text.secondary">
           Manage email templates, send emails to clients, and view communication history
         </Typography>
       </Box>
 
-      <Paper elevation={3}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          overflow: 'hidden'
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#f8fafc' }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
             aria-label="communication tabs"
             variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                py: 1.5,
+              },
+              '& .Mui-selected': {
+                color: '#2563eb',
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#2563eb',
+                height: 3,
+              },
+            }}
           >
             <Tab label="Email History" id="communication-tab-0" />
             <Tab label="Compose Email" id="communication-tab-1" />
@@ -131,6 +167,7 @@ const Communication = observer(() => {
         </TabPanel>
       </Paper>
 
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -146,7 +183,7 @@ const Communication = observer(() => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 });
 

@@ -24,6 +24,22 @@ class EmailTemplateViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    def update(self, request, *args, **kwargs):
+        """Override update to debug validation errors"""
+        print("=== TEMPLATE UPDATE DEBUG ===")
+        print("Request data:", request.data)
+
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def duplicate(self, request, pk=None):
         """Duplicate an existing template"""

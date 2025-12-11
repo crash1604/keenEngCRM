@@ -39,6 +39,7 @@ const TEMPLATE_TYPES = [
   { value: 'general_update', label: 'General Update' },
   { value: 'invoice_notification', label: 'Invoice Notification' },
   { value: 'delay_notification', label: 'Delay Notification' },
+  { value: 'permit_update', label: 'Permit Update' },
   { value: 'custom', label: 'Custom' },
 ];
 
@@ -188,26 +189,31 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
             Email Templates
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Total: {communicationStore.templates.length} templates
+            {communicationStore.templates.length} template{communicationStore.templates.length !== 1 ? 's' : ''} available
           </Typography>
         </Box>
 
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={1.5}>
           <Button
             variant="outlined"
+            size="small"
             startIcon={<RefreshIcon />}
             onClick={handleRefresh}
             disabled={communicationStore.loading}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             Refresh
           </Button>
           <Button
             variant="contained"
+            size="small"
             startIcon={<AddIcon />}
             onClick={() => handleOpenForm()}
             sx={{
               bgcolor: '#2563eb',
               '&:hover': { bgcolor: '#1d4ed8' },
+              textTransform: 'none',
+              fontWeight: 600,
             }}
           >
             New Template
@@ -216,88 +222,171 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
       </Box>
 
       {/* Templates Grid */}
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
+          },
+          gap: 2.5,
+        }}
+      >
         {communicationStore.templates.map((template) => (
-          <Grid item xs={12} md={6} lg={4} key={template.id}>
-            <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flex: 1 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+          <Card
+            key={template.id}
+            variant="outlined"
+            sx={{
+              height: 220,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 2,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                borderColor: '#2563eb',
+              },
+            }}
+          >
+              <CardContent sx={{ flex: 1, p: 2, pb: 1.5, overflow: 'hidden' }}>
+                {/* Header Row - Name and Status */}
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={600}
+                    sx={{
+                      lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '60%',
+                    }}
+                    title={template.name}
+                  >
                     {template.name}
                   </Typography>
-                  <Box>
+                  <Box display="flex" gap={0.5} flexShrink={0}>
                     {template.is_default && (
-                      <Chip label="Default" size="small" color="primary" sx={{ mr: 0.5 }} />
+                      <Chip
+                        label="Default"
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.65rem',
+                          bgcolor: '#dbeafe',
+                          color: '#1d4ed8',
+                          fontWeight: 600,
+                        }}
+                      />
                     )}
                     <Chip
                       label={template.is_active ? 'Active' : 'Inactive'}
                       size="small"
-                      color={template.is_active ? 'success' : 'default'}
+                      sx={{
+                        height: 20,
+                        fontSize: '0.65rem',
+                        bgcolor: template.is_active ? '#dcfce7' : '#f1f5f9',
+                        color: template.is_active ? '#166534' : '#64748b',
+                        fontWeight: 500,
+                      }}
                     />
                   </Box>
                 </Box>
 
+                {/* Type Badge */}
                 <Chip
                   label={template.template_type_display || template.template_type}
                   size="small"
                   variant="outlined"
-                  sx={{ mb: 2 }}
+                  sx={{
+                    mb: 1.5,
+                    height: 22,
+                    fontSize: '0.7rem',
+                    borderColor: '#e2e8f0',
+                    color: '#64748b',
+                  }}
                 />
 
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Subject:
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mb: 2,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                  }}
-                >
-                  {template.subject}
-                </Typography>
+                {/* Subject */}
+                <Box mb={1.5}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500} display="block" mb={0.25}>
+                    SUBJECT
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      color: 'text.primary',
+                      fontSize: '0.8rem',
+                      lineHeight: 1.4,
+                    }}
+                    title={template.subject}
+                  >
+                    {template.subject}
+                  </Typography>
+                </Box>
 
-                <Typography variant="caption" color="text.secondary">
-                  Created by: {template.created_by_name || 'Unknown'}
+                {/* Created By */}
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                  By {template.created_by_name || 'Unknown'}
                 </Typography>
               </CardContent>
 
-              <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                <Box>
+              <CardActions
+                sx={{
+                  justifyContent: 'space-between',
+                  px: 1.5,
+                  py: 1,
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: '#f8fafc',
+                  minHeight: 44,
+                }}
+              >
+                <Box display="flex" gap={0.5}>
                   <IconButton
                     size="small"
-                    color="primary"
                     onClick={() => handleOpenForm(template)}
                     title="Edit"
+                    sx={{
+                      color: '#2563eb',
+                      '&:hover': { bgcolor: '#dbeafe' },
+                    }}
                   >
-                    <EditIcon fontSize="small" />
+                    <EditIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                   <IconButton
                     size="small"
-                    color="secondary"
                     onClick={() => handleDuplicate(template)}
                     title="Duplicate"
+                    sx={{
+                      color: '#7c3aed',
+                      '&:hover': { bgcolor: '#ede9fe' },
+                    }}
                   >
-                    <DuplicateIcon fontSize="small" />
+                    <DuplicateIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Box>
                 <IconButton
                   size="small"
-                  color="error"
                   onClick={() => handleDelete(template)}
                   title="Delete"
+                  sx={{
+                    color: '#dc2626',
+                    '&:hover': { bgcolor: '#fee2e2' },
+                  }}
                 >
-                  <DeleteIcon fontSize="small" />
+                  <DeleteIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </CardActions>
-            </Card>
-          </Grid>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       {communicationStore.templates.length === 0 && !communicationStore.loading && (
         <Box
@@ -324,104 +413,176 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
       )}
 
       {/* Template Form Dialog */}
-      <Dialog open={showForm} onClose={handleCloseForm} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
+      <Dialog open={showForm} onClose={handleCloseForm} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" fontWeight={600}>
             {editMode ? 'Edit Template' : 'Create New Template'}
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {editMode ? 'Update the template details below' : 'Fill in the details to create a new email template'}
+          </Typography>
         </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Template Name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Template Type</InputLabel>
-                <Select
-                  value={formData.template_type}
-                  onChange={(e) => handleInputChange('template_type', e.target.value)}
-                  label="Template Type"
-                >
-                  {TEMPLATE_TYPES.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      {type.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Box display="flex" gap={2} height="100%" alignItems="center">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.is_active}
-                      onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                    />
-                  }
-                  label="Active"
+        <DialogContent sx={{ p: 3 }}>
+          {/* Top Section - Basic Info */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={2}>
+              BASIC INFORMATION
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Template Name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.is_default}
-                      onChange={(e) => handleInputChange('is_default', e.target.checked)}
-                    />
-                  }
-                  label="Default"
-                />
-              </Box>
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Subject"
-                value={formData.subject}
-                onChange={(e) => handleInputChange('subject', e.target.value)}
-                helperText="Use Django template variables like {{ project.project_name }}"
-              />
-            </Grid>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth required size="small">
+                  <InputLabel>Template Type</InputLabel>
+                  <Select
+                    value={formData.template_type}
+                    onChange={(e) => handleInputChange('template_type', e.target.value)}
+                    label="Template Type"
+                  >
+                    {TEMPLATE_TYPES.map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={10}
-                label="HTML Body"
-                value={formData.body_html}
-                onChange={(e) => handleInputChange('body_html', e.target.value)}
-                helperText="HTML template with Django template variables"
-              />
-            </Grid>
+              <Grid item xs={12} md={3}>
+                <Box display="flex" gap={2} height="100%" alignItems="center" justifyContent="flex-start">
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.is_active}
+                        onChange={(e) => handleInputChange('is_active', e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Active</Typography>}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.is_default}
+                        onChange={(e) => handleInputChange('is_default', e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Default</Typography>}
+                  />
+                </Box>
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={6}
-                label="Text Body (optional)"
-                value={formData.body_text}
-                onChange={(e) => handleInputChange('body_text', e.target.value)}
-                helperText="Plain text fallback for email clients that don't support HTML"
-              />
             </Grid>
-          </Grid>
+          </Box>
+
+          {/* Email Subject - Full Width Row */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+              EMAIL SUBJECT <Typography component="span" variant="caption" color="error">*</Typography>
+            </Typography>
+            <TextField
+              fullWidth
+              required
+              placeholder="Enter email subject line..."
+              value={formData.subject}
+              onChange={(e) => handleInputChange('subject', e.target.value)}
+              helperText="Use template variables like {{ project.project_name }}"
+              sx={{
+                '& .MuiInputBase-root': {
+                  fontSize: '0.9rem',
+                },
+              }}
+            />
+          </Box>
+
+          {/* Main Content Section - HTML Body */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+              HTML BODY <Typography component="span" variant="caption" color="error">*</Typography>
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              minRows={12}
+              maxRows={20}
+              placeholder="Enter HTML email content here..."
+              value={formData.body_html}
+              onChange={(e) => handleInputChange('body_html', e.target.value)}
+              helperText="HTML template with template variables. Use {{ project.field_name }} for dynamic content."
+              sx={{
+                width: '100%',
+                '& .MuiInputBase-root': {
+                  fontFamily: '"Fira Code", "Consolas", monospace',
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  bgcolor: '#f8fafc',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& textarea': {
+                    resize: 'vertical',
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Plain Text Section */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+              PLAIN TEXT BODY <Typography component="span" variant="caption" color="text.secondary">(Optional)</Typography>
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              minRows={6}
+              maxRows={12}
+              placeholder="Enter plain text fallback content here..."
+              value={formData.body_text}
+              onChange={(e) => handleInputChange('body_text', e.target.value)}
+              helperText="Plain text fallback for email clients that don't support HTML"
+              sx={{
+                width: '100%',
+                '& .MuiInputBase-root': {
+                  fontFamily: '"Fira Code", "Consolas", monospace',
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  bgcolor: '#f8fafc',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& textarea': {
+                    resize: 'vertical',
+                  },
+                },
+              }}
+            />
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseForm}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            {editMode ? 'Update' : 'Create'}
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button onClick={handleCloseForm} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            sx={{
+              bgcolor: '#2563eb',
+              '&:hover': { bgcolor: '#1d4ed8' },
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            {editMode ? 'Update Template' : 'Create Template'}
           </Button>
         </DialogActions>
       </Dialog>

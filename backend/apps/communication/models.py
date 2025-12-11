@@ -14,6 +14,7 @@ class EmailTemplate(models.Model):
         ('general_update', 'General Update'),
         ('invoice_notification', 'Invoice Notification'),
         ('delay_notification', 'Delay Notification'),
+        ('permit_update', 'Permit Update'),
         ('custom', 'Custom Template'),
     ]
 

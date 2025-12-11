@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -154,169 +153,249 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" color="text.primary" mb={3}>
-        Compose Email
-      </Typography>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box>
+          <Typography variant="h6" fontWeight="bold" color="text.primary">
+            Compose Email
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Select a project and template to send an email
+          </Typography>
+        </Box>
+      </Box>
 
-      <Grid container spacing={3}>
-        {/* Project Selection */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Select Project</InputLabel>
-            <Select
-              value={formData.project_id}
-              onChange={(e) => handleInputChange('project_id', e.target.value)}
-              label="Select Project"
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {projectStore.projects.map((project) => (
-                <MenuItem key={project.id} value={project.id}>
-                  {project.project_name} - {project.location}
+      {/* Section 1: Project & Template Selection */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2.5,
+          borderRadius: 2,
+          mb: 2,
+        }}
+      >
+        <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={2}>
+          Select Project & Template
+        </Typography>
+        <Grid container spacing={2.5} alignItems="flex-end">
+          <Grid item xs={12} sm={4}>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+              PROJECT *
+            </Typography>
+            <FormControl fullWidth required size="small">
+              <Select
+                value={formData.project_id}
+                onChange={(e) => handleInputChange('project_id', e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Project</em>
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Template Selection */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Select Template</InputLabel>
-            <Select
-              value={formData.template_id}
-              onChange={(e) => handleInputChange('template_id', e.target.value)}
-              label="Select Template"
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {communicationStore.templates
-                .filter((t) => t.is_active)
-                .map((template) => (
-                  <MenuItem key={template.id} value={template.id}>
-                    {template.name}
-                    {template.is_default && (
-                      <Chip label="Default" size="small" sx={{ ml: 1 }} />
-                    )}
+                {projectStore.projects.map((project) => (
+                  <MenuItem key={project.id} value={project.id}>
+                    {project.project_name}
                   </MenuItem>
                 ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Project Info Display */}
-        {selectedProject && (
-          <Grid item xs={12}>
-            <Alert severity="info">
-              <Typography variant="subtitle2" fontWeight="bold">
-                Selected Project Details
-              </Typography>
-              <Typography variant="body2">
-                <strong>Project:</strong> {selectedProject.project_name}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Client:</strong> {selectedProject.client_name}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Client Email:</strong> {selectedProject.client_email || 'Not available'}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Status:</strong> {selectedProject.status}
-              </Typography>
-            </Alert>
+              </Select>
+            </FormControl>
           </Grid>
-        )}
 
-        {/* Recipient Email Override */}
-        <Grid item xs={12}>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+              TEMPLATE *
+            </Typography>
+            <FormControl fullWidth required size="small">
+              <Select
+                value={formData.template_id}
+                onChange={(e) => handleInputChange('template_id', e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Template</em>
+                </MenuItem>
+                {communicationStore.templates
+                  .filter((t) => t.is_active)
+                  .map((template) => (
+                    <MenuItem key={template.id} value={template.id}>
+                      {template.name}
+                      {template.is_default && (
+                        <Chip label="Default" size="small" sx={{ ml: 1, height: 18, fontSize: '0.65rem' }} />
+                      )}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Project Info */}
+          <Grid item xs={12} sm={4}>
+            {selectedProject ? (
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: '#f0f9ff',
+                  borderRadius: 1.5,
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">Client:</Typography>
+                <Typography variant="caption" fontWeight={600} ml={0.5}>{selectedProject.client_name}</Typography>
+                <Box mt={0.5}>
+                  <Typography variant="caption" color="text.secondary">Email:</Typography>
+                  <Typography variant="caption" fontWeight={600} ml={0.5}>{selectedProject.client_email || 'N/A'}</Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: '#f8fafc',
+                  borderRadius: 1.5,
+                  border: '1px dashed #cbd5e1',
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Select a project to view client details
+                </Typography>
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Section 2: Email Details */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2.5,
+          borderRadius: 2,
+          mb: 2,
+        }}
+      >
+        <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={2}>
+          Email Details
+        </Typography>
+
+        {/* Row 1: Recipient Email */}
+        <Box mb={2}>
+          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+            RECIPIENT EMAIL
+          </Typography>
           <TextField
             fullWidth
-            label="Recipient Email (optional)"
+            size="small"
             placeholder="Leave empty to use client email from project"
             value={formData.recipient_email}
             onChange={(e) => handleInputChange('recipient_email', e.target.value)}
-            helperText="Override the default client email if needed"
+            InputProps={{
+              sx: { fontSize: '0.875rem' }
+            }}
           />
-        </Grid>
+        </Box>
 
-        {/* CC Emails */}
-        <Grid item xs={12} md={6}>
+        {/* Row 2: CC and BCC */}
+        <Box display="flex" gap={2} mb={2}>
+          <Box flex={1}>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+              CC
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="email1@example.com, email2@example.com"
+              value={formData.cc_emails}
+              onChange={(e) => handleInputChange('cc_emails', e.target.value)}
+              InputProps={{
+                sx: { fontSize: '0.875rem' }
+              }}
+            />
+          </Box>
+          <Box flex={1}>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+              BCC
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="email1@example.com, email2@example.com"
+              value={formData.bcc_emails}
+              onChange={(e) => handleInputChange('bcc_emails', e.target.value)}
+              InputProps={{
+                sx: { fontSize: '0.875rem' }
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* Row 3: Subject */}
+        <Box mb={2}>
+          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+            SUBJECT <Typography component="span" variant="caption" color="text.disabled">(optional - leave empty to use template subject)</Typography>
+          </Typography>
           <TextField
             fullWidth
-            label="CC Emails (optional)"
-            placeholder="email1@example.com, email2@example.com"
-            value={formData.cc_emails}
-            onChange={(e) => handleInputChange('cc_emails', e.target.value)}
-            helperText="Separate multiple emails with commas"
-          />
-        </Grid>
-
-        {/* BCC Emails */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="BCC Emails (optional)"
-            placeholder="email1@example.com, email2@example.com"
-            value={formData.bcc_emails}
-            onChange={(e) => handleInputChange('bcc_emails', e.target.value)}
-            helperText="Separate multiple emails with commas"
-          />
-        </Grid>
-
-        {/* Custom Subject */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Custom Subject (optional)"
-            placeholder="Leave empty to use template subject"
+            size="small"
+            placeholder="Enter custom subject line"
             value={formData.custom_subject}
             onChange={(e) => handleInputChange('custom_subject', e.target.value)}
-            helperText="Override the template subject if needed"
+            InputProps={{
+              sx: { fontSize: '0.875rem' }
+            }}
           />
-        </Grid>
+        </Box>
 
-        {/* Custom Body */}
-        <Grid item xs={12}>
+        {/* Row 4: Additional Notes */}
+        <Box>
+          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+            ADDITIONAL NOTES <Typography component="span" variant="caption" color="text.disabled">(optional)</Typography>
+          </Typography>
           <TextField
             fullWidth
             multiline
-            rows={6}
-            label="Custom Body (optional)"
-            placeholder="Leave empty to use template body"
+            rows={3}
+            placeholder="Add any additional message to include in the email"
             value={formData.custom_body}
             onChange={(e) => handleInputChange('custom_body', e.target.value)}
-            helperText="Override or add to the template body if needed"
+            InputProps={{
+              sx: { fontSize: '0.875rem' }
+            }}
           />
-        </Grid>
+        </Box>
+      </Paper>
 
-        {/* Action Buttons */}
-        <Grid item xs={12}>
-          <Box display="flex" gap={2} justifyContent="flex-end">
-            <Button
-              variant="outlined"
-              startIcon={<PreviewIcon />}
-              onClick={handlePreview}
-              disabled={!formData.project_id || !formData.template_id || loading}
-            >
-              {loading ? <CircularProgress size={20} /> : 'Preview'}
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<SendIcon />}
-              onClick={handleSendEmail}
-              disabled={!formData.project_id || !formData.template_id || sending}
-              sx={{
-                bgcolor: '#2563eb',
-                '&:hover': { bgcolor: '#1d4ed8' },
-              }}
-            >
-              {sending ? <CircularProgress size={20} /> : 'Send Email'}
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
+      {/* Action Buttons */}
+      <Box
+        display="flex"
+        gap={2}
+        justifyContent="flex-end"
+        alignItems="center"
+      >
+        <Button
+          variant="outlined"
+          startIcon={<PreviewIcon />}
+          onClick={handlePreview}
+          disabled={!formData.project_id || !formData.template_id || loading}
+          sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
+        >
+          {loading ? <CircularProgress size={20} /> : 'Preview Email'}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<SendIcon />}
+          onClick={handleSendEmail}
+          disabled={!formData.project_id || !formData.template_id || sending}
+          sx={{
+            bgcolor: '#2563eb',
+            '&:hover': { bgcolor: '#1d4ed8' },
+            textTransform: 'none',
+            fontWeight: 600,
+            px: 3,
+          }}
+        >
+          {sending ? <CircularProgress size={20} /> : 'Send Email'}
+        </Button>
+      </Box>
 
       {/* Preview Dialog */}
       <Dialog
