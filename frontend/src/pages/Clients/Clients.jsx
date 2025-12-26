@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { observer } from 'mobx-react-lite';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import {
   Button,
   Box,
@@ -143,20 +143,6 @@ const Clients = observer(() => {
     suppressMovable: true,
   }), []);
 
-  const customTheme = useMemo(() => {
-    return themeQuartz.withParams({
-      backgroundColor: '#ffffff',
-      foregroundColor: '#181d1f',
-      borderColor: '#e2e8f0',
-      headerBackgroundColor: '#f8fafc',
-      headerTextColor: '#0f172a',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      fontSize: 13,
-      headerFontSize: 13,
-      headerFontWeight: 600,
-    });
-  }, []);
-
   const frameworkComponents = useMemo(() => ({
     clientNameRenderer,
     clientStatusRenderer,
@@ -228,7 +214,6 @@ const Clients = observer(() => {
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             frameworkComponents={frameworkComponents}
-            theme={customTheme}
             animateRows={true}
             pagination={true}
             paginationPageSize={clientStore.pageSize}

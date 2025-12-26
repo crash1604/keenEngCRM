@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
 import Tooltip from './Tooltip';
 import DetailPanel from './DetailPanel';
@@ -42,20 +42,6 @@ const ProjectsGrid = ({ projects, loading }) => {
     floatingFilter: true,
     suppressMovable: true,
   }), []);
-
-  const customTheme = useMemo(() => {
-    return themeQuartz.withParams({
-      backgroundColor: '#ffffff',
-      foregroundColor: '#181d1f',
-      borderColor: '#e2e8f0',
-      headerBackgroundColor: '#f8fafc',
-      headerTextColor: '#0f172a',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      fontSize: 13,
-      headerFontSize: 13,
-      headerFontWeight: 600,
-    });
-  }, []);
 
   const handleRowClick = useCallback((event) => {
     setSelectedProject(event.data);
@@ -130,13 +116,12 @@ const ProjectsGrid = ({ projects, loading }) => {
 
       {/* AG Grid */}
       <div className={`${selectedProject ? 'w-3/5' : 'w-full'} transition-all duration-300 p-4`}>
-        <div className="bg-white rounded-lg shadow-lg" style={{ height: '100%' }}>
+        <div className="ag-theme-quartz bg-white rounded-lg shadow-lg" style={{ height: '100%' }}>
           <AgGridReact
             rowData={projects}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             components={components}
-            theme={customTheme}
             animateRows={true}
             pagination={true}
             paginationPageSize={20}

@@ -1,10 +1,14 @@
 // src/pages/Dashboard/Dashboard.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { useAuthStore } from '../../stores/auth.store';
 import { useProjectStore } from '../../stores/project.store';
-import { useActivityStore } from '../../stores/activity.store'; // Import the new store
+import { useActivityStore } from '../../stores/activity.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { capitalizeFirst, formatDate, formatRelativeTime } from '../../utils/helpers';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -42,10 +46,10 @@ const Dashboard = () => {
     const loadActivityData = async () => {
       if (user?.role === 'admin' || user?.role === 'manager') {
         // Admin/Manager: Show all activity logs
-        await fetchActivityLogs({ page_size: 5 });
+        await fetchActivityLogs({ page_size: 100 });
       } else {
         // Other users: Show only their activity
-        await fetchMyActivity({ page_size: 5 });
+        await fetchMyActivity({ page_size: 100 });
       }
     };
 
@@ -63,21 +67,6 @@ const Dashboard = () => {
 
   const recentActivities = getRecentActivities();
 
-  // Format activity for display
-  const formatActivity = (activity) => {
-    const timeAgo = formatRelativeTime(activity.timestamp);
-    
-    return {
-      id: activity.id,
-      action: activity.description,
-      project: activity.project_name || activity.project_job_number,
-      time: timeAgo,
-      user: activity.user_name,
-      type: activity.action_type_display,
-      icon: getActivityIcon(activity.action_type)
-    };
-  };
-
   // Get appropriate icon for activity type
   const getActivityIcon = (actionType) => {
     const icons = {
@@ -94,6 +83,92 @@ const Dashboard = () => {
     };
     return icons[actionType] || '📋';
   };
+
+  // AG Grid row data - transform activities for grid display
+  const activityRowData = useMemo(() => {
+    return recentActivities.map((activity) => ({
+      id: activity.id,
+      icon: getActivityIcon(activity.action_type),
+      action: activity.description,
+      project: activity.project_name || activity.project_job_number || '-',
+      user: activity.user_name || '-',
+      type: activity.action_type_display || activity.action_type,
+      time: formatRelativeTime(activity.timestamp),
+      timestamp: activity.timestamp
+    }));
+  }, [recentActivities]);
+
+  // AG Grid column definitions
+  const columnDefs = useMemo(() => {
+    const baseColumns = [
+      {
+        field: 'icon',
+        headerName: '',
+        width: 50,
+        sortable: false,
+        filter: false,
+        cellStyle: { textAlign: 'center', fontSize: '16px' }
+      },
+      {
+        field: 'action',
+        headerName: 'Action',
+        flex: 2,
+        minWidth: 200,
+        sortable: true,
+        filter: true
+      },
+      {
+        field: 'project',
+        headerName: 'Project',
+        flex: 1,
+        minWidth: 120,
+        sortable: true,
+        filter: true
+      },
+      {
+        field: 'type',
+        headerName: 'Type',
+        width: 130,
+        sortable: true,
+        filter: true
+      },
+      {
+        field: 'time',
+        headerName: 'Time',
+        width: 120,
+        sortable: true,
+        filter: false,
+        comparator: (valueA, valueB, nodeA, nodeB) => {
+          const dateA = new Date(nodeA.data.timestamp);
+          const dateB = new Date(nodeB.data.timestamp);
+          return dateA - dateB;
+        }
+      }
+    ];
+
+    // Add user column for admin/manager
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      baseColumns.splice(3, 0, {
+        field: 'user',
+        headerName: 'User',
+        width: 120,
+        sortable: true,
+        filter: true
+      });
+    }
+
+    return baseColumns;
+  }, [user?.role]);
+
+  // AG Grid default column definitions
+  const defaultColDef = useMemo(() => ({
+    resizable: true,
+    sortable: true
+  }), []);
+
+  // AG Grid pagination settings
+  const paginationPageSize = 10;
+  const paginationPageSizeSelector = [10];
 
   const loading = projectsLoading || activityLoading;
 
@@ -206,7 +281,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Recent Activities */}
+        {/* Recent Activities with AG Grid */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Recent Activities</h2>
@@ -214,37 +289,26 @@ const Dashboard = () => {
               {user?.role === 'admin' || user?.role === 'manager' ? 'All Activities' : 'My Activities'}
             </span>
           </div>
-          
+
           {activityLoading ? (
             <div className="flex justify-center py-4">
               <LoadingSpinner size="sm" text="Loading activities..." />
             </div>
-          ) : recentActivities.length > 0 ? (
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const formattedActivity = formatActivity(activity);
-                return (
-                  <div
-                    key={activity.id}
-                    className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                  >
-                    <div className="text-lg">{formattedActivity.icon}</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{formattedActivity.action}</p>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <span>{formattedActivity.project}</span>
-                        {(user?.role === 'admin' || user?.role === 'manager') && formattedActivity.user && (
-                          <>
-                            <span>•</span>
-                            <span>by {formattedActivity.user}</span>
-                          </>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500">{formattedActivity.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
+          ) : activityRowData.length > 0 ? (
+            <div className="ag-theme-alpine" style={{ height: 450, width: '100%' }}>
+              <AgGridReact
+                rowData={activityRowData}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                pagination={true}
+                paginationPageSize={paginationPageSize}
+                paginationPageSizeSelector={paginationPageSizeSelector}
+                domLayout="normal"
+                suppressCellFocus={true}
+                rowHeight={45}
+                headerHeight={40}
+                getRowId={(params) => params.data.id}
+              />
             </div>
           ) : (
             <div className="text-center py-8">

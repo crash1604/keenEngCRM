@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import {
   Box,
   Typography,
@@ -96,35 +96,27 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
       field: 'subject',
       headerName: 'Subject',
       width: 300,
-      filter: 'agTextColumnFilter',
     },
     {
       field: 'recipient_email',
       headerName: 'Recipient',
       width: 250,
-      filter: 'agTextColumnFilter',
     },
     {
       field: 'recipient_name',
       headerName: 'Recipient Name',
       width: 200,
-      filter: 'agTextColumnFilter',
     },
     {
       field: 'status',
       headerName: 'Status',
       width: 120,
       cellRenderer: StatusRenderer,
-      filter: 'agSetColumnFilter',
-      filterParams: {
-        values: ['sent', 'delivered', 'failed', 'pending'],
-      },
     },
     {
       field: 'sent_by_name',
       headerName: 'Sent By',
       width: 180,
-      filter: 'agTextColumnFilter',
     },
     {
       field: 'sent_at',
@@ -134,13 +126,11 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
         if (!params.value) return '';
         return new Date(params.value).toLocaleString();
       },
-      filter: 'agDateColumnFilter',
     },
     {
       field: 'project_name',
       headerName: 'Project',
       width: 200,
-      filter: 'agTextColumnFilter',
     },
     {
       headerName: 'Actions',
@@ -160,20 +150,6 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
     floatingFilter: true,
     suppressMovable: true,
   }), []);
-
-  const customTheme = useMemo(() => {
-    return themeQuartz.withParams({
-      backgroundColor: '#ffffff',
-      foregroundColor: '#181d1f',
-      borderColor: '#e2e8f0',
-      headerBackgroundColor: '#f8fafc',
-      headerTextColor: '#0f172a',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      fontSize: 13,
-      headerFontSize: 13,
-      headerFontWeight: 600,
-    });
-  }, []);
 
   const paginationPageSizeSelector = useMemo(() => [10, 20, 50, 100], []);
 
@@ -235,7 +211,6 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
           rowData={communicationStore.emailLogs}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          theme={customTheme}
           animateRows={true}
           pagination={true}
           paginationPageSize={communicationStore.pageSize}

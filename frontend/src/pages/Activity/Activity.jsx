@@ -1,7 +1,7 @@
 // src/pages/Activity/Activity.jsx
 import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import {
   Box,
   Typography,
@@ -278,58 +278,37 @@ const Activity = () => {
       field: 'timestamp',
       headerName: 'Time',
       width: 150,
-      filter: 'agDateColumnFilter',
       sort: 'desc',
       cellRenderer: TimestampCellRenderer,
-      filterParams: {
-        comparator: (filterDate, cellValue) => {
-          if (!cellValue) return -1;
-          const cellDate = new Date(cellValue);
-          const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate());
-          const cellDateOnly = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-          if (cellDateOnly < filterDateOnly) return -1;
-          if (cellDateOnly > filterDateOnly) return 1;
-          return 0;
-        },
-        browserDatePicker: true,
-      },
     },
     {
       field: 'action_type',
       headerName: 'Action',
       width: 160,
-      filter: 'agSetColumnFilter',
       cellRenderer: ActionTypeCellRenderer,
-      filterParams: {
-        values: ACTION_TYPES.filter(t => t.value).map(t => t.value),
-      },
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 2,
       minWidth: 200,
-      filter: 'agTextColumnFilter',
     },
     {
       field: 'project_name',
       headerName: 'Project',
       width: 180,
-      filter: 'agTextColumnFilter',
       cellRenderer: ProjectCellRenderer,
     },
     {
       field: 'project_job_number',
       headerName: 'Job #',
       width: 110,
-      filter: 'agTextColumnFilter',
       cellStyle: { fontFamily: 'monospace', fontWeight: '500' },
     },
     {
       field: 'user_name',
       headerName: 'User',
       width: 160,
-      filter: 'agTextColumnFilter',
       cellRenderer: UserCellRenderer,
       hide: !isAdminOrManager,
     },
@@ -337,7 +316,6 @@ const Activity = () => {
       field: 'changed_field',
       headerName: 'Field',
       width: 120,
-      filter: 'agTextColumnFilter',
       valueFormatter: (params) => params.value || '-',
     },
     {
@@ -352,7 +330,6 @@ const Activity = () => {
       field: 'ip_address',
       headerName: 'IP',
       width: 120,
-      filter: 'agTextColumnFilter',
       hide: !isAdminOrManager,
       valueFormatter: (params) => params.value || '-',
       cellStyle: { fontFamily: 'monospace', fontSize: '12px' },
@@ -367,21 +344,6 @@ const Activity = () => {
     floatingFilter: true,
     suppressMovable: true,
   }), []);
-
-  // Custom theme
-  const customTheme = useMemo(() => {
-    return themeQuartz.withParams({
-      backgroundColor: '#ffffff',
-      foregroundColor: '#181d1f',
-      borderColor: '#e2e8f0',
-      headerBackgroundColor: '#f8fafc',
-      headerTextColor: '#0f172a',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      fontSize: 13,
-      headerFontSize: 13,
-      headerFontWeight: 600,
-    });
-  }, []);
 
   // Pagination options
   const paginationPageSizeSelector = useMemo(() => [20, 50, 100, 200], []);
@@ -539,7 +501,6 @@ const Activity = () => {
             rowData={activities}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
-            theme={customTheme}
             animateRows={true}
             pagination={true}
             paginationPageSize={50}
