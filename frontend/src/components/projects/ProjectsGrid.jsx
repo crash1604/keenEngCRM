@@ -39,8 +39,6 @@ const ProjectsGrid = ({ projects, loading }) => {
     sortable: true,
     filter: true,
     resizable: true,
-    floatingFilter: true,
-    suppressMovable: true,
   }), []);
 
   const handleRowClick = useCallback((event) => {
@@ -115,8 +113,8 @@ const ProjectsGrid = ({ projects, loading }) => {
       <Tooltip content={tooltipContent} position={tooltipPosition} />
 
       {/* AG Grid */}
-      <div className={`${selectedProject ? 'w-3/5' : 'w-full'} transition-all duration-300 p-4`}>
-        <div className="ag-theme-quartz bg-white rounded-lg shadow-lg" style={{ height: '100%' }}>
+      <div className={`${selectedProject ? 'w-3/5' : 'w-full'}`}>
+        <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
           <AgGridReact
             rowData={projects}
             columnDefs={columnDefs}
@@ -130,9 +128,6 @@ const ProjectsGrid = ({ projects, loading }) => {
             suppressRowClickSelection={false}
             enableCellTextSelection={true}
             ensureDomOrder={true}
-            rowHeight={45}
-            headerHeight={44}
-            floatingFiltersHeight={36}
             onRowClicked={handleRowClick}
             onRowMouseEnter={handleRowMouseEnter}
             onRowMouseLeave={handleRowMouseLeave}

@@ -14,8 +14,6 @@ import {
   Chip
 } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ClientForm from "../../components/clients/ClientForm";

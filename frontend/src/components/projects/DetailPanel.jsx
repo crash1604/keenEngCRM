@@ -1,23 +1,15 @@
 import React from 'react';
 import FormField from './FormField';
+import { STATUS_OPTIONS } from './StatusRenderer';
 
 const PROJECT_TYPE_OPTIONS = [
   { value: 'M', label: 'Mechanical (M)' },
   { value: 'E', label: 'Electrical (E)' },
   { value: 'P', label: 'Plumbing (P)' },
-  { value: 'EM', label: 'Emergency (EM)' },
+  { value: 'EM', label: 'Energy Modelling (EM)' },
   { value: 'FP', label: 'Fire Protection (FP)' },
   { value: 'TI', label: 'Tenant Improvement (TI)' },
-  { value: 'VI', label: 'Vacant Improvement (VI)' }
-];
-
-const STATUS_OPTIONS = [
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' }
+  { value: 'VI', label: 'Verification Pending (VI)' }
 ];
 
 const DetailPanel = ({ 

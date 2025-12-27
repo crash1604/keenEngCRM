@@ -73,7 +73,7 @@ const ProjectTypesRenderer = (props) => {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', height: '100%', gap: '4px', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', height: 'fit-content', gap: '4px', flexWrap: 'wrap' }}>
       {types.map((type, index) => {
         const config = PROJECT_TYPE_CONFIG[type] || {
           label: type,
@@ -92,6 +92,7 @@ const ProjectTypesRenderer = (props) => {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '2px 8px',
+              margin: '6px 0',
               borderRadius: '6px',
               backgroundColor: config.bgColor,
               color: config.textColor,
@@ -99,6 +100,8 @@ const ProjectTypesRenderer = (props) => {
               fontSize: '11px',
               fontWeight: 600,
               minWidth: '24px',
+              height: 'fit-content',
+              maxHeight: '26px',
             }}
           >
             {config.shortLabel}

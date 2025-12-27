@@ -319,7 +319,7 @@ const Dashboard = () => {
               <LoadingSpinner size="sm" text="Loading activities..." />
             </div>
           ) : activityRowData.length > 0 ? (
-            <div className="ag-theme-alpine" style={{ height: 450, width: '100%' }}>
+            <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
               <AgGridReact
                 rowData={activityRowData}
                 columnDefs={columnDefs}

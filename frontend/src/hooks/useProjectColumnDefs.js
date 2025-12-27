@@ -35,7 +35,6 @@ export const useProjectColumnDefs = () => {
       headerName: 'Status',
       width: 155,
       cellRenderer: 'statusRenderer',
-      
     },
     {
       field: 'current_sub_status',

@@ -28,9 +28,6 @@ import {
   ManageAccounts as ManageAccountsIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
-
 import { useActivityStore } from '../../stores/activity.store';
 import { useAuthStore } from '../../stores/auth.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -87,12 +84,15 @@ const ActionTypeCellRenderer = (props) => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '4px',
+          margin: '6px 0',
           padding: '4px 8px',
           borderRadius: '12px',
           backgroundColor: config.bgColor,
           color: config.color,
           fontSize: '12px',
           fontWeight: 500,
+          height: 'fit-content',
+          maxHeight: '26px',
         }}
       >
         <Icon style={{ fontSize: 14 }} />

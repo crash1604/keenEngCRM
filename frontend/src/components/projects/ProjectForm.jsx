@@ -21,6 +21,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useProjectStore } from '../../stores/project.store';
 import { clientStore } from '../../stores/client.store';
+import { STATUS_OPTIONS } from './StatusRenderer';
 
 const PROJECT_TYPE_OPTIONS = [
   { value: 'M', label: 'Mechanical' },
@@ -30,16 +31,6 @@ const PROJECT_TYPE_OPTIONS = [
   { value: 'FP', label: 'Fire Protection' },
   { value: 'TI', label: 'Tenant Improvement' },
   { value: 'VI', label: 'Verification Pending' },
-];
-
-const STATUS_OPTIONS = [
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'closed_paid', label: 'Closed & Paid' },
-  { value: 'cancelled', label: 'Cancelled / Voided' },
-  { value: 'on_hold', label: 'On Hold' },
 ];
 
 const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) => {

@@ -15,8 +15,6 @@ import {
   Grid,
 } from '@mui/material';
 import { Refresh as RefreshIcon } from '@mui/icons-material';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 import { communicationStore } from '../../stores/communication.store';
 import LoadingSpinner from '../common/LoadingSpinner';
