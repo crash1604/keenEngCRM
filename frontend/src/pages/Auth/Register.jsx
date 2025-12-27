@@ -15,6 +15,31 @@ export const Register = () => {
     role: 'employee',
   });
   const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+
+  // Common passwords list (subset for client-side validation)
+  const commonPasswords = [
+    'password', 'password1', 'password123', '123456', '12345678', '123456789',
+    'qwerty', 'abc123', 'monkey', 'master', 'dragon', 'letmein', 'login',
+    'admin', 'welcome', 'iloveyou', 'sunshine', 'princess', 'football', 'baseball'
+  ];
+
+  // Password validation checks
+  const passwordChecks = {
+    minLength: formData.password.length >= 8,
+    notSimilarToUser: formData.password.length > 0 &&
+      !formData.password.toLowerCase().includes(formData.email.split('@')[0].toLowerCase()) &&
+      !formData.password.toLowerCase().includes(formData.first_name.toLowerCase()) &&
+      !formData.password.toLowerCase().includes(formData.last_name.toLowerCase()) &&
+      !formData.email.toLowerCase().includes(formData.password.toLowerCase()) &&
+      (formData.first_name.length === 0 || !formData.first_name.toLowerCase().includes(formData.password.toLowerCase())) &&
+      (formData.last_name.length === 0 || !formData.last_name.toLowerCase().includes(formData.password.toLowerCase())),
+    notCommon: formData.password.length > 0 &&
+      !commonPasswords.includes(formData.password.toLowerCase()),
+    notNumericOnly: formData.password.length > 0 &&
+      !/^\d+$/.test(formData.password),
+  };
 
   const { register, error, clearError, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -233,20 +258,40 @@ export const Register = () => {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password *
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
-                    formErrors.password ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                  placeholder="Create password"
-                  disabled={isLoading}
-                />
+                <div className="relative mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${
+                      formErrors.password ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                    placeholder="Create password"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 z-20 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {formErrors.password && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
                 )}
@@ -256,20 +301,40 @@ export const Register = () => {
                 <label htmlFor="password2" className="block text-sm font-medium text-gray-700">
                   Confirm Password *
                 </label>
-                <input
-                  id="password2"
-                  name="password2"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password2}
-                  onChange={handleChange}
-                  className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
-                    formErrors.password2 ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                  placeholder="Confirm password"
-                  disabled={isLoading}
-                />
+                <div className="relative mt-1">
+                  <input
+                    id="password2"
+                    name="password2"
+                    type={showPassword2 ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    required
+                    value={formData.password2}
+                    onChange={handleChange}
+                    className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${
+                      formErrors.password2 ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                    placeholder="Confirm password"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword2(!showPassword2)}
+                    className="absolute inset-y-0 right-0 z-20 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showPassword2 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {formErrors.password2 && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.password2}</p>
                 )}
@@ -279,14 +344,46 @@ export const Register = () => {
             {/* Password Requirements */}
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
-              <ul className="text-xs text-gray-600 space-y-1">
-                <li className={`flex items-center ${formData.password.length >= 8 ? 'text-green-600' : ''}`}>
-                  <span className="mr-2">•</span>
-                  At least 8 characters long
+              <ul className="text-xs space-y-1.5">
+                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.minLength ? 'text-green-600' : 'text-red-500'}`}>
+                  {formData.password.length === 0 ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
+                  ) : passwordChecks.minLength ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                  ) : (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  )}
+                  At least 8 characters
                 </li>
-                <li className="flex items-center">
-                  <span className="mr-2">•</span>
-                  Include letters and numbers
+                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notSimilarToUser ? 'text-green-600' : 'text-red-500'}`}>
+                  {formData.password.length === 0 ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
+                  ) : passwordChecks.notSimilarToUser ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                  ) : (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  )}
+                  Not similar to your email or name
+                </li>
+                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notCommon ? 'text-green-600' : 'text-red-500'}`}>
+                  {formData.password.length === 0 ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
+                  ) : passwordChecks.notCommon ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                  ) : (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  )}
+                  Not a common password
+                </li>
+                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notNumericOnly ? 'text-green-600' : 'text-red-500'}`}>
+                  {formData.password.length === 0 ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
+                  ) : passwordChecks.notNumericOnly ? (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                  ) : (
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  )}
+                  Not entirely numeric
                 </li>
               </ul>
             </div>
