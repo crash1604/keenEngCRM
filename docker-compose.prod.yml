@@ -1,25 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  db:
-    image: postgres:16-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=${DB_NAME:-keencrm}
-      - POSTGRES_USER=${DB_USER:-keencrm}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    networks:
-      - crm-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-keencrm}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Django Backend
+  # Django Backend (connects to external RDS)
   backend:
     build:
       context: ./backend
@@ -33,13 +15,8 @@ services:
       - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
-      - DB_HOST=db
-      - DB_PORT=5432
     networks:
       - crm-network
-    depends_on:
-      db:
-        condition: service_healthy
     restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --noinput &&
@@ -82,6 +59,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
   static_volume:
   media_volume:
