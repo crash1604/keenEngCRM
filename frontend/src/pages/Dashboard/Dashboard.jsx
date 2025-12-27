@@ -2,6 +2,21 @@
 import React, { useEffect, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import {
+  Sync as SyncIcon,
+  NoteAdd as NoteAddIcon,
+  Edit as EditIcon,
+  Event as EventIcon,
+  Schedule as ScheduleIcon,
+  AddCircle as AddCircleIcon,
+  Update as UpdateIcon,
+  People as PeopleIcon,
+  Architecture as ArchitectureIcon,
+  ManageAccounts as ManageAccountsIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Inbox as InboxIcon,
+} from '@mui/icons-material';
 import { useAuthStore } from '../../stores/auth.store';
 import { useProjectStore } from '../../stores/project.store';
 import { useActivityStore } from '../../stores/activity.store';
@@ -67,28 +82,25 @@ const Dashboard = () => {
 
   const recentActivities = getRecentActivities();
 
-  // Get appropriate icon for activity type
-  const getActivityIcon = (actionType) => {
-    const icons = {
-      'status_change': '🔄',
-      'note_added': '📝',
-      'field_updated': '✏️',
-      'inspection_scheduled': '📅',
-      'due_date_changed': '⏰',
-      'project_created': '🆕',
-      'project_updated': '📊',
-      'client_changed': '👥',
-      'architect_changed': '🏗️',
-      'manager_changed': '👨‍💼'
-    };
-    return icons[actionType] || '📋';
+  // Activity icon configuration
+  const ACTIVITY_ICONS = {
+    'status_change': { Icon: SyncIcon, color: '#3b82f6' },
+    'note_added': { Icon: NoteAddIcon, color: '#22c55e' },
+    'field_updated': { Icon: EditIcon, color: '#eab308' },
+    'inspection_scheduled': { Icon: EventIcon, color: '#a855f7' },
+    'due_date_changed': { Icon: ScheduleIcon, color: '#f97316' },
+    'project_created': { Icon: AddCircleIcon, color: '#10b981' },
+    'project_updated': { Icon: UpdateIcon, color: '#6366f1' },
+    'client_changed': { Icon: PeopleIcon, color: '#ec4899' },
+    'architect_changed': { Icon: ArchitectureIcon, color: '#06b6d4' },
+    'manager_changed': { Icon: ManageAccountsIcon, color: '#f43f5e' }
   };
 
   // AG Grid row data - transform activities for grid display
   const activityRowData = useMemo(() => {
     return recentActivities.map((activity) => ({
       id: activity.id,
-      icon: getActivityIcon(activity.action_type),
+      action_type: activity.action_type,
       action: activity.description,
       project: activity.project_name || activity.project_job_number || '-',
       user: activity.user_name || '-',
@@ -98,16 +110,28 @@ const Dashboard = () => {
     }));
   }, [recentActivities]);
 
+  // Icon cell renderer component
+  const IconCellRenderer = (props) => {
+    const actionType = props.data?.action_type;
+    const config = ACTIVITY_ICONS[actionType] || { Icon: AssignmentIcon, color: '#6b7280' };
+    const { Icon, color } = config;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Icon style={{ fontSize: 18, color }} />
+      </div>
+    );
+  };
+
   // AG Grid column definitions
   const columnDefs = useMemo(() => {
     const baseColumns = [
       {
-        field: 'icon',
+        field: 'action_type',
         headerName: '',
         width: 50,
         sortable: false,
         filter: false,
-        cellStyle: { textAlign: 'center', fontSize: '16px' }
+        cellRenderer: IconCellRenderer
       },
       {
         field: 'action',
@@ -185,7 +209,7 @@ const Dashboard = () => {
       {/* Welcome Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {user?.first_name} {user?.last_name}! 👋
+          Welcome back, {user?.first_name} {user?.last_name}!
         </h1>
         <p className="text-gray-600">
           Here's what's happening with your projects today. You're doing great as a{' '}
@@ -312,7 +336,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="text-gray-400 text-4xl mb-2">📋</div>
+              <InboxIcon style={{ fontSize: 48, color: '#9ca3af', marginBottom: 8 }} />
               <p className="text-gray-500">No recent activities</p>
               <p className="text-sm text-gray-400 mt-1">Activities will appear here as they happen</p>
             </div>
@@ -337,7 +361,10 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-4">No overdue projects 🎉</p>
+            <div className="text-center py-4">
+              <CheckCircleIcon style={{ fontSize: 32, color: '#22c55e', marginBottom: 4 }} />
+              <p className="text-gray-500">No overdue projects</p>
+            </div>
           )}
         </div>
 

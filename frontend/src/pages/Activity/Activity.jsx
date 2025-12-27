@@ -12,7 +12,22 @@ import {
   MenuItem,
   Stack
 } from '@mui/material';
-import { Refresh as RefreshIcon, FilterAlt as FilterIcon, Clear as ClearIcon } from '@mui/icons-material';
+import {
+  Refresh as RefreshIcon,
+  FilterAlt as FilterIcon,
+  Clear as ClearIcon,
+  Sync as SyncIcon,
+  NoteAdd as NoteAddIcon,
+  Edit as EditIconMui,
+  Event as EventIcon,
+  Schedule as ScheduleIcon,
+  AddCircle as AddCircleIcon,
+  Update as UpdateIcon,
+  People as PeopleIcon,
+  Architecture as ArchitectureIcon,
+  ManageAccounts as ManageAccountsIcon,
+  Assignment as AssignmentIcon,
+} from '@mui/icons-material';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -40,16 +55,16 @@ const ACTION_TYPES = [
 
 // Action type configuration for display
 const ACTION_CONFIG = {
-  status_change: { label: 'Status Change', color: '#3b82f6', bgColor: '#dbeafe', icon: '🔄' },
-  note_added: { label: 'Note Added', color: '#22c55e', bgColor: '#dcfce7', icon: '📝' },
-  field_updated: { label: 'Field Updated', color: '#eab308', bgColor: '#fef9c3', icon: '✏️' },
-  inspection_scheduled: { label: 'Inspection', color: '#a855f7', bgColor: '#f3e8ff', icon: '📅' },
-  due_date_changed: { label: 'Due Date', color: '#f97316', bgColor: '#ffedd5', icon: '⏰' },
-  project_created: { label: 'Created', color: '#10b981', bgColor: '#d1fae5', icon: '🆕' },
-  project_updated: { label: 'Updated', color: '#6366f1', bgColor: '#e0e7ff', icon: '📊' },
-  client_changed: { label: 'Client', color: '#ec4899', bgColor: '#fce7f3', icon: '👥' },
-  architect_changed: { label: 'Architect', color: '#06b6d4', bgColor: '#cffafe', icon: '🏗️' },
-  manager_changed: { label: 'Manager', color: '#f43f5e', bgColor: '#ffe4e6', icon: '👨‍💼' },
+  status_change: { label: 'Status Change', color: '#3b82f6', bgColor: '#dbeafe', Icon: SyncIcon },
+  note_added: { label: 'Note Added', color: '#22c55e', bgColor: '#dcfce7', Icon: NoteAddIcon },
+  field_updated: { label: 'Field Updated', color: '#eab308', bgColor: '#fef9c3', Icon: EditIconMui },
+  inspection_scheduled: { label: 'Inspection', color: '#a855f7', bgColor: '#f3e8ff', Icon: EventIcon },
+  due_date_changed: { label: 'Due Date', color: '#f97316', bgColor: '#ffedd5', Icon: ScheduleIcon },
+  project_created: { label: 'Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
+  project_updated: { label: 'Updated', color: '#6366f1', bgColor: '#e0e7ff', Icon: UpdateIcon },
+  client_changed: { label: 'Client', color: '#ec4899', bgColor: '#fce7f3', Icon: PeopleIcon },
+  architect_changed: { label: 'Architect', color: '#06b6d4', bgColor: '#cffafe', Icon: ArchitectureIcon },
+  manager_changed: { label: 'Manager', color: '#f43f5e', bgColor: '#ffe4e6', Icon: ManageAccountsIcon },
 };
 
 // View mode options
@@ -62,7 +77,8 @@ const VIEW_MODES = [
 // Cell Renderer Components
 const ActionTypeCellRenderer = (props) => {
   const { value } = props;
-  const config = ACTION_CONFIG[value] || { label: value || 'Unknown', color: '#6b7280', bgColor: '#f3f4f6', icon: '📋' };
+  const config = ACTION_CONFIG[value] || { label: value || 'Unknown', color: '#6b7280', bgColor: '#f3f4f6', Icon: AssignmentIcon };
+  const { Icon } = config;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -79,7 +95,7 @@ const ActionTypeCellRenderer = (props) => {
           fontWeight: 500,
         }}
       >
-        <span>{config.icon}</span>
+        <Icon style={{ fontSize: 14 }} />
         {config.label}
       </span>
     </div>

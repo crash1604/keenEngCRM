@@ -1,4 +1,15 @@
 import React from 'react';
+import {
+  HourglassEmpty as HourglassEmptyIcon,
+  Sync as SyncIcon,
+  Send as SendIcon,
+  CheckCircle as CheckCircleIcon,
+  Celebration as CelebrationIcon,
+  Cancel as CancelIcon,
+  Pause as PauseIcon,
+  Paid as PaidIcon,
+  Assignment as AssignmentIcon,
+} from '@mui/icons-material';
 
 // Status configuration with colors and icons
 const STATUS_CONFIG = {
@@ -7,56 +18,56 @@ const STATUS_CONFIG = {
     bgColor: '#f3f4f6',
     textColor: '#4b5563',
     borderColor: '#d1d5db',
-    icon: '⏳'
+    Icon: HourglassEmptyIcon
   },
   in_progress: {
     label: 'In Progress',
     bgColor: '#dbeafe',
     textColor: '#1d4ed8',
     borderColor: '#93c5fd',
-    icon: '🔄'
+    Icon: SyncIcon
   },
   submitted: {
     label: 'Submitted',
     bgColor: '#fef3c7',
     textColor: '#b45309',
     borderColor: '#fcd34d',
-    icon: '📤'
+    Icon: SendIcon
   },
   approved: {
     label: 'Approved',
     bgColor: '#d1fae5',
     textColor: '#047857',
     borderColor: '#6ee7b7',
-    icon: '✅'
+    Icon: CheckCircleIcon
   },
   completed: {
     label: 'Completed',
     bgColor: '#dcfce7',
     textColor: '#15803d',
     borderColor: '#86efac',
-    icon: '🎉'
+    Icon: CelebrationIcon
   },
   cancelled: {
     label: 'Cancelled',
     bgColor: '#fee2e2',
     textColor: '#b91c1c',
     borderColor: '#fca5a5',
-    icon: '❌'
+    Icon: CancelIcon
   },
   on_hold: {
     label: 'On Hold',
     bgColor: '#fef9c3',
     textColor: '#a16207',
     borderColor: '#fde047',
-    icon: '⏸️'
+    Icon: PauseIcon
   },
   closed_paid: {
     label: 'Closed & Paid',
     bgColor: '#e0e7ff',
     textColor: '#4338ca',
     borderColor: '#a5b4fc',
-    icon: '💰'
+    Icon: PaidIcon
   }
 };
 
@@ -73,8 +84,10 @@ const StatusRenderer = (props) => {
     bgColor: '#f3f4f6',
     textColor: '#4b5563',
     borderColor: '#d1d5db',
-    icon: '📋'
+    Icon: AssignmentIcon
   };
+
+  const { Icon } = config;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -93,7 +106,7 @@ const StatusRenderer = (props) => {
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ fontSize: '11px' }}>{config.icon}</span>
+        <Icon style={{ fontSize: 14 }} />
         {config.label}
       </span>
     </div>

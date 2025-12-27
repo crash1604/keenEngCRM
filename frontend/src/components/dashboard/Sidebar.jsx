@@ -1,39 +1,55 @@
 // src/components/dashboard/Sidebar.jsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  Dashboard as DashboardIcon,
+  Folder as FolderIcon,
+  Assignment as AssignmentIcon,
+  People as PeopleIcon,
+  Email as EmailIcon,
+  AdminPanelSettings as AdminIcon,
+  Person as PersonIcon,
+  CheckCircle as CheckCircleIcon,
+  Timer as TimerIcon,
+  Receipt as ReceiptIcon,
+  Palette as PaletteIcon,
+  Send as SendIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon,
+} from '@mui/icons-material';
 import { useAuthStore } from '../../stores/auth.store';
 import { useUIStore } from '../../stores/ui.store';
 
 // Base navigation items available to all roles
 const baseNavigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: '📊', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
-  { name: 'Projects', href: '/projects', icon: '📁', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
-  { name: 'Activity', href: '/activity', icon: '📋', roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
+  { name: 'Dashboard', href: '/dashboard', Icon: DashboardIcon, roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
+  { name: 'Projects', href: '/projects', Icon: FolderIcon, roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
+  { name: 'Activity', href: '/activity', Icon: AssignmentIcon, roles: ['admin', 'manager', 'employee', 'client', 'architect'] },
 ];
 
 // Role-specific navigation items
 const roleNavigation = {
   admin: [
-    { name: 'Clients', href: '/clients', icon: '👥' },
-    { name: 'Communication', href: '/communication', icon: '📧' },
-    { name: 'Admin', href: '/admin', icon: '⚙️' },
-    { name: 'Users', href: '/users', icon: '👤' },
+    { name: 'Clients', href: '/clients', Icon: PeopleIcon },
+    { name: 'Communication', href: '/communication', Icon: EmailIcon },
+    { name: 'Admin', href: '/admin', Icon: AdminIcon },
+    { name: 'Users', href: '/users', Icon: PersonIcon },
   ],
   manager: [
-    { name: 'Clients', href: '/clients', icon: '👥' },
-    { name: 'Communication', href: '/communication', icon: '📧' },
+    { name: 'Clients', href: '/clients', Icon: PeopleIcon },
+    { name: 'Communication', href: '/communication', Icon: EmailIcon },
   ],
   employee: [
-    { name: 'My Tasks', href: '/tasks', icon: '✅' },
-    { name: 'Time Tracking', href: '/time-tracking', icon: '⏱️' },
+    { name: 'My Tasks', href: '/tasks', Icon: CheckCircleIcon },
+    { name: 'Time Tracking', href: '/time-tracking', Icon: TimerIcon },
   ],
   client: [
-    { name: 'My Projects', href: '/my-projects', icon: '📋' },
-    { name: 'Invoices', href: '/invoices', icon: '🧾' },
+    { name: 'My Projects', href: '/my-projects', Icon: AssignmentIcon },
+    { name: 'Invoices', href: '/invoices', Icon: ReceiptIcon },
   ],
   architect: [
-    { name: 'Designs', href: '/designs', icon: '🎨' },
-    { name: 'Submissions', href: '/submissions', icon: '📤' },
+    { name: 'Designs', href: '/designs', Icon: PaletteIcon },
+    { name: 'Submissions', href: '/submissions', Icon: SendIcon },
   ],
 };
 
@@ -172,6 +188,7 @@ export const Sidebar = () => {
           <nav className={`flex-1 space-y-1 overflow-y-auto ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
+              const { Icon } = item;
               return (
                 <Link
                   key={item.name}
@@ -186,12 +203,13 @@ export const Sidebar = () => {
                   }`}
                   title={sidebarCollapsed ? item.name : ''}
                 >
-                  <span className={`transition-transform duration-200 group-hover:scale-110 ${
-                    isActive ? 'text-blue-600' : 'text-gray-400'
-                  } ${sidebarCollapsed ? 'text-xl' : 'text-lg mr-3'}`}>
-                    {item.icon}
-                  </span>
-                  
+                  <Icon
+                    className={`transition-transform duration-200 group-hover:scale-110 ${
+                      isActive ? 'text-blue-600' : 'text-gray-400'
+                    }`}
+                    style={{ fontSize: sidebarCollapsed ? 24 : 20, marginRight: sidebarCollapsed ? 0 : 12 }}
+                  />
+
                   {!sidebarCollapsed && (
                     <>
                       <span className="flex-1">{item.name}</span>
@@ -220,10 +238,10 @@ export const Sidebar = () => {
               }`}
               title={sidebarCollapsed ? 'Settings' : ''}
             >
-              <span className={`${sidebarCollapsed ? 'text-xl' : 'text-lg mr-3'}`}>⚙️</span>
+              <SettingsIcon style={{ fontSize: sidebarCollapsed ? 24 : 20, marginRight: sidebarCollapsed ? 0 : 12 }} />
               {!sidebarCollapsed && 'Settings'}
             </Link>
-            
+
             {/* Logout Button */}
             <button
               onClick={() => {
@@ -235,7 +253,7 @@ export const Sidebar = () => {
               }`}
               title={sidebarCollapsed ? 'Logout' : ''}
             >
-              <span className={`${sidebarCollapsed ? 'text-xl' : 'text-lg mr-3'}`}>🚪</span>
+              <LogoutIcon style={{ fontSize: sidebarCollapsed ? 24 : 20, marginRight: sidebarCollapsed ? 0 : 12 }} />
               {!sidebarCollapsed && 'Logout'}
             </button>
           </div>
