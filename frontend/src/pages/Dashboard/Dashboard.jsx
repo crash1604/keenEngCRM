@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { STATUS_CONFIG } from '../../components/projects/StatusRenderer';
 import {
   Sync as SyncIcon,
   NoteAdd as NoteAddIcon,
@@ -24,6 +26,17 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { capitalizeFirst, formatDate, formatRelativeTime } from '../../utils/helpers';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+// Chart colors for each status (vibrant colors for pie chart)
+const STATUS_CHART_COLORS = {
+  not_started: '#9ca3af',   // Gray
+  in_progress: '#2563eb',   // Blue
+  submitted: '#ea580c',     // Orange
+  completed: '#16a34a',     // Green
+  closed_paid: '#7c3aed',   // Purple
+  cancelled: '#dc2626',     // Red
+  on_hold: '#ca8a04'        // Yellow/Gold
+};
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -194,6 +207,25 @@ const Dashboard = () => {
   const paginationPageSize = 10;
   const paginationPageSizeSelector = [10];
 
+  // Pie chart data for project status breakdown
+  const pieChartData = useMemo(() => {
+    if (!dashboardStats?.by_status) return [];
+
+    // Default colors array as fallback
+    const FALLBACK_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#dc2626', '#7c3aed', '#ca8a04', '#9ca3af'];
+
+    return Object.entries(dashboardStats.by_status).map(([status, count], index) => {
+      // Try to get color from STATUS_CHART_COLORS, otherwise use fallback
+      const color = STATUS_CHART_COLORS[status] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+      return {
+        name: STATUS_CONFIG[status]?.label || status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        value: count,
+        color: color,
+        fill: color
+      };
+    });
+  }, [dashboardStats?.by_status]);
+
   const loading = projectsLoading || activityLoading;
 
   if (loading && !dashboardStats) {
@@ -280,33 +312,42 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Project Status Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Project Status Breakdown with Pie Chart */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Project Status</h2>
-          <div className="space-y-4">
-            {dashboardStats?.by_status && Object.entries(dashboardStats.by_status).map(([status, count]) => (
-              <div key={status} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    status === 'completed' ? 'bg-green-500' :
-                    status === 'in_progress' ? 'bg-blue-500' :
-                    status === 'submitted' ? 'bg-yellow-500' :
-                    status === 'not_started' ? 'bg-gray-500' :
-                    'bg-red-500'
-                  }`}></div>
-                  <span className="text-sm font-medium text-gray-900 capitalize">
-                    {status.replace('_', ' ')}
-                  </span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">{count}</span>
-              </div>
-            ))}
-          </div>
+          {pieChartData.length > 0 ? (
+            <div style={{ width: '100%', height: 280, minWidth: 200 }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    cx="50%"
+                    cy="40%"
+                    innerRadius={45}
+                    outerRadius={75}
+                    paddingAngle={2}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No project data available</p>
+            </div>
+          )}
         </div>
 
         {/* Recent Activities with AG Grid */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Recent Activities</h2>
             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -319,7 +360,7 @@ const Dashboard = () => {
               <LoadingSpinner size="sm" text="Loading activities..." />
             </div>
           ) : activityRowData.length > 0 ? (
-            <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+            <div className="ag-theme-quartz" style={{ height: 400, width: '100%' }}>
               <AgGridReact
                 rowData={activityRowData}
                 columnDefs={columnDefs}
@@ -331,7 +372,7 @@ const Dashboard = () => {
                 suppressCellFocus={true}
                 rowHeight={45}
                 headerHeight={40}
-                getRowId={(params) => params.data.id}
+                getRowId={(params) => String(params.data.id)}
               />
             </div>
           ) : (
