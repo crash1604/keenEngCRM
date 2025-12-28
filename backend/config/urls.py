@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/projects/', include('apps.projects.urls')),
     path('api/activity/', include('apps.activity.urls')),
     path('api/clients/', include('apps.clients.urls')),
+    path('api/architects/', include('apps.architects.urls')),
     path('api/communication/', include('apps.communication.urls')),
 
     # JWT Authentication endpoints

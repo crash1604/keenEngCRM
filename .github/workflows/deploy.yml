@@ -82,11 +82,15 @@ jobs:
               echo "${{ secrets.BACKEND_ENV }}" > backend/.env
             fi
 
+            # Get git commit hash for cache busting
+            COMMIT_SHA=$(git rev-parse --short HEAD)
+            echo "Deploying commit: $COMMIT_SHA"
+
             # Stop existing containers
             docker-compose -f docker-compose.prod.yml down
 
-            # Rebuild and start containers
-            docker-compose -f docker-compose.prod.yml build --no-cache
+            # Rebuild with cache bust using commit SHA
+            CACHEBUST=$COMMIT_SHA docker-compose -f docker-compose.prod.yml build --no-cache
             docker-compose -f docker-compose.prod.yml up -d
 
             # Wait for database to be ready
@@ -113,10 +117,18 @@ jobs:
           script: |
             cd ${{ secrets.APP_DIRECTORY || '~/keenEngCRM' }}
 
+            # Show deployed commit
+            echo "Deployed commit: $(git rev-parse --short HEAD)"
+            echo "Full hash: $(git rev-parse HEAD)"
+
             # Check if containers are running
             if docker-compose -f docker-compose.prod.yml ps | grep -q "Up\|running"; then
               echo "All containers are running"
               docker-compose -f docker-compose.prod.yml ps
+
+              # Show the frontend asset hashes for verification
+              echo "Frontend assets:"
+              docker exec keenengcrm-frontend-1 ls -la /usr/share/nginx/html/assets/ | head -10
             else
               echo "Some containers failed to start"
               docker-compose -f docker-compose.prod.yml logs --tail=50

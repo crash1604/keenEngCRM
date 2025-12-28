@@ -30,6 +30,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         - VITE_API_URL=/api
+        - CACHEBUST=${CACHEBUST:-1}
     ports:
       - "80:80"
       - "443:443"

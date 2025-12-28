@@ -1,4 +1,4 @@
-// src/pages/Clients/Clients.jsx
+// src/pages/Architects/Architects.jsx
 import React, { useState, useEffect } from "react";
 import { observer } from 'mobx-react-lite';
 import {
@@ -13,48 +13,48 @@ import {
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import ClientForm from "../../components/clients/ClientForm";
-import ClientsGrid from "../../components/clients/ClientsGrid";
-import { clientStore } from "../../stores/client.store";
+import ArchitectForm from "../../components/architects/ArchitectForm";
+import ArchitectsGrid from "../../components/architects/ArchitectsGrid";
+import { architectStore } from "../../stores/architect.store";
 
-const Clients = observer(() => {
+const Architects = observer(() => {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedArchitect, setSelectedArchitect] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Fetch clients on mount
+  // Fetch architects on mount
   useEffect(() => {
-    const loadClients = async () => {
+    const loadArchitects = async () => {
       try {
-        await clientStore.fetchClients(1);
+        await architectStore.fetchArchitects(1);
       } catch (error) {
         setSnackbar({
           open: true,
-          message: 'Failed to load clients',
+          message: 'Failed to load architects',
           severity: 'error'
         });
       }
     };
-    loadClients();
+    loadArchitects();
   }, []);
 
   // Handlers
-  const handleAddClient = () => {
-    setSelectedClient(null);
+  const handleAddArchitect = () => {
+    setSelectedArchitect(null);
     setEditMode(false);
     setShowForm(true);
   };
 
   const handleFormSuccess = async () => {
     setShowForm(false);
-    setSelectedClient(null);
+    setSelectedArchitect(null);
     setSnackbar({
       open: true,
-      message: `Client ${editMode ? 'updated' : 'created'} successfully`,
+      message: `Architect ${editMode ? 'updated' : 'created'} successfully`,
       severity: 'success'
     });
-    await clientStore.fetchClients(clientStore.currentPage);
+    await architectStore.fetchArchitects(architectStore.currentPage);
   };
 
   const handleFormError = (error) => {
@@ -67,16 +67,16 @@ const Clients = observer(() => {
 
   const handleRefresh = async () => {
     try {
-      await clientStore.fetchClients(clientStore.currentPage);
+      await architectStore.fetchArchitects(architectStore.currentPage);
       setSnackbar({
         open: true,
-        message: 'Clients refreshed',
+        message: 'Architects refreshed',
         severity: 'success'
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to refresh clients',
+        message: 'Failed to refresh architects',
         severity: 'error'
       });
     }
@@ -86,10 +86,10 @@ const Clients = observer(() => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  if (clientStore.loading && clientStore.clients.length === 0) {
+  if (architectStore.loading && architectStore.architects.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner size="lg" text="Loading clients..." />
+        <LoadingSpinner size="lg" text="Loading architects..." />
       </div>
     );
   }
@@ -101,13 +101,13 @@ const Clients = observer(() => {
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="h4" fontWeight="bold" color="text.primary">
-              Clients
+              Architects / Designers
             </Typography>
             <Box display="flex" gap={2} mt={1} alignItems="center">
               <Typography variant="body2" color="text.secondary">
-                Total: {clientStore.totalCount} clients
+                Total: {architectStore.totalCount} architects
               </Typography>
-              {clientStore.loading && (
+              {architectStore.loading && (
                 <Chip label="Refreshing..." size="small" color="primary" />
               )}
             </Box>
@@ -118,41 +118,41 @@ const Clients = observer(() => {
               variant="outlined"
               startIcon={<RefreshIcon />}
               onClick={handleRefresh}
-              disabled={clientStore.loading}
+              disabled={architectStore.loading}
             >
               Refresh
             </Button>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={handleAddClient}
+              onClick={handleAddArchitect}
               sx={{
-                bgcolor: '#2563eb',
-                '&:hover': { bgcolor: '#1d4ed8' }
+                bgcolor: '#6366f1',
+                '&:hover': { bgcolor: '#4f46e5' }
               }}
             >
-              Add Client
+              Add Architect
             </Button>
           </Box>
         </Box>
       </Paper>
 
-      {/* Client Grid with Detail Panel */}
+      {/* Architects Grid with Detail Panel */}
       <Paper elevation={0} sx={{ flex: 1, p: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <ClientsGrid
-          clients={clientStore.clients}
-          loading={clientStore.loading}
+        <ArchitectsGrid
+          architects={architectStore.architects}
+          loading={architectStore.loading}
         />
       </Paper>
 
-      {/* Client Form Modal */}
-      <ClientForm
+      {/* Architect Form Modal */}
+      <ArchitectForm
         open={showForm}
         onClose={() => {
           setShowForm(false);
-          setSelectedClient(null);
+          setSelectedArchitect(null);
         }}
-        client={selectedClient}
+        architect={selectedArchitect}
         editMode={editMode}
         onSuccess={handleFormSuccess}
         onError={handleFormError}
@@ -178,4 +178,4 @@ const Clients = observer(() => {
   );
 });
 
-export default Clients;
+export default Architects;

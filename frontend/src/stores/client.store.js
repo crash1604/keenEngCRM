@@ -100,7 +100,7 @@ class ClientStore {
 
     try {
       const data = await clientService.updateClient(id, clientData);
-      
+
       runInAction(() => {
         const index = this.clients.findIndex(client => client.id === id);
         if (index !== -1) {
@@ -118,6 +118,46 @@ class ClientStore {
         this.loading = false;
       });
       throw error;
+    }
+  }
+
+  // Update single field (async without page reload)
+  async updateClientField(id, fieldName, value) {
+    try {
+      const updateData = { [fieldName]: value };
+
+      // Optimistic update - update UI immediately
+      runInAction(() => {
+        const index = this.clients.findIndex(client => client.id === id);
+        if (index !== -1) {
+          this.clients[index] = { ...this.clients[index], [fieldName]: value };
+        }
+        if (this.currentClient?.id === id) {
+          this.currentClient = { ...this.currentClient, [fieldName]: value };
+        }
+      });
+
+      // Send to backend asynchronously
+      const data = await clientService.updateClient(id, updateData);
+
+      // Update with server response
+      runInAction(() => {
+        const index = this.clients.findIndex(client => client.id === id);
+        if (index !== -1) {
+          this.clients[index] = { ...this.clients[index], ...data };
+        }
+        if (this.currentClient?.id === id) {
+          this.currentClient = { ...this.currentClient, ...data };
+        }
+        this.error = null;
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error in updateClientField:', error);
+      // Revert by refetching on error
+      this.fetchClients(this.currentPage);
+      return { success: false, error: error.detail || 'Failed to update field' };
     }
   }
 

@@ -16,6 +16,7 @@ import {
   Send as SendIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  Architecture as ArchitectureIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/auth.store';
 import { useUIStore } from '../../stores/ui.store';
@@ -31,12 +32,14 @@ const baseNavigation = [
 const roleNavigation = {
   admin: [
     { name: 'Clients', href: '/clients', Icon: PeopleIcon },
+    { name: 'Architects', href: '/architects', Icon: ArchitectureIcon },
     { name: 'Communication', href: '/communication', Icon: EmailIcon },
     { name: 'Admin', href: '/admin', Icon: AdminIcon },
     { name: 'Users', href: '/users', Icon: PersonIcon },
   ],
   manager: [
     { name: 'Clients', href: '/clients', Icon: PeopleIcon },
+    { name: 'Architects', href: '/architects', Icon: ArchitectureIcon },
     { name: 'Communication', href: '/communication', Icon: EmailIcon },
   ],
   employee: [

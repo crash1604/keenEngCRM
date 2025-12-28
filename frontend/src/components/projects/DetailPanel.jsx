@@ -529,10 +529,10 @@ const DetailPanel = ({
               <div className="md:col-span-2">
                 <FormField
                   label="Architect / Designer"
-                  fieldName="architect_designer"
-                  value={formData.architect_designer}
-                  isEditing={editingField === 'architect_designer'}
-                  saving={savingField === 'architect_designer'}
+                  fieldName="architect_name"
+                  value={formData.architect_name}
+                  isEditing={editingField === 'architect_name'}
+                  saving={savingField === 'architect_name'}
                   onEdit={onEdit}
                   onSave={onSave}
                   onCancel={onCancel}

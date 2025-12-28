@@ -66,8 +66,11 @@ export const EmailRenderer = ({ value }) => {
 
 // Status Renderer
 export const StatusRenderer = ({ value, data }) => {
-  const isActive = data?.is_active ?? (value === 'Active');
-  
+  // Check is_active: treat as active unless explicitly set to false
+  // value comes from the is_active column field
+  const fieldValue = value ?? data?.is_active;
+  const isActive = fieldValue !== false && fieldValue !== 0 && fieldValue !== 'false';
+
   return (
     <Chip
       label={isActive ? 'Active' : 'Inactive'}

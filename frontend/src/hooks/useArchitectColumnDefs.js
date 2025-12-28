@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-export const useClientColumnDefs = () => {
+export const useArchitectColumnDefs = () => {
   return useMemo(() => [
     {
       field: 'id',
@@ -10,9 +10,9 @@ export const useClientColumnDefs = () => {
     },
     {
       field: 'name',
-      headerName: 'Client Name',
-      width: 200,
-      cellRenderer: 'clientNameRenderer'
+      headerName: 'Name',
+      width: 180,
+      cellRenderer: 'architectNameRenderer'
     },
     {
       field: 'company_name',
@@ -23,31 +23,31 @@ export const useClientColumnDefs = () => {
     {
       field: 'contact_email',
       headerName: 'Email',
-      width: 220,
+      width: 200,
       valueFormatter: (params) => params.value || 'N/A'
     },
     {
       field: 'phone',
       headerName: 'Phone',
-      width: 150,
+      width: 140,
+      valueFormatter: (params) => params.value || 'N/A'
+    },
+    {
+      field: 'license_number',
+      headerName: 'License #',
+      width: 140,
       valueFormatter: (params) => params.value || 'N/A'
     },
     {
       field: 'is_active',
       headerName: 'Status',
       width: 120,
-      cellRenderer: 'clientStatusRenderer'
-    },
-    {
-      field: 'contact_person',
-      headerName: 'Contact Person',
-      width: 180,
-      valueFormatter: (params) => params.value || 'N/A'
+      cellRenderer: 'architectStatusRenderer'
     },
     {
       field: 'created_at',
-      headerName: 'Created Date',
-      width: 140,
+      headerName: 'Created',
+      width: 130,
       valueFormatter: (params) => {
         if (!params.value) return 'N/A';
         return new Date(params.value).toLocaleDateString('en-US', {
@@ -55,15 +55,12 @@ export const useClientColumnDefs = () => {
           month: 'short',
           day: 'numeric'
         });
-      },
-      comparator: (dateA, dateB) => {
-        return new Date(dateA) - new Date(dateB);
       }
     },
     {
       field: 'updated_at',
-      headerName: 'Updated Date',
-      width: 140,
+      headerName: 'Updated',
+      width: 130,
       valueFormatter: (params) => {
         if (!params.value) return 'N/A';
         return new Date(params.value).toLocaleDateString('en-US', {
