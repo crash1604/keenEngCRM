@@ -10,8 +10,9 @@ export const Login = () => {
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, error, clearError, isAuthenticated, isLoading } = useAuth();
+  const { login, error, clearError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,10 +34,17 @@ export const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await login(formData);
-    
-    if (result.success) {
-      navigate(from, { replace: true });
+    setIsSubmitting(true);
+    try {
+      const result = await login(formData);
+
+      if (result.success) {
+        navigate(from, { replace: true });
+      }
+    } catch (err) {
+      // Error is handled by the auth store
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -53,10 +61,10 @@ export const Login = () => {
         </div>
 
         {error && (
-          <Alert 
-            type="error" 
-            message={typeof error === 'object' ? JSON.stringify(error) : error} 
-            onClose={clearError} 
+          <Alert
+            type="error"
+            message="Login failed, please try again."
+            onClose={clearError}
           />
         )}
 
@@ -76,7 +84,7 @@ export const Login = () => {
                 onChange={handleChange}
                 className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Enter your email"
-                disabled={isLoading}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -95,7 +103,7 @@ export const Login = () => {
                   onChange={handleChange}
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Enter your password"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
@@ -122,10 +130,10 @@ export const Login = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <LoadingSpinner size="sm" text="" />
               ) : (
                 'Sign in'

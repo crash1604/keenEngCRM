@@ -271,33 +271,47 @@ export const useProjectStore = create((set, get) => ({
     }
   },
 
-  // Update single field
+  // Update single field (async without page reload)
   updateProjectField: async (id, fieldName, value) => {
-  set({ loading: true, error: null });
-  try {
-    const updateData = { [fieldName]: value };
-    const data = await projectService.updateProject(id, updateData);
-    
-    set((state) => ({
-      projects: state.projects.map(project => 
-        project.id === id ? { ...project, ...data, [fieldName]: value } : project
-      ),
-      currentProject: state.currentProject?.id === id ? 
-        { ...state.currentProject, ...data, [fieldName]: value } : state.currentProject,
-      loading: false,
-      error: null
-    }));
-    
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error in updateProjectField:', error);
-    const errorMessage = error.response?.data?.detail || 
-                        error.response?.data?.message || 
-                        'Failed to update project field';
-    set({ error: errorMessage, loading: false });
-    return { success: false, error: errorMessage };
-  }
-},
+    // Don't set global loading - this allows async updates without page flicker
+    try {
+      const updateData = { [fieldName]: value };
+
+      // Optimistic update - update UI immediately
+      set((state) => ({
+        projects: state.projects.map(project =>
+          project.id === id ? { ...project, [fieldName]: value } : project
+        ),
+        currentProject: state.currentProject?.id === id ?
+          { ...state.currentProject, [fieldName]: value } : state.currentProject,
+      }));
+
+      // Send to backend asynchronously
+      const data = await projectService.updateProject(id, updateData);
+
+      // Update with server response (in case server modified any values)
+      set((state) => ({
+        projects: state.projects.map(project =>
+          project.id === id ? { ...project, ...data } : project
+        ),
+        currentProject: state.currentProject?.id === id ?
+          { ...state.currentProject, ...data } : state.currentProject,
+        error: null
+      }));
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error in updateProjectField:', error);
+      const errorMessage = error.response?.data?.detail ||
+                          error.response?.data?.message ||
+                          'Failed to update project field';
+
+      // Revert optimistic update on error by refetching
+      get().fetchProjects();
+
+      return { success: false, error: errorMessage };
+    }
+  },
 
   // Export
   exportProjects: async () => {

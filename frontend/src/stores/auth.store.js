@@ -12,44 +12,44 @@ export const useAuthStore = create((set) => ({
 
   /**
    * Login user - server sets HTTP-only cookies
+   * Note: We don't set isLoading here to avoid triggering PublicRoute's loading spinner
    */
   login: async (credentials) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const data = await authService.login(credentials);
 
       set({
         user: data.user,
-        isAuthenticated: true,
-        isLoading: false
+        isAuthenticated: true
       });
 
       return { success: true, data };
     } catch (error) {
       const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Login failed';
-      set({ error: errorMessage, isLoading: false });
+      set({ error: errorMessage });
       return { success: false, error: errorMessage };
     }
   },
 
   /**
    * Register user - server sets HTTP-only cookies
+   * Note: We don't set isLoading here to avoid triggering PublicRoute's loading spinner
    */
   register: async (userData) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const data = await authService.register(userData);
 
       set({
         user: data.user,
-        isAuthenticated: true,
-        isLoading: false
+        isAuthenticated: true
       });
 
       return { success: true, data };
     } catch (error) {
       const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Registration failed';
-      set({ error: errorMessage, isLoading: false });
+      set({ error: errorMessage });
       return { success: false, error: errorMessage };
     }
   },

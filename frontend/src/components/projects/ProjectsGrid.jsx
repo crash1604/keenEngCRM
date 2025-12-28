@@ -21,6 +21,8 @@ const ProjectsGrid = ({ projects, loading }) => {
   const [formData, setFormData] = useState({});
   const [tooltipContent, setTooltipContent] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [savingField, setSavingField] = useState(null);
+  const [saveStatus, setSaveStatus] = useState({ show: false, success: false, message: '' });
 
   const { updateProjectField } = useProjectStore();
 
@@ -54,6 +56,8 @@ const ProjectsGrid = ({ projects, loading }) => {
   const handleSave = useCallback(async (fieldName) => {
     if (!selectedProject) return;
 
+    setSavingField(fieldName);
+
     try {
       const result = await updateProjectField(selectedProject.id, fieldName, formData[fieldName]);
 
@@ -64,13 +68,20 @@ const ProjectsGrid = ({ projects, loading }) => {
           ...result.data
         }));
         setEditingField(null);
+        setSaveStatus({ show: true, success: true, message: 'Saved' });
       } else {
         console.error('Failed to update field:', result.error);
         setFormData(prev => ({ ...prev, [fieldName]: selectedProject[fieldName] }));
+        setSaveStatus({ show: true, success: false, message: result.error || 'Failed to save' });
       }
     } catch (error) {
       console.error('Error saving field:', error);
       setFormData(prev => ({ ...prev, [fieldName]: selectedProject[fieldName] }));
+      setSaveStatus({ show: true, success: false, message: 'Failed to save' });
+    } finally {
+      setSavingField(null);
+      // Auto-hide status after 2 seconds
+      setTimeout(() => setSaveStatus({ show: false, success: false, message: '' }), 2000);
     }
   }, [selectedProject, formData, updateProjectField]);
 
@@ -113,7 +124,7 @@ const ProjectsGrid = ({ projects, loading }) => {
       <Tooltip content={tooltipContent} position={tooltipPosition} />
 
       {/* AG Grid */}
-      <div className={`${selectedProject ? 'w-3/5' : 'w-full'}`}>
+      <div className={`${selectedProject ? 'w-1/3' : 'w-full'}`}>
         <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
           <AgGridReact
             rowData={projects}
@@ -150,6 +161,8 @@ const ProjectsGrid = ({ projects, loading }) => {
         selectedProject={selectedProject}
         formData={formData}
         editingField={editingField}
+        savingField={savingField}
+        saveStatus={saveStatus}
         onClose={handleClose}
         onEdit={handleEdit}
         onSave={handleSave}

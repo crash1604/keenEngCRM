@@ -1,211 +1,465 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import FormField from './FormField';
 import { STATUS_OPTIONS } from './StatusRenderer';
 
-const PROJECT_TYPE_OPTIONS = [
-  { value: 'M', label: 'Mechanical (M)' },
-  { value: 'E', label: 'Electrical (E)' },
-  { value: 'P', label: 'Plumbing (P)' },
-  { value: 'EM', label: 'Energy Modelling (EM)' },
-  { value: 'FP', label: 'Fire Protection (FP)' },
-  { value: 'TI', label: 'Tenant Improvement (TI)' },
-  { value: 'VI', label: 'Verification Pending (VI)' }
+// Tab configuration
+const TABS = [
+  { id: 'action-items', label: 'Action Items', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+  { id: 'timeline', label: 'Timeline', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+  { id: 'project-details', label: 'Details', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+  { id: 'team', label: 'Team', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+  { id: 'location', label: 'Location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
+  { id: 'billing', label: 'Billing', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: 'system-info', label: 'System', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
 ];
 
-const DetailPanel = ({ 
-  selectedProject, 
-  formData, 
-  editingField, 
-  onClose, 
-  onEdit, 
-  onSave, 
-  onCancel, 
-  onChange 
-}) => {
-  if (!selectedProject) return null;
+const PROJECT_TYPE_OPTIONS = [
+  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 text-blue-700' },
+  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 text-yellow-700' },
+  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 text-cyan-700' },
+  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 text-green-700' },
+  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 text-red-700' },
+  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 text-purple-700' },
+  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 text-gray-700' }
+];
+
+const STATUS_COLORS = {
+  not_started: 'bg-gray-100 text-gray-700 border-gray-300',
+  in_progress: 'bg-blue-100 text-blue-700 border-blue-300',
+  submitted: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  approved: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  completed: 'bg-green-100 text-green-700 border-green-300',
+  cancelled: 'bg-red-100 text-red-700 border-red-300',
+  on_hold: 'bg-orange-100 text-orange-700 border-orange-300',
+  closed_paid: 'bg-indigo-100 text-indigo-700 border-indigo-300'
+};
+
+// Section Header Component
+const SectionHeader = ({ icon, title, subtitle }) => (
+  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+    <div className="p-2 bg-gray-100 rounded-lg">
+      {icon}
+    </div>
+    <div>
+      <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">{title}</h3>
+      {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+    </div>
+  </div>
+);
+
+// Info Card for read-only display
+const InfoCard = ({ label, value, icon }) => (
+  <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+    <div className="flex items-center gap-2 mb-1">
+      {icon && <span className="text-gray-400">{icon}</span>}
+      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+    </div>
+    <div className="text-sm font-medium text-gray-900">{value || '—'}</div>
+  </div>
+);
+
+// Date Card Component
+const DateCard = ({ label, value, note, noteValue, isEditing, editingField, onEdit, onSave, onCancel, onChange, formData }) => {
+  const formattedDate = value ? new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }) : null;
 
   return (
-    <div className="w-2/5 p-4 animate-slide-in">
-      <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">{selectedProject.project_name}</h2>
-            <p className="text-sm text-gray-600 mt-1">{selectedProject.job_number}</p>
-            {selectedProject.year && (
-              <p className="text-sm text-gray-500">Year: {selectedProject.year}</p>
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors">
+      <FormField
+        label={label}
+        fieldName={value ? label.toLowerCase().replace(/ /g, '_') : label.toLowerCase().replace(/ /g, '_')}
+        value={formData[label.toLowerCase().replace(/ /g, '_')]}
+        isEditing={editingField === label.toLowerCase().replace(/ /g, '_')}
+        type="date"
+        onEdit={onEdit}
+        onSave={onSave}
+        onCancel={onCancel}
+        onChange={onChange}
+      />
+      {note && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <FormField
+            label="Note"
+            fieldName={note}
+            value={formData[note]}
+            isEditing={editingField === note}
+            type="textarea"
+            onEdit={onEdit}
+            onSave={onSave}
+            onCancel={onCancel}
+            onChange={onChange}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DetailPanel = ({
+  selectedProject,
+  formData,
+  editingField,
+  savingField,
+  saveStatus,
+  onClose,
+  onEdit,
+  onSave,
+  onCancel,
+  onChange
+}) => {
+  const scrollContainerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('action-items');
+
+  // Scroll to section when tab is clicked
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    const container = scrollContainerRef.current;
+    if (section && container) {
+      const containerTop = container.getBoundingClientRect().top;
+      const sectionTop = section.getBoundingClientRect().top;
+      const offset = sectionTop - containerTop + container.scrollTop - 12;
+      container.scrollTo({ top: offset, behavior: 'smooth' });
+      setActiveTab(sectionId);
+    }
+  };
+
+  // Update active tab based on scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !selectedProject) return;
+
+    const handleScroll = () => {
+      const containerTop = container.getBoundingClientRect().top;
+      let currentSection = 'action-items';
+
+      TABS.forEach(tab => {
+        const section = document.getElementById(tab.id);
+        if (section) {
+          const sectionTop = section.getBoundingClientRect().top - containerTop;
+          if (sectionTop <= 50) {
+            currentSection = tab.id;
+          }
+        }
+      });
+
+      setActiveTab(currentSection);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [selectedProject]);
+
+  if (!selectedProject) return null;
+
+  const getStatusLabel = (status) => {
+    const option = STATUS_OPTIONS.find(opt => opt.value === status);
+    return option?.label || status;
+  };
+
+  const getProjectTypeChips = () => {
+    const types = formData.project_types_list || [];
+    return types.map(type => {
+      const option = PROJECT_TYPE_OPTIONS.find(opt => opt.value === type);
+      return option || { value: type, label: type, color: 'bg-gray-100 text-gray-700' };
+    });
+  };
+
+  // Statuses where due date warnings don't apply (project is finished)
+  const COMPLETED_STATUSES = ['completed', 'closed_paid', 'cancelled'];
+  const isProjectCompleted = COMPLETED_STATUSES.includes(formData.status);
+
+  const getDaysUntilDue = () => {
+    if (!formData.due_date || isProjectCompleted) return null;
+    const today = new Date();
+    const dueDate = new Date(formData.due_date);
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const daysUntilDue = getDaysUntilDue();
+
+  return (
+    <div className="w-2/3 p-4 animate-slide-in">
+      <div className="bg-white rounded-xl shadow-lg h-full flex flex-col overflow-hidden border border-gray-200 relative">
+
+        {/* Save Status Toast */}
+        {saveStatus?.show && (
+          <div className={`absolute top-4 right-16 z-10 px-3 py-2 rounded-lg text-sm font-medium shadow-lg transition-all ${
+            saveStatus.success
+              ? 'bg-green-100 text-green-700 border border-green-200'
+              : 'bg-red-100 text-red-700 border border-red-200'
+          }`}>
+            {saveStatus.success ? (
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {saveStatus.message}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {saveStatus.message}
+              </span>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        )}
+
+        {/* Header */}
+        <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  {formData.job_number}
+                </span>
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${STATUS_COLORS[formData.status] || STATUS_COLORS.not_started}`}>
+                  {getStatusLabel(formData.status)}
+                </span>
+                {daysUntilDue !== null && (
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    daysUntilDue < 0 ? 'bg-red-100 text-red-700' :
+                    daysUntilDue <= 7 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-green-100 text-green-700'
+                  }`}>
+                    {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)}d overdue` :
+                     daysUntilDue === 0 ? 'Due today' :
+                     `${daysUntilDue}d remaining`}
+                  </span>
+                )}
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">{formData.project_name}</h2>
+              <div className="flex flex-wrap gap-2">
+                {getProjectTypeChips().map((type, idx) => (
+                  <span key={idx} className={`px-2.5 py-1 text-xs font-medium rounded-md ${type.color}`}>
+                    {type.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Quick Info Bar */}
+          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+            <InfoCard
+              label="Client"
+              value={formData.client_name}
+              icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+            />
+            <InfoCard
+              label="Manager"
+              value={formData.manager_name}
+              icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+            />
+            <InfoCard
+              label="Due Date"
+              value={formData.due_date ? new Date(formData.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null}
+              icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+            />
+          </div>
         </div>
 
-        {/* Form Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
+        {/* Tab Navigation */}
+        <div className="bg-white border-b border-gray-200 px-4 py-2 flex gap-1 overflow-x-auto sticky top-0 z-10">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => scrollToSection(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-700 shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
+              </svg>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-            {/* Items & Actions */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                Items & Actions
-              </h3>
-              <FormField 
-                label="Current Open Items" 
-                fieldName="current_open_items" 
-                value={formData.current_open_items}
-                isEditing={editingField === 'current_open_items'}
-                type="textarea"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Current Action Items" 
-                fieldName="current_action_items" 
-                value={formData.current_action_items}
-                isEditing={editingField === 'current_action_items'}
-                type="textarea"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
+        {/* Scrollable Content */}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+
+          {/* Action Items Section - Most Important First */}
+          <section id="action-items" className="bg-amber-50 rounded-xl p-5 border border-amber-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}
+              title="Action Items"
+              subtitle="Current tasks and open items"
+            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg p-4 border border-amber-100">
+                <FormField
+                  label="Open Items"
+                  fieldName="current_open_items"
+                  value={formData.current_open_items}
+                  isEditing={editingField === 'current_open_items'}
+                  saving={savingField === 'current_open_items'}
+                  type="textarea"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
+              <div className="bg-white rounded-lg p-4 border border-amber-100">
+                <FormField
+                  label="Action Items"
+                  fieldName="current_action_items"
+                  value={formData.current_action_items}
+                  isEditing={editingField === 'current_action_items'}
+                  saving={savingField === 'current_action_items'}
+                  type="textarea"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
             </div>
+          </section>
 
-            {/* Dates & Scheduling */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                Dates & Scheduling
-              </h3>
-              <FormField 
-                label="Due Date" 
-                fieldName="due_date" 
-                value={formData.due_date}
-                isEditing={editingField === 'due_date'}
-                type="date"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Due Date Note" 
-                fieldName="due_date_note" 
-                value={formData.due_date_note}
-                isEditing={editingField === 'due_date_note'}
-                type="textarea"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Rough In Date" 
-                fieldName="rough_in_date" 
-                value={formData.rough_in_date}
-                isEditing={editingField === 'rough_in_date'}
-                type="date"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Rough In Note" 
-                fieldName="rough_in_note" 
-                value={formData.rough_in_note}
-                isEditing={editingField === 'rough_in_note'}
-                type="textarea"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Final Inspection Date" 
-                fieldName="final_inspection_date" 
-                value={formData.final_inspection_date}
-                isEditing={editingField === 'final_inspection_date'}
-                type="date"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Final Inspection Note" 
-                fieldName="final_inspection_note" 
-                value={formData.final_inspection_note}
-                isEditing={editingField === 'final_inspection_note'}
-                type="textarea"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
+          {/* Timeline Section */}
+          <section id="timeline" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+              title="Timeline & Dates"
+              subtitle="Important project milestones"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <FormField
+                  label="Due Date"
+                  fieldName="due_date"
+                  value={formData.due_date}
+                  isEditing={editingField === 'due_date'}
+                  saving={savingField === 'due_date'}
+                  type="date"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+                <FormField
+                  label="Notes"
+                  fieldName="due_date_note"
+                  value={formData.due_date_note}
+                  isEditing={editingField === 'due_date_note'}
+                  saving={savingField === 'due_date_note'}
+                  type="textarea"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <FormField
+                  label="Rough-In Date"
+                  fieldName="rough_in_date"
+                  value={formData.rough_in_date}
+                  isEditing={editingField === 'rough_in_date'}
+                  saving={savingField === 'rough_in_date'}
+                  type="date"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+                <FormField
+                  label="Notes"
+                  fieldName="rough_in_note"
+                  value={formData.rough_in_note}
+                  isEditing={editingField === 'rough_in_note'}
+                  saving={savingField === 'rough_in_note'}
+                  type="textarea"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <FormField
+                  label="Final Inspection Date"
+                  fieldName="final_inspection_date"
+                  value={formData.final_inspection_date}
+                  isEditing={editingField === 'final_inspection_date'}
+                  saving={savingField === 'final_inspection_date'}
+                  type="date"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+                <FormField
+                  label="Notes"
+                  fieldName="final_inspection_note"
+                  value={formData.final_inspection_note}
+                  isEditing={editingField === 'final_inspection_note'}
+                  saving={savingField === 'final_inspection_note'}
+                  type="textarea"
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
             </div>
+          </section>
 
-
-            {/* Basic Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                Basic Information
-              </h3>
-              <FormField 
-                label="Project Name" 
-                fieldName="project_name" 
+          {/* Project Details Section */}
+          <section id="project-details" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>}
+              title="Project Details"
+              subtitle="Core project information"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Project Name"
+                fieldName="project_name"
                 value={formData.project_name}
                 isEditing={editingField === 'project_name'}
+                saving={savingField === 'project_name'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
-              <FormField 
-                label="Job Number" 
-                fieldName="job_number" 
+              <FormField
+                label="Job Number"
+                fieldName="job_number"
                 value={formData.job_number}
                 isEditing={editingField === 'job_number'}
+                saving={savingField === 'job_number'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
-              <FormField 
-                label="Year" 
-                fieldName="year" 
-                value={formData.year}
-                isEditing={editingField === 'year'}
-                type="number"
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Project Types" 
-                fieldName="project_types_list" 
-                value={formData.project_types_list}
-                isEditing={editingField === 'project_types_list'}
-                type="multiselect"
-                options={PROJECT_TYPE_OPTIONS}
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Status" 
-                fieldName="status" 
+              <FormField
+                label="Status"
+                fieldName="status"
                 value={formData.status}
                 isEditing={editingField === 'status'}
+                saving={savingField === 'status'}
                 type="select"
                 options={STATUS_OPTIONS}
                 onEdit={onEdit}
@@ -213,126 +467,164 @@ const DetailPanel = ({
                 onCancel={onCancel}
                 onChange={onChange}
               />
-              <FormField 
-                label="Current Sub Status" 
-                fieldName="current_sub_status" 
+              <FormField
+                label="Sub Status"
+                fieldName="current_sub_status"
                 value={formData.current_sub_status}
                 isEditing={editingField === 'current_sub_status'}
+                saving={savingField === 'current_sub_status'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
+              <div className="md:col-span-2">
+                <FormField
+                  label="Project Types"
+                  fieldName="project_types_list"
+                  value={formData.project_types_list}
+                  isEditing={editingField === 'project_types_list'}
+                  saving={savingField === 'project_types_list'}
+                  type="multiselect"
+                  options={PROJECT_TYPE_OPTIONS}
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
             </div>
+          </section>
 
-            {/* Client & Team Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                Client & Team
-              </h3>
-              <FormField 
-                label="Client Name" 
-                fieldName="client_name" 
+          {/* Team Section */}
+          <section id="team" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+              title="Team & Stakeholders"
+              subtitle="People involved in this project"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Client"
+                fieldName="client_name"
                 value={formData.client_name}
                 isEditing={editingField === 'client_name'}
+                saving={savingField === 'client_name'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
-              <FormField 
-                label="Architect/Designer" 
-                fieldName="architect_designer" 
-                value={formData.architect_designer}
-                isEditing={editingField === 'architect_designer'}
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Manager" 
-                fieldName="manager_name" 
+              <FormField
+                label="Manager"
+                fieldName="manager_name"
                 value={formData.manager_name}
                 isEditing={editingField === 'manager_name'}
+                saving={savingField === 'manager_name'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
+              <div className="md:col-span-2">
+                <FormField
+                  label="Architect / Designer"
+                  fieldName="architect_designer"
+                  value={formData.architect_designer}
+                  isEditing={editingField === 'architect_designer'}
+                  saving={savingField === 'architect_designer'}
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                />
+              </div>
             </div>
+          </section>
 
-            
-            {/* Location Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                Location Information
-              </h3>
-              <FormField 
-                label="Address" 
-                fieldName="address" 
+          {/* Location Section */}
+          <section id="location" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              title="Location"
+              subtitle="Project address and legal information"
+            />
+            <div className="space-y-4">
+              <FormField
+                label="Address"
+                fieldName="address"
                 value={formData.address}
                 isEditing={editingField === 'address'}
+                saving={savingField === 'address'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
-              <FormField 
-                label="Legal Address" 
-                fieldName="legal_address" 
+              <FormField
+                label="Legal Address (Parcel, Block, Lot)"
+                fieldName="legal_address"
                 value={formData.legal_address}
                 isEditing={editingField === 'legal_address'}
-                onEdit={onEdit}
-                onSave={onSave}
-                onCancel={onCancel}
-                onChange={onChange}
-              />
-              <FormField 
-                label="Billing Information" 
-                fieldName="billing_info" 
-                value={formData.billing_info}
-                isEditing={editingField === 'billing_info'}
-                type="textarea"
+                saving={savingField === 'legal_address'}
                 onEdit={onEdit}
                 onSave={onSave}
                 onCancel={onCancel}
                 onChange={onChange}
               />
             </div>
+          </section>
 
-            
-            {/* System Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                System Information
-              </h3>
+          {/* Billing Section */}
+          <section id="billing" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              title="Billing"
+              subtitle="Payment and billing information"
+            />
+            <FormField
+              label="Billing Information"
+              fieldName="billing_info"
+              value={formData.billing_info}
+              isEditing={editingField === 'billing_info'}
+              saving={savingField === 'billing_info'}
+              type="textarea"
+              onEdit={onEdit}
+              onSave={onSave}
+              onCancel={onCancel}
+              onChange={onChange}
+            />
+          </section>
+
+          {/* System Info Section */}
+          <section id="system-info" className="bg-gray-50 rounded-xl p-5 border border-gray-200 scroll-mt-4">
+            <SectionHeader
+              icon={<svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              title="System Information"
+              subtitle="Record timestamps"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {selectedProject.created_at && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Created Date</label>
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {new Date(selectedProject.created_at).toLocaleDateString()}
-                  </div>
-                </div>
+                <InfoCard
+                  label="Created"
+                  value={new Date(selectedProject.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                />
               )}
               {selectedProject.updated_at && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Updated</label>
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {new Date(selectedProject.updated_at).toLocaleDateString()}
-                  </div>
-                </div>
+                <InfoCard
+                  label="Last Updated"
+                  value={new Date(selectedProject.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                />
               )}
               {selectedProject.last_status_change && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Status Change</label>
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {new Date(selectedProject.last_status_change).toLocaleDateString()}
-                  </div>
-                </div>
+                <InfoCard
+                  label="Status Changed"
+                  value={new Date(selectedProject.last_status_change).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                />
               )}
             </div>
-          </div>
+          </section>
+
         </div>
       </div>
     </div>
