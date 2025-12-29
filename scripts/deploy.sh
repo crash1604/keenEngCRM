@@ -26,9 +26,13 @@ echo ""
 echo "Stopping containers..."
 docker-compose -f docker-compose.prod.yml down
 
+# Clear Docker build cache
+echo "Clearing Docker build cache..."
+docker builder prune -f 2>/dev/null || true
+
 # Rebuild with cache bust
 echo "Rebuilding containers (this may take a few minutes)..."
-CACHEBUST=$COMMIT_SHA docker-compose -f docker-compose.prod.yml build --no-cache
+CACHEBUST=$(date +%s) docker-compose -f docker-compose.prod.yml build --no-cache --pull
 
 # Start containers
 echo "Starting containers..."

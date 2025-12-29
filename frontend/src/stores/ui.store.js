@@ -13,22 +13,8 @@ const getSystemTheme = () => {
 const applyTheme = (theme) => {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
-    console.log('Applying theme:', theme);
-
-    // Remove both first, then add the correct one
     root.classList.remove('dark', 'light');
-
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.add('light');
-    }
-
-    // Also set a data attribute for debugging
-    root.setAttribute('data-theme', theme);
-
-    console.log('HTML classes:', root.className);
-    console.log('HTML element:', root.outerHTML.substring(0, 100));
+    root.classList.add(theme === 'dark' ? 'dark' : 'light');
   }
 };
 
@@ -56,9 +42,7 @@ export const useUIStore = create(
 
       // Theme methods
       setTheme: (newTheme) => {
-        console.log('setTheme called with:', newTheme);
         const effectiveTheme = newTheme === 'system' ? getSystemTheme() : newTheme;
-        console.log('Effective theme:', effectiveTheme);
         applyTheme(effectiveTheme);
         set({ theme: newTheme });
       },

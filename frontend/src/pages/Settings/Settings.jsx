@@ -286,7 +286,6 @@ const Settings = () => {
 
   // Handle theme change
   const handleThemeChange = (newTheme) => {
-    console.log('handleThemeChange called with:', newTheme);
     setTheme(newTheme);
   };
 
@@ -515,7 +514,7 @@ const Settings = () => {
       </div>
 
       {/* Appearance Settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 relative z-40">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <SectionHeader
           icon={<PaletteIcon />}
           title="Appearance"
@@ -527,18 +526,12 @@ const Settings = () => {
             Choose your preferred theme for the application
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-50">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Light Mode */}
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Light button clicked!');
-                handleThemeChange('light');
-              }}
-              style={{ pointerEvents: 'auto' }}
-              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer relative z-50 ${
+              onClick={() => handleThemeChange('light')}
+              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
                 theme === 'light'
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -569,14 +562,8 @@ const Settings = () => {
             {/* Dark Mode */}
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Dark button clicked!');
-                handleThemeChange('dark');
-              }}
-              style={{ pointerEvents: 'auto' }}
-              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer relative z-50 ${
+              onClick={() => handleThemeChange('dark')}
+              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
                 theme === 'dark'
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -607,14 +594,8 @@ const Settings = () => {
             {/* System Mode */}
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('System button clicked!');
-                handleThemeChange('system');
-              }}
-              style={{ pointerEvents: 'auto' }}
-              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer relative z-50 ${
+              onClick={() => handleThemeChange('system')}
+              className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
                 theme === 'system'
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
