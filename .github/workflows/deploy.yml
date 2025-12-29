@@ -82,15 +82,18 @@ jobs:
               echo "${{ secrets.BACKEND_ENV }}" > backend/.env
             fi
 
-            # Get git commit hash for cache busting
+            # Get git commit hash for logging
             COMMIT_SHA=$(git rev-parse --short HEAD)
             echo "Deploying commit: $COMMIT_SHA"
 
             # Stop existing containers
             docker-compose -f docker-compose.prod.yml down
 
-            # Rebuild with cache bust using commit SHA
-            CACHEBUST=$COMMIT_SHA docker-compose -f docker-compose.prod.yml build --no-cache
+            # Clear Docker build cache
+            docker builder prune -f 2>/dev/null || true
+
+            # Rebuild with cache bust using timestamp (more reliable than commit hash)
+            CACHEBUST=$(date +%s) docker-compose -f docker-compose.prod.yml build --no-cache --pull
             docker-compose -f docker-compose.prod.yml up -d
 
             # Wait for database to be ready
