@@ -75,14 +75,29 @@ export const useAuthStore = create((set) => ({
    * Update user profile
    */
   updateProfile: async (userData) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const data = await authService.updateProfile(userData);
-      set({ user: data, isLoading: false });
+      set({ user: data });
       return { success: true, data };
     } catch (error) {
-      const errorMessage = error.response?.data?.details || 'Profile update failed';
-      set({ error: errorMessage, isLoading: false });
+      const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Profile update failed';
+      set({ error: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  /**
+   * Change user password
+   */
+  changePassword: async (passwordData) => {
+    set({ error: null });
+    try {
+      await authService.changePassword(passwordData);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.details || error.response?.data?.error || error.response?.data?.current_password?.[0] || 'Password change failed';
+      set({ error: errorMessage });
       return { success: false, error: errorMessage };
     }
   },

@@ -1,14 +1,60 @@
 import React, { useRef, useState, useEffect } from 'react';
 import FormField from '../projects/FormField';
+import { projectService } from '../../services/project';
+import { activityService } from '../../services/activity';
 
-// Tab configuration for architects
-const TABS = [
+// Tab configuration for architects - projects and activity are separate views
+const INFO_TABS = [
   { id: 'basic-info', label: 'Basic Info', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   { id: 'contact', label: 'Contact', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
   { id: 'professional', label: 'Professional', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
   { id: 'notes', label: 'Notes', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
   { id: 'system-info', label: 'System', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
 ];
+
+const PROJECTS_TAB = { id: 'projects', label: 'Projects', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' };
+const ACTIVITY_TAB = { id: 'activity', label: 'Activity', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' };
+
+// Action type colors for activity
+const ACTION_TYPE_COLORS = {
+  architect_created: { bg: 'bg-green-100', text: 'text-green-700', label: 'Created' },
+  architect_updated: { bg: 'bg-violet-100', text: 'text-violet-700', label: 'Updated' },
+  architect_deactivated: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Deactivated' },
+  architect_activated: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Activated' },
+  field_updated: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Field Updated' },
+};
+
+// Status badge colors for projects
+const STATUS_COLORS = {
+  not_started: 'bg-gray-100 text-gray-700 border-gray-300',
+  in_progress: 'bg-blue-100 text-blue-700 border-blue-300',
+  submitted: 'bg-purple-100 text-purple-700 border-purple-300',
+  completed: 'bg-green-100 text-green-700 border-green-300',
+  closed_paid: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  cancelled: 'bg-red-100 text-red-700 border-red-300',
+  on_hold: 'bg-amber-100 text-amber-700 border-amber-300',
+};
+
+const STATUS_LABELS = {
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  submitted: 'Submitted',
+  completed: 'Completed',
+  closed_paid: 'Closed & Paid',
+  cancelled: 'Cancelled',
+  on_hold: 'On Hold',
+};
+
+// Project type colors
+const PROJECT_TYPE_COLORS = {
+  M: 'bg-blue-100 text-blue-700',
+  E: 'bg-yellow-100 text-yellow-700',
+  P: 'bg-cyan-100 text-cyan-700',
+  EM: 'bg-green-100 text-green-700',
+  FP: 'bg-red-100 text-red-700',
+  TI: 'bg-purple-100 text-purple-700',
+  VI: 'bg-gray-100 text-gray-700',
+};
 
 // Section Header Component
 const SectionHeader = ({ icon, title, subtitle }) => (
@@ -48,30 +94,93 @@ const ArchitectDetailPanel = ({
 }) => {
   const scrollContainerRef = useRef(null);
   const [activeTab, setActiveTab] = useState('basic-info');
+  const [viewMode, setViewMode] = useState('info'); // 'info', 'projects', or 'activity'
+  const [architectProjects, setArchitectProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [architectActivity, setArchitectActivity] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
 
-  // Scroll to section when tab is clicked
-  const scrollToSection = (sectionId) => {
-    const section = document.getElementById(`architect-${sectionId}`);
-    const container = scrollContainerRef.current;
-    if (section && container) {
-      const containerTop = container.getBoundingClientRect().top;
-      const sectionTop = section.getBoundingClientRect().top;
-      const offset = sectionTop - containerTop + container.scrollTop - 12;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
-      setActiveTab(sectionId);
+  // Fetch projects for this architect
+  useEffect(() => {
+    const fetchArchitectProjects = async () => {
+      if (!selectedArchitect?.id) return;
+
+      setLoadingProjects(true);
+      try {
+        const response = await projectService.getProjects({ architect_designer: selectedArchitect.id });
+        const projects = response.results || response || [];
+        setArchitectProjects(projects);
+      } catch (error) {
+        console.error('Failed to fetch architect projects:', error);
+        setArchitectProjects([]);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    fetchArchitectProjects();
+  }, [selectedArchitect?.id]);
+
+  // Fetch activity for this architect
+  const fetchArchitectActivity = async () => {
+    if (!selectedArchitect?.id) return;
+
+    setLoadingActivity(true);
+    try {
+      const response = await activityService.getActivityLogs({ entity_type: 'architect' });
+      const allActivity = response.results || response || [];
+      // Filter to only this architect's activity
+      const activity = allActivity.filter(a => a.architect === selectedArchitect.id);
+      setArchitectActivity(activity);
+    } catch (error) {
+      console.error('Failed to fetch architect activity:', error);
+      setArchitectActivity([]);
+    } finally {
+      setLoadingActivity(false);
     }
   };
 
-  // Update active tab based on scroll position
+  useEffect(() => {
+    fetchArchitectActivity();
+  }, [selectedArchitect?.id]);
+
+  // Handle tab click
+  const handleTabClick = (tabId) => {
+    if (tabId === 'projects') {
+      setViewMode('projects');
+      setActiveTab('projects');
+    } else if (tabId === 'activity') {
+      setViewMode('activity');
+      setActiveTab('activity');
+      // Re-fetch activity to get latest changes
+      fetchArchitectActivity();
+    } else {
+      setViewMode('info');
+      setActiveTab(tabId);
+      // Scroll to section
+      setTimeout(() => {
+        const section = document.getElementById(`architect-${tabId}`);
+        const container = scrollContainerRef.current;
+        if (section && container) {
+          const containerTop = container.getBoundingClientRect().top;
+          const sectionTop = section.getBoundingClientRect().top;
+          const offset = sectionTop - containerTop + container.scrollTop - 12;
+          container.scrollTo({ top: offset, behavior: 'smooth' });
+        }
+      }, 50);
+    }
+  };
+
+  // Update active tab based on scroll position (only in info view)
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || !selectedArchitect) return;
+    if (!container || !selectedArchitect || viewMode !== 'info') return;
 
     const handleScroll = () => {
       const containerTop = container.getBoundingClientRect().top;
       let currentSection = 'basic-info';
 
-      TABS.forEach(tab => {
+      INFO_TABS.forEach(tab => {
         const section = document.getElementById(`architect-${tab.id}`);
         if (section) {
           const sectionTop = section.getBoundingClientRect().top - containerTop;
@@ -86,7 +195,7 @@ const ArchitectDetailPanel = ({
 
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [selectedArchitect]);
+  }, [selectedArchitect, viewMode]);
 
   if (!selectedArchitect) return null;
 
@@ -176,12 +285,13 @@ const ArchitectDetailPanel = ({
 
         {/* Tab Navigation */}
         <div className="bg-white border-b border-gray-200 px-4 py-2 flex gap-1 overflow-x-auto sticky top-0 z-10">
-          {TABS.map(tab => (
+          {/* Info Tabs */}
+          {INFO_TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => scrollToSection(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
-                activeTab === tab.id
+                activeTab === tab.id && viewMode === 'info'
                   ? 'bg-indigo-100 text-indigo-700 shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
@@ -192,12 +302,248 @@ const ArchitectDetailPanel = ({
               {tab.label}
             </button>
           ))}
+
+          {/* Separator */}
+          <div className="w-px bg-gray-300 mx-1"></div>
+
+          {/* Projects Tab */}
+          <button
+            onClick={() => handleTabClick('projects')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+              viewMode === 'projects'
+                ? 'bg-violet-100 text-violet-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={PROJECTS_TAB.icon} />
+            </svg>
+            {PROJECTS_TAB.label}
+            {architectProjects.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-violet-200 text-violet-800 rounded-full">
+                {architectProjects.length}
+              </span>
+            )}
+          </button>
+
+          {/* Activity Tab */}
+          <button
+            onClick={() => handleTabClick('activity')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+              viewMode === 'activity'
+                ? 'bg-amber-100 text-amber-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ACTIVITY_TAB.icon} />
+            </svg>
+            {ACTIVITY_TAB.label}
+          </button>
         </div>
 
         {/* Scrollable Content */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* Basic Information Section */}
+          {viewMode === 'activity' ? (
+            /* Activity View */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Activity History</h3>
+                    <p className="text-sm text-gray-500">{architectActivity.length} activit{architectActivity.length !== 1 ? 'ies' : 'y'} recorded</p>
+                  </div>
+                </div>
+              </div>
+
+              {loadingActivity ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
+                  <span className="ml-3 text-gray-600">Loading activity...</span>
+                </div>
+              ) : architectActivity.length === 0 ? (
+                <div className="bg-gray-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
+                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-gray-500 text-lg font-medium">No activity recorded</p>
+                  <p className="text-gray-400 text-sm mt-1">Changes to this architect will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {architectActivity.map((activity) => {
+                    const actionConfig = ACTION_TYPE_COLORS[activity.action_type] || { bg: 'bg-gray-100', text: 'text-gray-700', label: activity.action_type };
+                    const timestamp = new Date(activity.timestamp);
+                    return (
+                      <div
+                        key={activity.id}
+                        className="bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${actionConfig.bg} ${actionConfig.text}`}>
+                                {actionConfig.label}
+                              </span>
+                              {activity.changed_field && (
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                  {activity.changed_field}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-700 mb-2">{activity.description}</p>
+                            {(activity.old_value || activity.new_value) && (
+                              <div className="flex items-center gap-2 text-xs">
+                                {activity.old_value && (
+                                  <span className="text-red-600 line-through bg-red-50 px-2 py-0.5 rounded">
+                                    {activity.old_value}
+                                  </span>
+                                )}
+                                {activity.old_value && activity.new_value && (
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                  </svg>
+                                )}
+                                {activity.new_value && (
+                                  <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium">
+                                    {activity.new_value}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-xs font-medium text-gray-900">
+                              {timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {activity.user_name && (
+                              <p className="text-xs text-gray-400 mt-1">by {activity.user_name}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : viewMode === 'projects' ? (
+            /* Projects View */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-100 rounded-lg">
+                    <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Projects</h3>
+                    <p className="text-sm text-gray-500">{architectProjects.length} project{architectProjects.length !== 1 ? 's' : ''} associated with this architect</p>
+                  </div>
+                </div>
+              </div>
+
+              {loadingProjects ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"></div>
+                  <span className="ml-3 text-gray-600">Loading projects...</span>
+                </div>
+              ) : architectProjects.length === 0 ? (
+                <div className="bg-gray-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
+                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  <p className="text-gray-500 text-lg font-medium">No projects found</p>
+                  <p className="text-gray-400 text-sm mt-1">Projects associated with this architect will appear here</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {architectProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg hover:border-violet-200 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          {/* Job Number and Name */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-sm font-mono bg-violet-50 text-violet-700 px-2.5 py-1 rounded-lg font-semibold">
+                              {project.job_number || `#${project.id}`}
+                            </span>
+                            <h4 className="text-lg font-semibold text-gray-900 truncate">
+                              {project.project_name}
+                            </h4>
+                          </div>
+
+                          {/* Project Types */}
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {project.project_type?.split(',').map((type, idx) => (
+                              <span
+                                key={idx}
+                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${PROJECT_TYPE_COLORS[type.trim()] || 'bg-gray-100 text-gray-600'}`}
+                              >
+                                {type.trim()}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Client Name */}
+                          {project.client_name && (
+                            <p className="text-sm text-gray-600 flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              {project.client_name}
+                            </p>
+                          )}
+
+                          {/* Address */}
+                          {project.address && (
+                            <p className="text-sm text-gray-600 flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              </svg>
+                              {project.address}
+                            </p>
+                          )}
+
+                          {/* Due Date */}
+                          {project.due_date && (
+                            <p className="text-sm text-gray-500 flex items-center gap-2">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              Due: {new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex-shrink-0">
+                          <span className={`px-3 py-1.5 text-sm font-semibold rounded-full border ${STATUS_COLORS[project.status] || STATUS_COLORS.not_started}`}>
+                            {STATUS_LABELS[project.status] || project.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Info View */
+            <>
+              {/* Basic Information Section */}
           <section id="architect-basic-info" className="bg-indigo-50 rounded-xl p-5 border border-indigo-200 scroll-mt-4">
             <SectionHeader
               icon={<svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
@@ -385,6 +731,8 @@ const ArchitectDetailPanel = ({
               )}
             </div>
           </section>
+            </>
+          )}
 
         </div>
       </div>

@@ -7,6 +7,8 @@ export const useActivityStore = create((set, get) => ({
   activityLogs: [],
   myActivity: [],
   projectActivity: [],
+  clientActivity: [],
+  architectActivity: [],
   loading: false,
   error: null,
   pagination: {
@@ -107,9 +109,9 @@ export const useActivityStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await activityService.getProjectActivity(params);
-      
+
       let projectActivity = [];
-      
+
       if (Array.isArray(data)) {
         projectActivity = data;
       } else if (data.results) {
@@ -117,30 +119,102 @@ export const useActivityStore = create((set, get) => ({
       } else {
         projectActivity = [data];
       }
-      
-      set({ 
-        projectActivity, 
+
+      set({
+        projectActivity,
         loading: false,
         error: null
       });
-      
+
       return { success: true, data: projectActivity };
-      
+
     } catch (error) {
       console.error('Error in fetchProjectActivity:', error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          error.message || 
+      const errorMessage = error.response?.data?.detail ||
+                          error.response?.data?.message ||
+                          error.message ||
                           'Failed to fetch project activity';
       set({ error: errorMessage, loading: false });
       return { success: false, error: errorMessage };
     }
   },
 
+  // Get client activity (admin/manager only)
+  fetchClientActivity: async (params = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await activityService.getClientActivity(params);
+
+      let clientActivity = [];
+
+      if (Array.isArray(data)) {
+        clientActivity = data;
+      } else if (data.results) {
+        clientActivity = data.results;
+      } else {
+        clientActivity = [data];
+      }
+
+      set({
+        clientActivity,
+        loading: false,
+        error: null
+      });
+
+      return { success: true, data: clientActivity };
+
+    } catch (error) {
+      console.error('Error in fetchClientActivity:', error);
+      const errorMessage = error.response?.data?.detail ||
+                          error.response?.data?.message ||
+                          error.message ||
+                          'Failed to fetch client activity';
+      set({ error: errorMessage, loading: false });
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Get architect activity (admin/manager only)
+  fetchArchitectActivity: async (params = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await activityService.getArchitectActivity(params);
+
+      let architectActivity = [];
+
+      if (Array.isArray(data)) {
+        architectActivity = data;
+      } else if (data.results) {
+        architectActivity = data.results;
+      } else {
+        architectActivity = [data];
+      }
+
+      set({
+        architectActivity,
+        loading: false,
+        error: null
+      });
+
+      return { success: true, data: architectActivity };
+
+    } catch (error) {
+      console.error('Error in fetchArchitectActivity:', error);
+      const errorMessage = error.response?.data?.detail ||
+                          error.response?.data?.message ||
+                          error.message ||
+                          'Failed to fetch architect activity';
+      set({ error: errorMessage, loading: false });
+      return { success: false, error: errorMessage };
+    }
+  },
+
   // Clear all activity data
-  clearActivity: () => set({ 
-    activityLogs: [], 
-    myActivity: [], 
-    projectActivity: [] 
+  clearActivity: () => set({
+    activityLogs: [],
+    myActivity: [],
+    projectActivity: [],
+    clientActivity: [],
+    architectActivity: []
   })
 }));

@@ -66,4 +66,20 @@ export const authService = {
     const response = await api.post('/auth/token/verify/');
     return response.data;
   },
+
+  /**
+   * Change user password
+   */
+  changePassword: async (passwordData) => {
+    const response = await api.post('/auth/change-password/', passwordData);
+    return response.data;
+  },
+
+  /**
+   * Update user settings/preferences
+   */
+  updateSettings: async (settings) => {
+    const response = await api.patch('/auth/profile/', settings);
+    return response.data;
+  },
 };

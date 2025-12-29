@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import FormField from './FormField';
 import { STATUS_OPTIONS } from './StatusRenderer';
+import { activityService } from '../../services/activity';
 
-// Tab configuration
-const TABS = [
+// Tab configuration (info tabs - scrollable sections)
+const INFO_TABS = [
   { id: 'action-items', label: 'Action Items', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
   { id: 'timeline', label: 'Timeline', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
   { id: 'project-details', label: 'Details', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
@@ -12,6 +13,25 @@ const TABS = [
   { id: 'billing', label: 'Billing', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { id: 'system-info', label: 'System', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
 ];
+
+// Backwards compatibility
+const TABS = INFO_TABS;
+
+const ACTIVITY_TAB = { id: 'activity', label: 'Activity', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' };
+
+// Action type colors for activity
+const ACTION_TYPE_COLORS = {
+  project_created: { bg: 'bg-green-100', text: 'text-green-700', label: 'Created' },
+  project_updated: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Updated' },
+  status_change: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Status Change' },
+  field_updated: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Field Updated' },
+  note_added: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Note Added' },
+  inspection_scheduled: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'Inspection' },
+  due_date_changed: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Due Date' },
+  client_changed: { bg: 'bg-pink-100', text: 'text-pink-700', label: 'Client Changed' },
+  architect_changed: { bg: 'bg-violet-100', text: 'text-violet-700', label: 'Architect Changed' },
+  manager_changed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Manager Changed' },
+};
 
 const PROJECT_TYPE_OPTIONS = [
   { value: 'M', label: 'Mechanical', color: 'bg-blue-100 text-blue-700' },
@@ -112,6 +132,45 @@ const DetailPanel = ({
 }) => {
   const scrollContainerRef = useRef(null);
   const [activeTab, setActiveTab] = useState('action-items');
+  const [viewMode, setViewMode] = useState('info'); // 'info' or 'activity'
+  const [projectActivity, setProjectActivity] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+
+  // Fetch activity for this project
+  const fetchProjectActivity = async () => {
+    if (!selectedProject?.id) return;
+
+    setLoadingActivity(true);
+    try {
+      const response = await activityService.getActivityLogs({ entity_type: 'project' });
+      const allActivity = response.results || response || [];
+      // Filter to only this project's activity
+      const activity = allActivity.filter(a => a.project === selectedProject.id);
+      setProjectActivity(activity);
+    } catch (error) {
+      console.error('Failed to fetch project activity:', error);
+      setProjectActivity([]);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjectActivity();
+  }, [selectedProject?.id]);
+
+  // Handle tab click
+  const handleTabClick = (tabId) => {
+    if (tabId === 'activity') {
+      setViewMode('activity');
+      setActiveTab('activity');
+      // Re-fetch activity to get latest changes
+      fetchProjectActivity();
+    } else {
+      setViewMode('info');
+      scrollToSection(tabId);
+    }
+  };
 
   // Scroll to section when tab is clicked
   const scrollToSection = (sectionId) => {
@@ -126,16 +185,16 @@ const DetailPanel = ({
     }
   };
 
-  // Update active tab based on scroll position
+  // Update active tab based on scroll position (only in info view)
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || !selectedProject) return;
+    if (!container || !selectedProject || viewMode !== 'info') return;
 
     const handleScroll = () => {
       const containerTop = container.getBoundingClientRect().top;
       let currentSection = 'action-items';
 
-      TABS.forEach(tab => {
+      INFO_TABS.forEach(tab => {
         const section = document.getElementById(tab.id);
         if (section) {
           const sectionTop = section.getBoundingClientRect().top - containerTop;
@@ -150,7 +209,7 @@ const DetailPanel = ({
 
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [selectedProject]);
+  }, [selectedProject, viewMode]);
 
   if (!selectedProject) return null;
 
@@ -275,12 +334,13 @@ const DetailPanel = ({
 
         {/* Tab Navigation */}
         <div className="bg-white border-b border-gray-200 px-4 py-2 flex gap-1 overflow-x-auto sticky top-0 z-10">
-          {TABS.map(tab => (
+          {/* Info Tabs */}
+          {INFO_TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => scrollToSection(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
-                activeTab === tab.id
+                activeTab === tab.id && viewMode === 'info'
                   ? 'bg-blue-100 text-blue-700 shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
@@ -291,11 +351,128 @@ const DetailPanel = ({
               {tab.label}
             </button>
           ))}
+
+          {/* Separator */}
+          <div className="w-px bg-gray-300 mx-1"></div>
+
+          {/* Activity Tab */}
+          <button
+            onClick={() => handleTabClick('activity')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+              viewMode === 'activity'
+                ? 'bg-amber-100 text-amber-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ACTIVITY_TAB.icon} />
+            </svg>
+            {ACTIVITY_TAB.label}
+            {projectActivity.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-amber-200 text-amber-800 rounded-full">
+                {projectActivity.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Scrollable Content */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
 
+          {viewMode === 'activity' ? (
+            /* Activity View */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Activity History</h3>
+                    <p className="text-sm text-gray-500">{projectActivity.length} activit{projectActivity.length !== 1 ? 'ies' : 'y'} recorded</p>
+                  </div>
+                </div>
+              </div>
+
+              {loadingActivity ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
+                  <span className="ml-3 text-gray-600">Loading activity...</span>
+                </div>
+              ) : projectActivity.length === 0 ? (
+                <div className="bg-gray-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
+                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-gray-500 text-lg font-medium">No activity recorded</p>
+                  <p className="text-gray-400 text-sm mt-1">Changes to this project will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {projectActivity.map((activity) => {
+                    const actionConfig = ACTION_TYPE_COLORS[activity.action_type] || { bg: 'bg-gray-100', text: 'text-gray-700', label: activity.action_type };
+                    const timestamp = new Date(activity.timestamp);
+                    return (
+                      <div
+                        key={activity.id}
+                        className="bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${actionConfig.bg} ${actionConfig.text}`}>
+                                {actionConfig.label}
+                              </span>
+                              {activity.changed_field && (
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                  {activity.changed_field}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-700 mb-2">{activity.description}</p>
+                            {(activity.old_value || activity.new_value) && (
+                              <div className="flex items-center gap-2 text-xs flex-wrap">
+                                {activity.old_value && (
+                                  <span className="text-red-600 line-through bg-red-50 px-2 py-0.5 rounded max-w-xs truncate">
+                                    {activity.old_value}
+                                  </span>
+                                )}
+                                {activity.old_value && activity.new_value && (
+                                  <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                  </svg>
+                                )}
+                                {activity.new_value && (
+                                  <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium max-w-xs truncate">
+                                    {activity.new_value}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-xs font-medium text-gray-900">
+                              {timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {activity.user_name && (
+                              <p className="text-xs text-gray-400 mt-1">by {activity.user_name}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Info View */
+            <>
           {/* Action Items Section - Most Important First */}
           <section id="action-items" className="bg-amber-50 rounded-xl p-5 border border-amber-200 scroll-mt-4">
             <SectionHeader
@@ -624,6 +801,8 @@ const DetailPanel = ({
               )}
             </div>
           </section>
+            </>
+          )}
 
         </div>
       </div>

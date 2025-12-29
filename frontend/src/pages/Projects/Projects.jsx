@@ -1,13 +1,16 @@
 // src/pages/Projects/Projects.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Snackbar, Alert, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import { useProjectStore } from '../../stores/project.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ProjectsGrid from '../../components/projects/ProjectsGrid';
 import ProjectForm from '../../components/projects/ProjectForm';
 
 const Projects = () => {
+  const gridRef = useRef(null);
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
   const {
     projects,
     loading,
@@ -96,6 +99,18 @@ const Projects = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
+  // Filter handlers
+  const handleFilterChanged = useCallback((hasFilters) => {
+    setHasActiveFilters(hasFilters);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    if (gridRef.current) {
+      gridRef.current.clearAllFilters();
+      setHasActiveFilters(false);
+    }
+  }, []);
+
   const statusOptions = [
     { value: '', label: 'All Status' },
     { value: 'not_started', label: 'Not Started' },
@@ -119,7 +134,16 @@ const Projects = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <div className="flex space-x-3">
+          <div className="flex items-center gap-3">
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all duration-200"
+              >
+                <FilterListOffIcon fontSize="small" />
+                Clear Filters
+              </button>
+            )}
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -145,10 +169,12 @@ const Projects = () => {
 
       {/* AG Grid Component */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-        <ProjectsGrid 
-          projects={projects} 
+        <ProjectsGrid
+          ref={gridRef}
+          projects={projects}
           loading={loading}
           onStatusChange={handleStatusChange}
+          onFilterChanged={handleFilterChanged}
         />
       </div>
 

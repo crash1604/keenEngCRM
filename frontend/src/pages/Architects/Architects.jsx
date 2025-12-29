@@ -127,8 +127,8 @@ const Architects = observer(() => {
               startIcon={<AddIcon />}
               onClick={handleAddArchitect}
               sx={{
-                bgcolor: '#6366f1',
-                '&:hover': { bgcolor: '#4f46e5' }
+                bgcolor: '#2563eb',
+                '&:hover': { bgcolor: '#1d4ed8' }
               }}
             >
               Add Architect

@@ -137,8 +137,8 @@ class ClientStore {
         }
       });
 
-      // Send to backend asynchronously
-      const data = await clientService.updateClient(id, updateData);
+      // Send to backend asynchronously using PATCH for partial updates
+      const data = await clientService.partialUpdateClient(id, updateData);
 
       // Update with server response
       runInAction(() => {

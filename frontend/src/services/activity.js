@@ -20,6 +20,18 @@ export const activityService = {
     return response.data;
   },
 
+  // Get client activity (admin/manager only)
+  getClientActivity: async (params = {}) => {
+    const response = await api.get('/activity/activity-logs/client_activity/', { params });
+    return response.data;
+  },
+
+  // Get architect activity (admin/manager only)
+  getArchitectActivity: async (params = {}) => {
+    const response = await api.get('/activity/activity-logs/architect_activity/', { params });
+    return response.data;
+  },
+
   // Get specific activity log
   getActivityLog: async (id) => {
     const response = await api.get(`/activity/activity-logs/${id}/`);

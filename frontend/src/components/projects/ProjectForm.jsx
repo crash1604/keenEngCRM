@@ -1,61 +1,503 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Button,
   TextField,
-  Grid,
   MenuItem,
   Alert,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  Chip,
-  Box,
-  OutlinedInput,
+  IconButton,
+  Collapse,
+  Tooltip,
+  Autocomplete,
+  InputAdornment,
 } from '@mui/material';
+import {
+  Close as CloseIcon,
+  FolderOpen as FolderIcon,
+  Category as CategoryIcon,
+  LocationOn as LocationIcon,
+  CalendarMonth as CalendarIcon,
+  Assignment as AssignmentIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  AttachMoney as MoneyIcon,
+  Add as AddIcon,
+  Business as BusinessIcon,
+  Architecture as ArchitectureIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
+
+// Utility function to sanitize search input - prevents XSS and injection
+const sanitizeSearchInput = (input) => {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/[<>{}[\]\\\/]/g, '')
+    .replace(/['"`;]/g, '')
+    .trim()
+    .slice(0, 100);
+};
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useProjectStore } from '../../stores/project.store';
 import { clientStore } from '../../stores/client.store';
+import { architectStore } from '../../stores/architect.store';
 import { STATUS_OPTIONS } from './StatusRenderer';
 
+// Quick Add Client Modal
+const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      company_name: '',
+      contact_email: '',
+      phone: '',
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().required('Name is required'),
+      contact_email: Yup.string().email('Invalid email'),
+    }),
+    onSubmit: async (values) => {
+      setLoading(true);
+      setError('');
+      try {
+        const newClient = await clientStore.createClient(values);
+        formik.resetForm();
+        onSuccess(newClient);
+      } catch (err) {
+        setError(err.detail || 'Failed to create client');
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
+
+  const handleClose = () => {
+    formik.resetForm();
+    setError('');
+    onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: '16px', overflow: 'hidden' }
+      }}
+    >
+      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <BusinessIcon className="text-white" fontSize="small" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Quick Add Client</h2>
+              <p className="text-emerald-100 text-xs">Add basic client info</p>
+            </div>
+          </div>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'white' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </div>
+      </div>
+
+      <form onSubmit={formik.handleSubmit}>
+        <DialogContent sx={{ p: 3 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+
+          <div className="space-y-4">
+            <TextField
+              fullWidth
+              label="Client Name"
+              name="name"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.name && Boolean(formik.errors.name)}
+              helperText={formik.touched.name && formik.errors.name}
+              disabled={loading}
+              size="small"
+              required
+              autoFocus
+            />
+
+            <TextField
+              fullWidth
+              label="Company Name"
+              name="company_name"
+              value={formik.values.company_name}
+              onChange={formik.handleChange}
+              disabled={loading}
+              size="small"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <TextField
+                fullWidth
+                label="Email"
+                name="contact_email"
+                type="email"
+                value={formik.values.contact_email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.contact_email && Boolean(formik.errors.contact_email)}
+                helperText={formik.touched.contact_email && formik.errors.contact_email}
+                disabled={loading}
+                size="small"
+              />
+
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                disabled={loading}
+                size="small"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !formik.values.name}
+              className="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <AddIcon fontSize="small" />
+                  <span>Add Client</span>
+                </>
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </form>
+    </Dialog>
+  );
+};
+
+// Quick Add Architect Modal
+const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      company_name: '',
+      contact_email: '',
+      phone: '',
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().required('Name is required'),
+      contact_email: Yup.string().email('Invalid email'),
+    }),
+    onSubmit: async (values) => {
+      setLoading(true);
+      setError('');
+      try {
+        const newArchitect = await architectStore.createArchitect(values);
+        formik.resetForm();
+        onSuccess(newArchitect);
+      } catch (err) {
+        setError(err.detail || 'Failed to create architect');
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
+
+  const handleClose = () => {
+    formik.resetForm();
+    setError('');
+    onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: '16px', overflow: 'hidden' }
+      }}
+    >
+      <div className="bg-gradient-to-r from-violet-500 to-purple-500 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <ArchitectureIcon className="text-white" fontSize="small" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Quick Add Architect</h2>
+              <p className="text-violet-100 text-xs">Add basic architect info</p>
+            </div>
+          </div>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'white' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </div>
+      </div>
+
+      <form onSubmit={formik.handleSubmit}>
+        <DialogContent sx={{ p: 3 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+
+          <div className="space-y-4">
+            <TextField
+              fullWidth
+              label="Architect / Designer Name"
+              name="name"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.name && Boolean(formik.errors.name)}
+              helperText={formik.touched.name && formik.errors.name}
+              disabled={loading}
+              size="small"
+              required
+              autoFocus
+            />
+
+            <TextField
+              fullWidth
+              label="Company / Firm Name"
+              name="company_name"
+              value={formik.values.company_name}
+              onChange={formik.handleChange}
+              disabled={loading}
+              size="small"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <TextField
+                fullWidth
+                label="Email"
+                name="contact_email"
+                type="email"
+                value={formik.values.contact_email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.contact_email && Boolean(formik.errors.contact_email)}
+                helperText={formik.touched.contact_email && formik.errors.contact_email}
+                disabled={loading}
+                size="small"
+              />
+
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                disabled={loading}
+                size="small"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !formik.values.name}
+              className="px-4 py-2 text-sm font-medium text-white bg-violet-500 rounded-lg hover:bg-violet-600 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <AddIcon fontSize="small" />
+                  <span>Add Architect</span>
+                </>
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </form>
+    </Dialog>
+  );
+};
+
 const PROJECT_TYPE_OPTIONS = [
-  { value: 'M', label: 'Mechanical' },
-  { value: 'E', label: 'Electrical' },
-  { value: 'P', label: 'Plumbing' },
-  { value: 'EM', label: 'Energy Modelling' },
-  { value: 'FP', label: 'Fire Protection' },
-  { value: 'TI', label: 'Tenant Improvement' },
-  { value: 'VI', label: 'Verification Pending' },
+  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 text-blue-700 border-blue-300', selectedBg: 'bg-blue-500' },
+  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 text-yellow-700 border-yellow-300', selectedBg: 'bg-yellow-500' },
+  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 text-cyan-700 border-cyan-300', selectedBg: 'bg-cyan-500' },
+  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 text-green-700 border-green-300', selectedBg: 'bg-green-500' },
+  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 text-red-700 border-red-300', selectedBg: 'bg-red-500' },
+  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 text-purple-700 border-purple-300', selectedBg: 'bg-purple-500' },
+  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 text-gray-700 border-gray-300', selectedBg: 'bg-gray-500' },
 ];
+
+// Section Header Component with improved styling
+const SectionHeader = ({ icon, title, subtitle, isOpen, onToggle, optional, bgColor = 'bg-blue-50', iconColor = 'text-blue-600' }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50/80 transition-colors"
+  >
+    <div className="flex items-center gap-3">
+      <div className={`p-2 ${bgColor} rounded-lg ${iconColor}`}>
+        {icon}
+      </div>
+      <div className="text-left">
+        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        {optional && !subtitle && <span className="text-xs text-gray-400">Optional</span>}
+      </div>
+    </div>
+    <div className={`p-1 rounded-full transition-colors ${isOpen ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}>
+      {isOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+    </div>
+  </button>
+);
 
 const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) => {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
+  const [architects, setArchitects] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
+  const [loadingArchitects, setLoadingArchitects] = useState(false);
   const { createProject, updateProject } = useProjectStore();
 
-  // Fetch clients when modal opens
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedArchitect, setSelectedArchitect] = useState(null);
+
+  const [showQuickAddClient, setShowQuickAddClient] = useState(false);
+  const [showQuickAddArchitect, setShowQuickAddArchitect] = useState(false);
+
+  const [sectionsOpen, setSectionsOpen] = useState({
+    basic: true,
+    location: true,
+    timeline: true,
+    details: false,
+    billing: false,
+  });
+
+  const toggleSection = (section) => {
+    setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   useEffect(() => {
     if (open) {
       fetchClients();
+      fetchArchitects();
+      setSectionsOpen({
+        basic: true,
+        location: true,
+        timeline: true,
+        details: false,
+        billing: false,
+      });
     }
   }, [open]);
 
-  const fetchClients = async () => {
+  const fetchClients = async (searchQuery = '') => {
     setLoadingClients(true);
     try {
       await clientStore.fetchClients(1);
-      setClients(clientStore.clients || []);
+      let clientList = clientStore.clients || [];
+
+      if (searchQuery) {
+        const sanitized = sanitizeSearchInput(searchQuery).toLowerCase();
+        clientList = clientList.filter(client =>
+          (client.name?.toLowerCase().includes(sanitized)) ||
+          (client.company_name?.toLowerCase().includes(sanitized)) ||
+          (client.contact_email?.toLowerCase().includes(sanitized))
+        );
+      }
+
+      setClients(clientList);
     } catch (error) {
       console.error('Failed to fetch clients:', error);
     } finally {
       setLoadingClients(false);
     }
+  };
+
+  const fetchArchitects = async (searchQuery = '') => {
+    setLoadingArchitects(true);
+    try {
+      await architectStore.fetchArchitects(1);
+      let architectList = architectStore.architects || [];
+
+      if (searchQuery) {
+        const sanitized = sanitizeSearchInput(searchQuery).toLowerCase();
+        architectList = architectList.filter(architect =>
+          (architect.name?.toLowerCase().includes(sanitized)) ||
+          (architect.company_name?.toLowerCase().includes(sanitized)) ||
+          (architect.contact_email?.toLowerCase().includes(sanitized))
+        );
+      }
+
+      setArchitects(architectList);
+    } catch (error) {
+      console.error('Failed to fetch architects:', error);
+    } finally {
+      setLoadingArchitects(false);
+    }
+  };
+
+  const handleQuickAddClientSuccess = (newClient) => {
+    setShowQuickAddClient(false);
+    fetchClients().then(() => {
+      if (newClient?.id) {
+        setSelectedClient(newClient);
+        formik.setFieldValue('client', newClient.id);
+      }
+    });
+  };
+
+  const handleQuickAddArchitectSuccess = (newArchitect) => {
+    setShowQuickAddArchitect(false);
+    fetchArchitects().then(() => {
+      if (newArchitect?.id) {
+        setSelectedArchitect(newArchitect);
+        formik.setFieldValue('architect_designer', newArchitect.id);
+      }
+    });
   };
 
   const validationSchema = Yup.object({
@@ -76,7 +518,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
       status: 'not_started',
       address: '',
       legal_address: '',
-      due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+      due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       rough_in_date: '',
       final_inspection_date: '',
       current_sub_status: '',
@@ -89,11 +531,9 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
     onSubmit: async (values) => {
       setLoading(true);
       try {
-        // Convert project_type array to comma-separated string
         const submitData = {
           ...values,
           project_type: values.project_type.join(','),
-          // Convert empty strings to null for optional fields
           architect_designer: values.architect_designer || null,
           legal_address: values.legal_address || null,
           rough_in_date: values.rough_in_date || null,
@@ -129,9 +569,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
 
   useEffect(() => {
     if (open && project && editMode) {
-      // Parse project_type from comma-separated string to array
       const projectTypes = project.project_type ? project.project_type.split(',').map(t => t.trim()) : [];
-
       formik.setValues({
         project_name: project.project_name || '',
         project_type: projectTypes,
@@ -149,313 +587,756 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
         due_date_note: project.due_date_note || '',
         billing_info: project.billing_info || '',
       });
+
+      if (project.client && clients.length > 0) {
+        const clientObj = clients.find(c => c.id === project.client);
+        if (clientObj) setSelectedClient(clientObj);
+      }
+      if (project.architect_designer && architects.length > 0) {
+        const architectObj = architects.find(a => a.id === project.architect_designer);
+        if (architectObj) setSelectedArchitect(architectObj);
+      }
+
+      setSectionsOpen({
+        basic: true,
+        location: true,
+        timeline: true,
+        details: true,
+        billing: true,
+      });
     } else if (open && !editMode) {
       formik.resetForm();
+      setSelectedClient(null);
+      setSelectedArchitect(null);
     }
-  }, [open, project, editMode]);
+  }, [open, project, editMode, clients, architects]);
 
   const handleClose = () => {
     formik.resetForm();
+    setSelectedClient(null);
+    setSelectedArchitect(null);
     onClose();
   };
 
+  // Calculate form completion percentage
+  const requiredFields = ['project_name', 'project_type', 'client', 'address', 'status', 'due_date'];
+  const filledRequired = requiredFields.filter(field => {
+    const value = formik.values[field];
+    if (Array.isArray(value)) return value.length > 0;
+    return value && value.toString().trim() !== '';
+  }).length;
+  const completionPercent = Math.round((filledRequired / requiredFields.length) * 100);
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ fontWeight: 600 }}>
-        {editMode ? 'Edit Project' : 'Create New Project'}
-      </DialogTitle>
-      <form onSubmit={formik.handleSubmit}>
-        <DialogContent>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          overflow: 'hidden',
+        }
+      }}
+    >
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-white relative">
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+        >
+          <CloseIcon />
+        </button>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <FolderIcon />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">
+              {editMode ? 'Edit Project' : 'Create New Project'}
+            </h2>
+            <p className="text-blue-100 text-sm mt-0.5">
+              {editMode ? 'Update project information' : 'Fill in the details to create a new project'}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs text-blue-100 mb-1.5">
+            <span>Required fields completion</span>
+            <span>{completionPercent}%</span>
+          </div>
+          <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white rounded-full transition-all duration-300"
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={formik.handleSubmit} className="flex flex-col max-h-[calc(100vh-200px)]">
+        <DialogContent sx={{ p: 0, overflow: 'auto', flex: 1 }}>
           {formik.errors.submit && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {formik.errors.submit}
-            </Alert>
+            <div className="px-6 pt-4">
+              <Alert severity="error" sx={{ borderRadius: '8px' }}>
+                {formik.errors.submit}
+              </Alert>
+            </div>
           )}
 
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            {/* Project Name */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Project Name *"
-                name="project_name"
-                value={formik.values.project_name}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.project_name && Boolean(formik.errors.project_name)}
-                helperText={formik.touched.project_name && formik.errors.project_name}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
+          <div className="p-6 space-y-4">
 
-            {/* Project Types - Multi-select */}
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small" error={formik.touched.project_type && Boolean(formik.errors.project_type)}>
-                <InputLabel>Project Types *</InputLabel>
-                <Select
-                  multiple
-                  name="project_type"
-                  value={formik.values.project_type}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  input={<OutlinedInput label="Project Types *" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const option = PROJECT_TYPE_OPTIONS.find(o => o.value === value);
-                        return <Chip key={value} label={option?.label || value} size="small" />;
+            {/* Basic Information Section */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              <SectionHeader
+                icon={<CategoryIcon fontSize="small" />}
+                title="Basic Information"
+                subtitle="Project name, type, and assignments"
+                isOpen={sectionsOpen.basic}
+                onToggle={() => toggleSection('basic')}
+              />
+              <Collapse in={sectionsOpen.basic}>
+                <div className="p-5 space-y-5 border-t border-gray-100">
+                  {/* Project Name */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">
+                      Project Name <span className="text-red-500">*</span>
+                    </label>
+                    <TextField
+                      fullWidth
+                      name="project_name"
+                      value={formik.values.project_name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      error={formik.touched.project_name && Boolean(formik.errors.project_name)}
+                      helperText={formik.touched.project_name && formik.errors.project_name}
+                      disabled={loading}
+                      size="small"
+                      placeholder="Enter project name"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'white',
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Project Types */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Project Types <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {PROJECT_TYPE_OPTIONS.map((option) => {
+                        const isSelected = formik.values.project_type.includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const newTypes = isSelected
+                                ? formik.values.project_type.filter(t => t !== option.value)
+                                : [...formik.values.project_type, option.value];
+                              formik.setFieldValue('project_type', newTypes);
+                            }}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-200 ${
+                              isSelected
+                                ? option.color + ' border-current shadow-sm scale-105'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
                       })}
-                    </Box>
-                  )}
-                  disabled={loading}
-                >
-                  {PROJECT_TYPE_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {formik.touched.project_type && formik.errors.project_type && (
-                  <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5, ml: 1.5 }}>
-                    {formik.errors.project_type}
-                  </Box>
-                )}
-              </FormControl>
-            </Grid>
+                    </div>
+                    {formik.touched.project_type && formik.errors.project_type && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {formik.errors.project_type}
+                      </p>
+                    )}
+                  </div>
 
-            {/* Status */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                select
-                label="Status *"
-                name="status"
-                value={formik.values.status}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.status && Boolean(formik.errors.status)}
-                helperText={formik.touched.status && formik.errors.status}
-                disabled={loading}
-                size="small"
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+                  {/* Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">
+                        Status <span className="text-red-500">*</span>
+                      </label>
+                      <TextField
+                        fullWidth
+                        select
+                        name="status"
+                        value={formik.values.status}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.status && Boolean(formik.errors.status)}
+                        helperText={formik.touched.status && formik.errors.status}
+                        disabled={loading}
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      >
+                        {STATUS_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </div>
 
-            {/* Client */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                select
-                label="Client *"
-                name="client"
-                value={formik.values.client}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.client && Boolean(formik.errors.client)}
-                helperText={formik.touched.client && formik.errors.client}
-                disabled={loading || loadingClients}
-                size="small"
-              >
-                {loadingClients ? (
-                  <MenuItem value="">Loading clients...</MenuItem>
-                ) : clients.length === 0 ? (
-                  <MenuItem value="">No clients available</MenuItem>
-                ) : (
-                  clients.map((client) => (
-                    <MenuItem key={client.id} value={client.id}>
-                      {client.name} {client.company_name ? `(${client.company_name})` : ''}
-                    </MenuItem>
-                  ))
-                )}
-              </TextField>
-            </Grid>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Sub-Status</label>
+                      <TextField
+                        fullWidth
+                        name="current_sub_status"
+                        value={formik.values.current_sub_status}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={loading}
+                        size="small"
+                        placeholder="e.g., Awaiting permits"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
 
-            {/* Due Date */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Due Date *"
-                name="due_date"
-                type="date"
-                value={formik.values.due_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.due_date && Boolean(formik.errors.due_date)}
-                helperText={formik.touched.due_date && formik.errors.due_date}
-                disabled={loading}
-                size="small"
-                InputLabelProps={{ shrink: true }}
+                  {/* Client & Architect */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">
+                        Client <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <Autocomplete
+                          fullWidth
+                          options={clients}
+                          value={selectedClient}
+                          onChange={(event, newValue) => {
+                            setSelectedClient(newValue);
+                            formik.setFieldValue('client', newValue?.id || '');
+                          }}
+                          filterOptions={(options, state) => {
+                            const input = sanitizeSearchInput(state.inputValue).toLowerCase();
+                            if (!input) return options;
+                            return options.filter(option =>
+                              option.name?.toLowerCase().includes(input) ||
+                              option.company_name?.toLowerCase().includes(input) ||
+                              option.contact_email?.toLowerCase().includes(input)
+                            );
+                          }}
+                          getOptionLabel={(option) => {
+                            if (!option) return '';
+                            return option.company_name
+                              ? `${option.name} (${option.company_name})`
+                              : option.name || '';
+                          }}
+                          isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                          loading={loadingClients}
+                          disabled={loading}
+                          noOptionsText={loadingClients ? "Loading..." : "No clients found - click + to add"}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              error={formik.touched.client && Boolean(formik.errors.client)}
+                              helperText={formik.touched.client && formik.errors.client}
+                              placeholder="Search clients..."
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '8px',
+                                  backgroundColor: 'white',
+                                }
+                              }}
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment: (
+                                  <>
+                                    <InputAdornment position="start">
+                                      <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                                    </InputAdornment>
+                                    {params.InputProps.startAdornment}
+                                  </>
+                                ),
+                                endAdornment: (
+                                  <>
+                                    {loadingClients && <CircularProgress color="inherit" size={18} />}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
+                            />
+                          )}
+                          renderOption={(props, option) => {
+                            const { key, ...otherProps } = props;
+                            return (
+                              <li key={option.id} {...otherProps}>
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium text-gray-900">{option.name}</span>
+                                  {option.company_name && (
+                                    <span className="text-xs text-gray-500">{option.company_name}</span>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          }}
+                        />
+                        <Tooltip title="Add new client">
+                          <IconButton
+                            onClick={() => setShowQuickAddClient(true)}
+                            disabled={loading}
+                            sx={{
+                              bgcolor: '#10b981',
+                              color: 'white',
+                              '&:hover': { bgcolor: '#059669' },
+                              height: 40,
+                              width: 40,
+                              flexShrink: 0,
+                              borderRadius: '8px',
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Architect / Designer</label>
+                      <div className="flex gap-2">
+                        <Autocomplete
+                          fullWidth
+                          options={architects}
+                          value={selectedArchitect}
+                          onChange={(event, newValue) => {
+                            setSelectedArchitect(newValue);
+                            formik.setFieldValue('architect_designer', newValue?.id || '');
+                          }}
+                          filterOptions={(options, state) => {
+                            const input = sanitizeSearchInput(state.inputValue).toLowerCase();
+                            if (!input) return options;
+                            return options.filter(option =>
+                              option.name?.toLowerCase().includes(input) ||
+                              option.company_name?.toLowerCase().includes(input) ||
+                              option.contact_email?.toLowerCase().includes(input)
+                            );
+                          }}
+                          getOptionLabel={(option) => {
+                            if (!option) return '';
+                            return option.company_name
+                              ? `${option.name} (${option.company_name})`
+                              : option.name || '';
+                          }}
+                          isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                          loading={loadingArchitects}
+                          disabled={loading}
+                          noOptionsText={loadingArchitects ? "Loading..." : "No architects found - click + to add"}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              placeholder="Search architects..."
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '8px',
+                                  backgroundColor: 'white',
+                                }
+                              }}
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment: (
+                                  <>
+                                    <InputAdornment position="start">
+                                      <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                                    </InputAdornment>
+                                    {params.InputProps.startAdornment}
+                                  </>
+                                ),
+                                endAdornment: (
+                                  <>
+                                    {loadingArchitects && <CircularProgress color="inherit" size={18} />}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
+                            />
+                          )}
+                          renderOption={(props, option) => {
+                            const { key, ...otherProps } = props;
+                            return (
+                              <li key={option.id} {...otherProps}>
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium text-gray-900">{option.name}</span>
+                                  {option.company_name && (
+                                    <span className="text-xs text-gray-500">{option.company_name}</span>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          }}
+                        />
+                        <Tooltip title="Add new architect">
+                          <IconButton
+                            onClick={() => setShowQuickAddArchitect(true)}
+                            disabled={loading}
+                            sx={{
+                              bgcolor: '#8b5cf6',
+                              color: 'white',
+                              '&:hover': { bgcolor: '#7c3aed' },
+                              height: 40,
+                              width: 40,
+                              flexShrink: 0,
+                              borderRadius: '8px',
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Collapse>
+            </div>
+
+            {/* Location Section */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              <SectionHeader
+                icon={<LocationIcon fontSize="small" />}
+                title="Location"
+                subtitle="Project and legal addresses"
+                isOpen={sectionsOpen.location}
+                onToggle={() => toggleSection('location')}
+                bgColor="bg-green-50"
+                iconColor="text-green-600"
               />
-            </Grid>
+              <Collapse in={sectionsOpen.location}>
+                <div className="p-5 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">
+                      Project Address <span className="text-red-500">*</span>
+                    </label>
+                    <TextField
+                      fullWidth
+                      name="address"
+                      multiline
+                      rows={2}
+                      value={formik.values.address}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      error={formik.touched.address && Boolean(formik.errors.address)}
+                      helperText={formik.touched.address && formik.errors.address}
+                      disabled={loading}
+                      size="small"
+                      placeholder="Enter the project address"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'white',
+                        }
+                      }}
+                    />
+                  </div>
 
-            {/* Address */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address *"
-                name="address"
-                multiline
-                rows={2}
-                value={formik.values.address}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.address && Boolean(formik.errors.address)}
-                helperText={formik.touched.address && formik.errors.address}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Legal Address</label>
+                    <TextField
+                      fullWidth
+                      name="legal_address"
+                      value={formik.values.legal_address}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      disabled={loading}
+                      size="small"
+                      placeholder="Parcel no, Block no, Lot no"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'white',
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </Collapse>
+            </div>
 
-            {/* Legal Address */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Legal Address (Parcel no, Block no, Lot no)"
-                name="legal_address"
-                value={formik.values.legal_address}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
+            {/* Timeline Section */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              <SectionHeader
+                icon={<CalendarIcon fontSize="small" />}
+                title="Timeline"
+                subtitle="Important dates and deadlines"
+                isOpen={sectionsOpen.timeline}
+                onToggle={() => toggleSection('timeline')}
+                bgColor="bg-orange-50"
+                iconColor="text-orange-600"
               />
-            </Grid>
+              <Collapse in={sectionsOpen.timeline}>
+                <div className="p-5 space-y-4 border-t border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">
+                        Due Date <span className="text-red-500">*</span>
+                      </label>
+                      <TextField
+                        fullWidth
+                        name="due_date"
+                        type="date"
+                        value={formik.values.due_date}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.due_date && Boolean(formik.errors.due_date)}
+                        helperText={formik.touched.due_date && formik.errors.due_date}
+                        disabled={loading}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Rough-in Date</label>
+                      <TextField
+                        fullWidth
+                        name="rough_in_date"
+                        type="date"
+                        value={formik.values.rough_in_date}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={loading}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Final Inspection</label>
+                      <TextField
+                        fullWidth
+                        name="final_inspection_date"
+                        type="date"
+                        value={formik.values.final_inspection_date}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={loading}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
 
-            {/* Rough-in Date */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Rough-in Date"
-                name="rough_in_date"
-                type="date"
-                value={formik.values.rough_in_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Due Date Notes</label>
+                    <TextField
+                      fullWidth
+                      name="due_date_note"
+                      multiline
+                      rows={2}
+                      value={formik.values.due_date_note}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      disabled={loading}
+                      size="small"
+                      placeholder="Any notes about the timeline..."
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'white',
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </Collapse>
+            </div>
 
-            {/* Final Inspection Date */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Final Inspection Date"
-                name="final_inspection_date"
-                type="date"
-                value={formik.values.final_inspection_date}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-                InputLabelProps={{ shrink: true }}
+            {/* Action Items Section */}
+            <div className="bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden">
+              <SectionHeader
+                icon={<AssignmentIcon fontSize="small" />}
+                title="Action Items & Notes"
+                subtitle="Track open items and action items"
+                isOpen={sectionsOpen.details}
+                onToggle={() => toggleSection('details')}
+                bgColor="bg-indigo-100"
+                iconColor="text-indigo-600"
+                optional
               />
-            </Grid>
+              <Collapse in={sectionsOpen.details}>
+                <div className="p-5 space-y-4 border-t border-indigo-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Open Items</label>
+                      <TextField
+                        fullWidth
+                        name="current_open_items"
+                        multiline
+                        rows={3}
+                        value={formik.values.current_open_items}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={loading}
+                        size="small"
+                        placeholder="List any open items..."
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
 
-            {/* Sub Status */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Current Sub-Status"
-                name="current_sub_status"
-                value={formik.values.current_sub_status}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Action Items</label>
+                      <TextField
+                        fullWidth
+                        name="current_action_items"
+                        multiline
+                        rows={3}
+                        value={formik.values.current_action_items}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={loading}
+                        size="small"
+                        placeholder="List action items..."
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Collapse>
+            </div>
 
-            {/* Open Items */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Current Open Items"
-                name="current_open_items"
-                multiline
-                rows={2}
-                value={formik.values.current_open_items}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
+            {/* Billing Section */}
+            <div className="bg-amber-50 rounded-xl border border-amber-100 overflow-hidden">
+              <SectionHeader
+                icon={<MoneyIcon fontSize="small" />}
+                title="Billing Information"
+                subtitle="Payment terms and billing details"
+                isOpen={sectionsOpen.billing}
+                onToggle={() => toggleSection('billing')}
+                bgColor="bg-amber-100"
+                iconColor="text-amber-600"
+                optional
               />
-            </Grid>
+              <Collapse in={sectionsOpen.billing}>
+                <div className="p-5 border-t border-amber-100">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Billing Information</label>
+                    <TextField
+                      fullWidth
+                      name="billing_info"
+                      multiline
+                      rows={3}
+                      value={formik.values.billing_info}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      disabled={loading}
+                      size="small"
+                      placeholder="Payment terms, billing address, etc."
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'white',
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </Collapse>
+            </div>
 
-            {/* Action Items */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Current Action Items"
-                name="current_action_items"
-                multiline
-                rows={2}
-                value={formik.values.current_action_items}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
-
-            {/* Due Date Note */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Due Date Notes"
-                name="due_date_note"
-                multiline
-                rows={2}
-                value={formik.values.due_date_note}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
-
-            {/* Billing Info */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Billing Information"
-                name="billing_info"
-                multiline
-                rows={2}
-                value={formik.values.billing_info}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={loading}
-                size="small"
-              />
-            </Grid>
-          </Grid>
+          </div>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !formik.isValid}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
-            sx={{
-              bgcolor: '#2563eb',
-              '&:hover': { bgcolor: '#1d4ed8' }
-            }}
-          >
-            {loading ? 'Saving...' : editMode ? 'Update Project' : 'Create Project'}
-          </Button>
-        </DialogActions>
+        {/* Footer Actions */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            <span className="text-red-500">*</span> Required fields
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !formik.isValid}
+              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            >
+              {loading ? (
+                <>
+                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>{editMode ? 'Update Project' : 'Create Project'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </form>
+
+      {/* Quick Add Client Modal */}
+      <QuickAddClientModal
+        open={showQuickAddClient}
+        onClose={() => setShowQuickAddClient(false)}
+        onSuccess={handleQuickAddClientSuccess}
+      />
+
+      {/* Quick Add Architect Modal */}
+      <QuickAddArchitectModal
+        open={showQuickAddArchitect}
+        onClose={() => setShowQuickAddArchitect(false)}
+        onSuccess={handleQuickAddArchitectSuccess}
+      />
     </Dialog>
   );
 };

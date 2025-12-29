@@ -12,6 +12,7 @@ import Projects from './pages/Projects/Projects';
 import Communication from './pages/Communication/Communication';
 import Activity from './pages/Activity/Activity';
 import Architects from './pages/Architects/Architects';
+import Settings from './pages/Settings/Settings';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -81,6 +82,7 @@ const AppRouter = () => {
         <Route path="communication" element={<Communication />} />
         <Route path="activity" element={<Activity />} />
         <Route path="architects" element={<Architects />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Default redirect - Remove this duplicate route */}

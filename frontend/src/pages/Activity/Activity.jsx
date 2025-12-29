@@ -38,6 +38,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 // Action type options for filter
 const ACTION_TYPES = [
   { value: '', label: 'All Actions' },
+  // Project actions
   { value: 'status_change', label: 'Status Change' },
   { value: 'note_added', label: 'Note Added' },
   { value: 'field_updated', label: 'Field Updated' },
@@ -48,28 +49,58 @@ const ACTION_TYPES = [
   { value: 'client_changed', label: 'Client Changed' },
   { value: 'architect_changed', label: 'Architect Changed' },
   { value: 'manager_changed', label: 'Manager Changed' },
+  // Client actions
+  { value: 'client_created', label: 'Client Created' },
+  { value: 'client_updated', label: 'Client Updated' },
+  { value: 'client_archived', label: 'Client Archived' },
+  { value: 'client_restored', label: 'Client Restored' },
+  // Architect actions
+  { value: 'architect_created', label: 'Architect Created' },
+  { value: 'architect_updated', label: 'Architect Updated' },
+  { value: 'architect_deactivated', label: 'Architect Deactivated' },
+  { value: 'architect_activated', label: 'Architect Activated' },
 ];
 
 // Action type configuration for display
 const ACTION_CONFIG = {
+  // Project actions
   status_change: { label: 'Status Change', color: '#3b82f6', bgColor: '#dbeafe', Icon: SyncIcon },
   note_added: { label: 'Note Added', color: '#22c55e', bgColor: '#dcfce7', Icon: NoteAddIcon },
   field_updated: { label: 'Field Updated', color: '#eab308', bgColor: '#fef9c3', Icon: EditIconMui },
   inspection_scheduled: { label: 'Inspection', color: '#a855f7', bgColor: '#f3e8ff', Icon: EventIcon },
   due_date_changed: { label: 'Due Date', color: '#f97316', bgColor: '#ffedd5', Icon: ScheduleIcon },
-  project_created: { label: 'Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
-  project_updated: { label: 'Updated', color: '#6366f1', bgColor: '#e0e7ff', Icon: UpdateIcon },
-  client_changed: { label: 'Client', color: '#ec4899', bgColor: '#fce7f3', Icon: PeopleIcon },
-  architect_changed: { label: 'Architect', color: '#06b6d4', bgColor: '#cffafe', Icon: ArchitectureIcon },
-  manager_changed: { label: 'Manager', color: '#f43f5e', bgColor: '#ffe4e6', Icon: ManageAccountsIcon },
+  project_created: { label: 'Project Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
+  project_updated: { label: 'Project Updated', color: '#6366f1', bgColor: '#e0e7ff', Icon: UpdateIcon },
+  client_changed: { label: 'Client Changed', color: '#ec4899', bgColor: '#fce7f3', Icon: PeopleIcon },
+  architect_changed: { label: 'Architect Changed', color: '#06b6d4', bgColor: '#cffafe', Icon: ArchitectureIcon },
+  manager_changed: { label: 'Manager Changed', color: '#f43f5e', bgColor: '#ffe4e6', Icon: ManageAccountsIcon },
+  // Client actions
+  client_created: { label: 'Client Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
+  client_updated: { label: 'Client Updated', color: '#ec4899', bgColor: '#fce7f3', Icon: EditIconMui },
+  client_archived: { label: 'Client Archived', color: '#6b7280', bgColor: '#f3f4f6', Icon: PeopleIcon },
+  client_restored: { label: 'Client Restored', color: '#22c55e', bgColor: '#dcfce7', Icon: PeopleIcon },
+  // Architect actions
+  architect_created: { label: 'Architect Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
+  architect_updated: { label: 'Architect Updated', color: '#8b5cf6', bgColor: '#ede9fe', Icon: EditIconMui },
+  architect_deactivated: { label: 'Architect Deactivated', color: '#6b7280', bgColor: '#f3f4f6', Icon: ArchitectureIcon },
+  architect_activated: { label: 'Architect Activated', color: '#22c55e', bgColor: '#dcfce7', Icon: ArchitectureIcon },
 };
 
-// View mode options
+// View mode options (client and architect only visible to admin/manager)
 const VIEW_MODES = [
   { value: 'all', label: 'All Activity' },
   { value: 'my', label: 'My Activity' },
   { value: 'project', label: 'Project Activity' },
+  { value: 'client', label: 'Client Activity', adminOnly: true },
+  { value: 'architect', label: 'Architect Activity', adminOnly: true },
 ];
+
+// Entity type configuration for display
+const ENTITY_CONFIG = {
+  project: { label: 'Project', color: '#3b82f6', bgColor: '#dbeafe' },
+  client: { label: 'Client', color: '#ec4899', bgColor: '#fce7f3' },
+  architect: { label: 'Architect', color: '#8b5cf6', bgColor: '#ede9fe' },
+};
 
 // Cell Renderer Components
 const ActionTypeCellRenderer = (props) => {
@@ -147,23 +178,65 @@ const TimestampCellRenderer = (props) => {
   );
 };
 
-const ProjectCellRenderer = (props) => {
-  const { data } = props;
-  const projectName = data?.project_name;
-  const jobNumber = data?.project_job_number;
+const EntityTypeCellRenderer = (props) => {
+  const { value } = props;
+  const config = ENTITY_CONFIG[value] || { label: value || 'Unknown', color: '#6b7280', bgColor: '#f3f4f6' };
 
-  if (!projectName && !jobNumber) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          margin: '6px 0',
+          padding: '4px 8px',
+          borderRadius: '12px',
+          backgroundColor: config.bgColor,
+          color: config.color,
+          fontSize: '11px',
+          fontWeight: 500,
+          height: 'fit-content',
+          maxHeight: '24px',
+        }}
+      >
+        {config.label}
+      </span>
+    </div>
+  );
+};
+
+const EntityCellRenderer = (props) => {
+  const { data } = props;
+  const entityType = data?.entity_type;
+
+  // Get entity name based on type
+  let entityName = data?.entity_display_name;
+  let secondaryInfo = null;
+
+  if (entityType === 'project') {
+    entityName = data?.project_name || entityName;
+    secondaryInfo = data?.project_job_number;
+  } else if (entityType === 'client') {
+    entityName = data?.client_name || entityName;
+    secondaryInfo = data?.client_company;
+  } else if (entityType === 'architect') {
+    entityName = data?.architect_name || entityName;
+    secondaryInfo = data?.architect_company;
+  }
+
+  if (!entityName) {
     return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>-</span>;
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {projectName || 'Unknown Project'}
+        {entityName}
       </span>
-      {jobNumber && (
-        <span style={{ color: '#6b7280', fontSize: '11px', fontFamily: 'monospace' }}>
-          {jobNumber}
+      {secondaryInfo && (
+        <span style={{ color: '#6b7280', fontSize: '11px', fontFamily: entityType === 'project' ? 'monospace' : 'inherit' }}>
+          {secondaryInfo}
         </span>
       )}
     </div>
@@ -238,11 +311,15 @@ const Activity = () => {
     activityLogs,
     myActivity,
     projectActivity,
+    clientActivity,
+    architectActivity,
     loading,
     error,
     fetchActivityLogs,
     fetchMyActivity,
     fetchProjectActivity,
+    fetchClientActivity,
+    fetchArchitectActivity,
   } = useActivityStore();
 
   // Filter states
@@ -252,6 +329,11 @@ const Activity = () => {
   const [dateTo, setDateTo] = useState('');
 
   const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
+
+  // Filter view modes based on role
+  const availableViewModes = useMemo(() => {
+    return VIEW_MODES.filter(mode => !mode.adminOnly || isAdminOrManager);
+  }, [isAdminOrManager]);
 
   // Load activity data based on view mode
   const loadActivityData = useCallback(async () => {
@@ -264,12 +346,18 @@ const Activity = () => {
       case 'project':
         await fetchProjectActivity(params);
         break;
+      case 'client':
+        await fetchClientActivity(params);
+        break;
+      case 'architect':
+        await fetchArchitectActivity(params);
+        break;
       case 'all':
       default:
         await fetchActivityLogs(params);
         break;
     }
-  }, [viewMode, fetchActivityLogs, fetchMyActivity, fetchProjectActivity]);
+  }, [viewMode, fetchActivityLogs, fetchMyActivity, fetchProjectActivity, fetchClientActivity, fetchArchitectActivity]);
 
   useEffect(() => {
     loadActivityData();
@@ -282,44 +370,48 @@ const Activity = () => {
         return myActivity || [];
       case 'project':
         return projectActivity || [];
+      case 'client':
+        return clientActivity || [];
+      case 'architect':
+        return architectActivity || [];
       case 'all':
       default:
         return activityLogs || [];
     }
-  }, [viewMode, myActivity, projectActivity, activityLogs]);
+  }, [viewMode, myActivity, projectActivity, clientActivity, architectActivity, activityLogs]);
 
   // Column definitions
   const columnDefs = useMemo(() => [
     {
       field: 'timestamp',
       headerName: 'Time',
-      width: 150,
+      width: 130,
       sort: 'desc',
       cellRenderer: TimestampCellRenderer,
     },
     {
+      field: 'entity_type',
+      headerName: 'Type',
+      width: 100,
+      cellRenderer: EntityTypeCellRenderer,
+    },
+    {
       field: 'action_type',
       headerName: 'Action',
-      width: 160,
+      width: 170,
       cellRenderer: ActionTypeCellRenderer,
+    },
+    {
+      field: 'entity_display_name',
+      headerName: 'Entity',
+      width: 180,
+      cellRenderer: EntityCellRenderer,
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 2,
       minWidth: 200,
-    },
-    {
-      field: 'project_name',
-      headerName: 'Project',
-      width: 180,
-      cellRenderer: ProjectCellRenderer,
-    },
-    {
-      field: 'project_job_number',
-      headerName: 'Job #',
-      width: 110,
-      cellStyle: { fontFamily: 'monospace', fontWeight: '500' },
     },
     {
       field: 'user_name',
@@ -436,10 +528,10 @@ const Activity = () => {
               size="small"
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value)}
-              sx={{ minWidth: 140 }}
+              sx={{ minWidth: 160 }}
               label="View"
             >
-              {VIEW_MODES.map((mode) => (
+              {availableViewModes.map((mode) => (
                 <MenuItem key={mode.value} value={mode.value}>
                   {mode.label}
                 </MenuItem>

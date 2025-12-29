@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
@@ -15,7 +15,8 @@ import { useProjectColumnDefs } from '../../hooks/useProjectColumnDefs';
 // Register all community modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const ProjectsGrid = ({ projects, loading }) => {
+const ProjectsGrid = forwardRef(({ projects, loading, onFilterChanged }, ref) => {
+  const gridRef = useRef(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [formData, setFormData] = useState({});
@@ -25,6 +26,30 @@ const ProjectsGrid = ({ projects, loading }) => {
   const [saveStatus, setSaveStatus] = useState({ show: false, success: false, message: '' });
 
   const { updateProjectField } = useProjectStore();
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    clearAllFilters: () => {
+      if (gridRef.current?.api) {
+        gridRef.current.api.setFilterModel(null);
+      }
+    },
+    getFilterModel: () => {
+      if (gridRef.current?.api) {
+        return gridRef.current.api.getFilterModel();
+      }
+      return null;
+    }
+  }));
+
+  // Handle filter changes
+  const handleFilterChanged = useCallback(() => {
+    if (gridRef.current?.api) {
+      const filterModel = gridRef.current.api.getFilterModel();
+      const hasFilters = filterModel && Object.keys(filterModel).length > 0;
+      onFilterChanged?.(hasFilters);
+    }
+  }, [onFilterChanged]);
 
   // Get column definitions from hook
   const columnDefs = useProjectColumnDefs();
@@ -127,6 +152,7 @@ const ProjectsGrid = ({ projects, loading }) => {
       <div className={`${selectedProject ? 'w-1/3' : 'w-full'}`}>
         <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
           <AgGridReact
+            ref={gridRef}
             rowData={projects}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
@@ -142,6 +168,7 @@ const ProjectsGrid = ({ projects, loading }) => {
             onRowClicked={handleRowClick}
             onRowMouseEnter={handleRowMouseEnter}
             onRowMouseLeave={handleRowMouseLeave}
+            onFilterChanged={handleFilterChanged}
             loadingOverlayComponent={() => (
               <div className="flex justify-center items-center h-32">
                 <div className="text-gray-600">Loading projects...</div>
@@ -179,6 +206,8 @@ const ProjectsGrid = ({ projects, loading }) => {
       `}</style>
     </div>
   );
-};
+});
+
+ProjectsGrid.displayName = 'ProjectsGrid';
 
 export default ProjectsGrid;
