@@ -125,20 +125,20 @@ const Projects = () => {
     <div className="space-y-6">
       {/* Debug Information - Keep your existing debug panel */}
       {debugInfo && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
           {/* Your existing debug content */}
         </div>
       )}
 
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
               <button
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all duration-200"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200"
               >
                 <FilterListOffIcon fontSize="small" />
                 Clear Filters
@@ -162,13 +162,13 @@ const Projects = () => {
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
           {error}
         </div>
       )}
 
       {/* AG Grid Component */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <ProjectsGrid
           ref={gridRef}
           projects={projects}
@@ -181,25 +181,25 @@ const Projects = () => {
       {/* Quick Stats */}
       {projects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-sm font-medium text-gray-600">Total Projects</div>
-            <div className="text-2xl font-bold text-gray-900">{projects.length}</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Projects</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{projects.length}</div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-sm font-medium text-gray-600">In Progress</div>
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {projects.filter(p => p.status === 'in_progress').length}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-sm font-medium text-gray-600">Overdue</div>
-            <div className="text-2xl font-bold text-red-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               {projects.filter(p => p.days_until_due < 0).length}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-sm font-medium text-gray-600">Completed</div>
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {projects.filter(p => p.status === 'completed').length}
             </div>
           </div>

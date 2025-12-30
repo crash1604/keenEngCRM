@@ -3,9 +3,6 @@ import { observer } from 'mobx-react-lite';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import {
-  Box,
-  Typography,
-  Paper,
   Button,
   Chip,
   Dialog,
@@ -13,6 +10,8 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  Typography,
+  Paper,
 } from '@mui/material';
 import { Refresh as RefreshIcon } from '@mui/icons-material';
 
@@ -164,22 +163,22 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
   }
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2.5}>
-        <Box>
-          <Typography variant="h6" fontWeight="bold" color="text.primary">
+      <div className="flex justify-between items-center mb-5">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             Email History
-          </Typography>
-          <Box display="flex" gap={2} mt={0.5} alignItems="center">
-            <Typography variant="body2" color="text.secondary">
+          </h3>
+          <div className="flex gap-4 mt-1 items-center">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               {communicationStore.totalCount} email{communicationStore.totalCount !== 1 ? 's' : ''} sent
-            </Typography>
+            </span>
             {communicationStore.loading && (
               <Chip label="Refreshing..." size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         <Button
           variant="outlined"
@@ -191,19 +190,12 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
         >
           Refresh
         </Button>
-      </Box>
+      </div>
 
       {/* AG Grid */}
-      <Box
-        sx={{
-          height: 550,
-          width: '100%',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1.5,
-          overflow: 'hidden',
-        }}
-        className="ag-theme-quartz"
+      <div
+        className="ag-theme-quartz dark:ag-theme-quartz-dark border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+        style={{ height: 550, width: '100%' }}
       >
         <AgGridReact
           rowData={communicationStore.emailLogs}
@@ -226,13 +218,13 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
             </div>
           )}
           noRowsOverlayComponent={() => (
-            <div className="flex flex-col justify-center items-center h-32 text-gray-500">
-              <Typography variant="h6">No emails found</Typography>
-              <Typography variant="body2">Start sending emails to see them here</Typography>
+            <div className="flex flex-col justify-center items-center h-32 text-gray-500 dark:text-gray-400">
+              <p className="text-lg font-medium">No emails found</p>
+              <p className="text-sm">Start sending emails to see them here</p>
             </div>
           )}
         />
-      </Box>
+      </div>
 
       {/* Email Details Dialog */}
       <Dialog
@@ -365,7 +357,7 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 });
 

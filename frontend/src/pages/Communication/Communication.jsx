@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
-  Box,
-  Paper,
   Tabs,
   Tab,
-  Typography,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -23,7 +20,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`communication-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>}
+      {value === index && <div className="p-4 sm:p-6">{children}</div>}
     </div>
   );
 }
@@ -90,40 +87,19 @@ const Communication = observer(() => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+    <div className="space-y-6">
       {/* Header */}
-      <Box
-        sx={{
-          mb: 3,
-          pb: 2,
-          borderBottom: '1px solid',
-          borderColor: 'divider'
-        }}
-      >
-        <Typography
-          variant="h5"
-          component="h1"
-          fontWeight={700}
-          color="text.primary"
-          gutterBottom
-        >
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Communication Center
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Manage email templates, send emails to clients, and view communication history
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Paper
-        elevation={0}
-        sx={{
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 2,
-          overflow: 'hidden'
-        }}
-      >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#f8fafc' }}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -135,9 +111,10 @@ const Communication = observer(() => {
                 fontWeight: 600,
                 fontSize: '0.9rem',
                 py: 1.5,
+                color: 'rgb(107, 114, 128)',
               },
               '& .Mui-selected': {
-                color: '#2563eb',
+                color: '#2563eb !important',
               },
               '& .MuiTabs-indicator': {
                 backgroundColor: '#2563eb',
@@ -149,7 +126,7 @@ const Communication = observer(() => {
             <Tab label="Compose Email" id="communication-tab-1" />
             <Tab label="Email Templates" id="communication-tab-2" />
           </Tabs>
-        </Box>
+        </div>
 
         <TabPanel value={activeTab} index={0}>
           <EmailHistory onShowSnackbar={handleShowSnackbar} />
@@ -165,7 +142,7 @@ const Communication = observer(() => {
         <TabPanel value={activeTab} index={2}>
           <EmailTemplates onShowSnackbar={handleShowSnackbar} />
         </TabPanel>
-      </Paper>
+      </div>
 
       {/* Snackbar for notifications */}
       <Snackbar
@@ -183,7 +160,7 @@ const Communication = observer(() => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </div>
   );
 });
 

@@ -239,18 +239,18 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Welcome back, {user?.first_name} {user?.last_name}!
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Here's what's happening with your projects today. You're doing great as a{' '}
-          <span className="font-semibold text-blue-600">
+          <span className="font-semibold text-blue-600 dark:text-blue-400">
             {capitalizeFirst(user?.role)}
           </span>
           !
         </p>
-        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <span>Member since: {formatDate(user?.date_joined || user?.created_at)}</span>
           <span>•</span>
           <span>Email: {user?.email}</span>
@@ -259,54 +259,54 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center">
             <div className="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">P</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_projects || 0}</p>
-              <p className="text-xs text-gray-500">All projects</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Projects</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardStats?.total_projects || 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">All projects</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center">
             <div className="bg-red-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">O</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Overdue</p>
-              <p className="text-2xl font-bold text-gray-900">{dashboardStats?.overdue_projects || 0}</p>
-              <p className="text-xs text-gray-500">Need attention</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardStats?.overdue_projects || 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Need attention</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center">
             <div className="bg-yellow-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">D</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Due Soon</p>
-              <p className="text-2xl font-bold text-gray-900">{dashboardStats?.due_soon_projects || 0}</p>
-              <p className="text-xs text-gray-500">Next 7 days</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Due Soon</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardStats?.due_soon_projects || 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Next 7 days</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center">
             <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">C</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{dashboardStats?.completed_this_month || 0}</p>
-              <p className="text-xs text-gray-500">This month</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardStats?.completed_this_month || 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">This month</p>
             </div>
           </div>
         </div>
@@ -314,8 +314,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Project Status Breakdown with Pie Chart */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Project Status</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Project Status</h2>
           {pieChartData.length > 0 ? (
             <div style={{ width: '100%', height: 280, minWidth: 200 }}>
               <ResponsiveContainer width="100%" height={280}>
@@ -341,16 +341,16 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">No project data available</p>
+              <p className="text-gray-500 dark:text-gray-400">No project data available</p>
             </div>
           )}
         </div>
 
         {/* Recent Activities with AG Grid */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Activities</h2>
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activities</h2>
+            <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
               {user?.role === 'admin' || user?.role === 'manager' ? 'All Activities' : 'My Activities'}
             </span>
           </div>
@@ -360,7 +360,7 @@ const Dashboard = () => {
               <LoadingSpinner size="sm" text="Loading activities..." />
             </div>
           ) : activityRowData.length > 0 ? (
-            <div className="ag-theme-quartz" style={{ height: 400, width: '100%' }}>
+            <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 400, width: '100%' }}>
               <AgGridReact
                 rowData={activityRowData}
                 columnDefs={columnDefs}
@@ -378,8 +378,8 @@ const Dashboard = () => {
           ) : (
             <div className="text-center py-8">
               <InboxIcon style={{ fontSize: 48, color: '#9ca3af', marginBottom: 8 }} />
-              <p className="text-gray-500">No recent activities</p>
-              <p className="text-sm text-gray-400 mt-1">Activities will appear here as they happen</p>
+              <p className="text-gray-500 dark:text-gray-400">No recent activities</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Activities will appear here as they happen</p>
             </div>
           )}
         </div>
@@ -387,14 +387,14 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Overdue Projects */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Overdue Projects</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Overdue Projects</h2>
           {overdueProjects.length > 0 ? (
             <div className="space-y-3">
               {overdueProjects.slice(0, 5).map(project => (
-                <div key={project.id} className="border-l-4 border-red-500 pl-4 py-2 hover:bg-gray-50 rounded-r-lg">
-                  <h4 className="font-medium text-gray-900">{project.project_name}</h4>
-                  <p className="text-sm text-gray-600">Job #: {project.job_number}</p>
+                <div key={project.id} className="border-l-4 border-red-500 pl-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-r-lg">
+                  <h4 className="font-medium text-gray-900 dark:text-white">{project.project_name}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Job #: {project.job_number}</p>
                   <p className="text-xs text-red-500">
                     Due: {new Date(project.due_date).toLocaleDateString()}
                   </p>
@@ -404,20 +404,20 @@ const Dashboard = () => {
           ) : (
             <div className="text-center py-4">
               <CheckCircleIcon style={{ fontSize: 32, color: '#22c55e', marginBottom: 4 }} />
-              <p className="text-gray-500">No overdue projects</p>
+              <p className="text-gray-500 dark:text-gray-400">No overdue projects</p>
             </div>
           )}
         </div>
 
         {/* Upcoming Inspections */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Upcoming Inspections</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Upcoming Inspections</h2>
           {upcomingInspections.length > 0 ? (
             <div className="space-y-3">
               {upcomingInspections.slice(0, 5).map(project => (
-                <div key={project.id} className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 rounded-r-lg">
-                  <h4 className="font-medium text-gray-900">{project.project_name}</h4>
-                  <p className="text-sm text-gray-600">
+                <div key={project.id} className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-r-lg">
+                  <h4 className="font-medium text-gray-900 dark:text-white">{project.project_name}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {project.rough_in_date && (
                       <span>Rough-in: {new Date(project.rough_in_date).toLocaleDateString()}</span>
                     )}
@@ -431,47 +431,47 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-4">No upcoming inspections</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No upcoming inspections</p>
           )}
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button 
-            className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 text-left group"
+          <button
+            className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors duration-150 text-left group"
             onClick={() => window.location.href = '/projects'}
           >
-            <div className="text-blue-600 font-semibold group-hover:text-blue-700">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold group-hover:text-blue-700 dark:group-hover:text-blue-300">
               View Projects
             </div>
-            <div className="text-sm text-blue-500 mt-1">Manage all projects</div>
+            <div className="text-sm text-blue-500 dark:text-blue-500 mt-1">Manage all projects</div>
           </button>
 
-          <button className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-150 text-left group">
-            <div className="text-green-600 font-semibold group-hover:text-green-700">
+          <button className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors duration-150 text-left group">
+            <div className="text-green-600 dark:text-green-400 font-semibold group-hover:text-green-700 dark:group-hover:text-green-300">
               Create Project
             </div>
-            <div className="text-sm text-green-500 mt-1">Start new project</div>
+            <div className="text-sm text-green-500 dark:text-green-500 mt-1">Start new project</div>
           </button>
 
-          <button 
-            className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors duration-150 text-left group"
+          <button
+            className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors duration-150 text-left group"
             onClick={() => window.location.href = '/clients'}
           >
-            <div className="text-purple-600 font-semibold group-hover:text-purple-700">
+            <div className="text-purple-600 dark:text-purple-400 font-semibold group-hover:text-purple-700 dark:group-hover:text-purple-300">
               Clients
             </div>
-            <div className="text-sm text-purple-500 mt-1">Manage clients</div>
+            <div className="text-sm text-purple-500 dark:text-purple-500 mt-1">Manage clients</div>
           </button>
 
-          <button className="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-150 text-left group">
-            <div className="text-orange-600 font-semibold group-hover:text-orange-700">
+          <button className="p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors duration-150 text-left group">
+            <div className="text-orange-600 dark:text-orange-400 font-semibold group-hover:text-orange-700 dark:group-hover:text-orange-300">
               Reports
             </div>
-            <div className="text-sm text-orange-500 mt-1">View analytics</div>
+            <div className="text-sm text-orange-500 dark:text-orange-500 mt-1">View analytics</div>
           </button>
         </div>
       </div>

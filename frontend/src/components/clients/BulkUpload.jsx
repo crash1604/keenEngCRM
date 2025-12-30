@@ -29,7 +29,7 @@ import {
   Close as CloseIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { clientStore } from '../../stores/client.store';
 
 const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
@@ -43,24 +43,51 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
 
   const steps = ['Upload File', 'Validate Data', 'Review & Confirm', 'Complete'];
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     setFile(file);
-    const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const arrayBuffer = await file.arrayBuffer();
+      await workbook.xlsx.load(arrayBuffer);
+
+      const worksheet = workbook.worksheets[0];
+      const jsonData = [];
+
+      // Get headers from first row
+      const headers = [];
+      worksheet.getRow(1).eachCell((cell, colNumber) => {
+        headers[colNumber] = cell.value?.toString().toLowerCase().replace(/\s+/g, '_') || `col_${colNumber}`;
+      });
+
+      // Convert rows to objects
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // Skip header row
+
+        const rowData = {};
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber];
+          if (header) {
+            rowData[header] = cell.value;
+          }
+        });
+
+        if (Object.keys(rowData).length > 0) {
+          jsonData.push(rowData);
+        }
+      });
+
       setData(jsonData);
       validateData(jsonData);
-    };
-
-    reader.readAsArrayBuffer(file);
-    setActiveStep(1);
+      setActiveStep(1);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      setValidationErrors(['Failed to read file. Please ensure it is a valid Excel file.']);
+      setActiveStep(1);
+    }
   };
 
   const validateData = (data) => {
@@ -138,25 +165,51 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
     onClose();
   };
 
-  const downloadTemplate = () => {
-    const template = [
-      {
-        name: 'John Doe',
-        company_name: 'Example Corp',
-        contact_email: 'john@example.com',
-        phone: '+1 (555) 123-4567',
-        address: '123 Main St, City',
-        contact_person: 'Jane Smith',
-        billing_address: '123 Main St, City',
-        notes: 'Important client',
-      },
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Template');
+
+    // Add headers
+    worksheet.columns = [
+      { header: 'Name', key: 'name', width: 20 },
+      { header: 'Company Name', key: 'company_name', width: 20 },
+      { header: 'Contact Email', key: 'contact_email', width: 25 },
+      { header: 'Phone', key: 'phone', width: 18 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'Contact Person', key: 'contact_person', width: 20 },
+      { header: 'Billing Address', key: 'billing_address', width: 30 },
+      { header: 'Notes', key: 'notes', width: 25 },
     ];
 
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    
-    XLSX.writeFile(workbook, 'client_upload_template.xlsx');
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' },
+    };
+
+    // Add example row
+    worksheet.addRow({
+      name: 'John Doe',
+      company_name: 'Example Corp',
+      contact_email: 'john@example.com',
+      phone: '+1 (555) 123-4567',
+      address: '123 Main St, City',
+      contact_person: 'Jane Smith',
+      billing_address: '123 Main St, City',
+      notes: 'Important client',
+    });
+
+    // Generate and download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'client_upload_template.xlsx';
+    link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (

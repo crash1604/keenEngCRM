@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
-  Box,
-  Typography,
   Button,
   Card,
   CardContent,
   CardActions,
-  Grid,
   Chip,
   IconButton,
   Dialog,
@@ -21,6 +18,9 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  Typography,
+  Grid,
+  Box,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -181,19 +181,19 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
   }
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h6" fontWeight="bold" color="text.primary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             Email Templates
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {communicationStore.templates.length} template{communicationStore.templates.length !== 1 ? 's' : ''} available
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
-        <Box display="flex" gap={1.5}>
+        <div className="flex gap-3">
           <Button
             variant="outlined"
             size="small"
@@ -218,21 +218,11 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
           >
             New Template
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Templates Grid */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            lg: 'repeat(3, 1fr)',
-          },
-          gap: 2.5,
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {communicationStore.templates.map((template) => (
           <Card
             key={template.id}
@@ -386,22 +376,16 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
               </CardActions>
           </Card>
         ))}
-      </Box>
+      </div>
 
       {communicationStore.templates.length === 0 && !communicationStore.loading && (
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          py={8}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="flex flex-col items-center justify-center py-16">
+          <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">
             No templates found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={2}>
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Create your first email template to get started
-          </Typography>
+          </p>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -409,7 +393,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
           >
             Create Template
           </Button>
-        </Box>
+        </div>
       )}
 
       {/* Template Form Dialog */}
@@ -586,7 +570,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 });
 

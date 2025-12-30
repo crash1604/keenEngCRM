@@ -3,11 +3,8 @@ import React, { useState, useEffect } from "react";
 import { observer } from 'mobx-react-lite';
 import {
   Button,
-  Box,
-  Typography,
   Snackbar,
   Alert,
-  Paper,
   Chip
 } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
@@ -95,25 +92,25 @@ const Clients = observer(() => {
   }
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb' }}>
+    <div className="space-y-6">
       {/* Header */}
-      <Paper elevation={0} sx={{ p: 3, mb: 2, borderRadius: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="h4" fontWeight="bold" color="text.primary">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Clients
-            </Typography>
-            <Box display="flex" gap={2} mt={1} alignItems="center">
-              <Typography variant="body2" color="text.secondary">
+            </h1>
+            <div className="flex gap-4 mt-2 items-center">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 Total: {clientStore.totalCount} clients
-              </Typography>
+              </span>
               {clientStore.loading && (
                 <Chip label="Refreshing..." size="small" color="primary" />
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <Box display="flex" gap={2}>
+          <div className="flex gap-3">
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -133,17 +130,17 @@ const Clients = observer(() => {
             >
               Add Client
             </Button>
-          </Box>
-        </Box>
-      </Paper>
+          </div>
+        </div>
+      </div>
 
       {/* Client Grid with Detail Panel */}
-      <Paper elevation={0} sx={{ flex: 1, p: 2, borderRadius: 2, overflow: 'hidden' }}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <ClientsGrid
           clients={clientStore.clients}
           loading={clientStore.loading}
         />
-      </Paper>
+      </div>
 
       {/* Client Form Modal */}
       <ClientForm
@@ -174,7 +171,7 @@ const Clients = observer(() => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </div>
   );
 });
 

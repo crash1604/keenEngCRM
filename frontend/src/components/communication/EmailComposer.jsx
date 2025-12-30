@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
-  Box,
-  Paper,
-  Typography,
   TextField,
   Button,
-  Grid,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Chip,
@@ -17,6 +12,9 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Typography,
+  Box,
+  Paper,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -152,36 +150,29 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
   );
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h6" fontWeight="bold" color="text.primary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             Compose Email
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Select a project and template to send an email
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
 
       {/* Section 1: Project & Template Selection */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2.5,
-          borderRadius: 2,
-          mb: 2,
-        }}
-      >
-        <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={2}>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 mb-4 bg-white dark:bg-gray-800">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
           Select Project & Template
-        </Typography>
-        <Grid container spacing={2.5} alignItems="flex-end">
-          <Grid item xs={12} sm={4}>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-end">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
               PROJECT *
-            </Typography>
+            </label>
             <FormControl fullWidth required size="small">
               <Select
                 value={formData.project_id}
@@ -198,12 +189,12 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+          </div>
 
-          <Grid item xs={12} sm={4}>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
               TEMPLATE *
-            </Typography>
+            </label>
             <FormControl fullWidth required size="small">
               <Select
                 value={formData.template_id}
@@ -225,63 +216,41 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
                   ))}
               </Select>
             </FormControl>
-          </Grid>
+          </div>
 
           {/* Project Info */}
-          <Grid item xs={12} sm={4}>
+          <div>
             {selectedProject ? (
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: '#f0f9ff',
-                  borderRadius: 1.5,
-                  border: '1px solid #bae6fd',
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">Client:</Typography>
-                <Typography variant="caption" fontWeight={600} ml={0.5}>{selectedProject.client_name}</Typography>
-                <Box mt={0.5}>
-                  <Typography variant="caption" color="text.secondary">Email:</Typography>
-                  <Typography variant="caption" fontWeight={600} ml={0.5}>{selectedProject.client_email || 'N/A'}</Typography>
-                </Box>
-              </Box>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Client:</span>
+                <span className="text-xs font-semibold text-gray-900 dark:text-white ml-1">{selectedProject.client_name}</span>
+                <div className="mt-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Email:</span>
+                  <span className="text-xs font-semibold text-gray-900 dark:text-white ml-1">{selectedProject.client_email || 'N/A'}</span>
+                </div>
+              </div>
             ) : (
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: '#f8fafc',
-                  borderRadius: 1.5,
-                  border: '1px dashed #cbd5e1',
-                  textAlign: 'center',
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-center">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   Select a project to view client details
-                </Typography>
-              </Box>
+                </span>
+              </div>
             )}
-          </Grid>
-        </Grid>
-      </Paper>
+          </div>
+        </div>
+      </div>
 
       {/* Section 2: Email Details */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2.5,
-          borderRadius: 2,
-          mb: 2,
-        }}
-      >
-        <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={2}>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 mb-4 bg-white dark:bg-gray-800">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
           Email Details
-        </Typography>
+        </h4>
 
         {/* Row 1: Recipient Email */}
-        <Box mb={2}>
-          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
             RECIPIENT EMAIL
-          </Typography>
+          </label>
           <TextField
             fullWidth
             size="small"
@@ -292,14 +261,14 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
               sx: { fontSize: '0.875rem' }
             }}
           />
-        </Box>
+        </div>
 
         {/* Row 2: CC and BCC */}
-        <Box display="flex" gap={2} mb={2}>
-          <Box flex={1}>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
               CC
-            </Typography>
+            </label>
             <TextField
               fullWidth
               size="small"
@@ -310,11 +279,11 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
                 sx: { fontSize: '0.875rem' }
               }}
             />
-          </Box>
-          <Box flex={1}>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
               BCC
-            </Typography>
+            </label>
             <TextField
               fullWidth
               size="small"
@@ -325,14 +294,14 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
                 sx: { fontSize: '0.875rem' }
               }}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Row 3: Subject */}
-        <Box mb={2}>
-          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
-            SUBJECT <Typography component="span" variant="caption" color="text.disabled">(optional - leave empty to use template subject)</Typography>
-          </Typography>
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
+            SUBJECT <span className="text-gray-400 dark:text-gray-500 font-normal">(optional - leave empty to use template subject)</span>
+          </label>
           <TextField
             fullWidth
             size="small"
@@ -343,13 +312,13 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
               sx: { fontSize: '0.875rem' }
             }}
           />
-        </Box>
+        </div>
 
         {/* Row 4: Additional Notes */}
-        <Box>
-          <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.75}>
-            ADDITIONAL NOTES <Typography component="span" variant="caption" color="text.disabled">(optional)</Typography>
-          </Typography>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
+            ADDITIONAL NOTES <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
+          </label>
           <TextField
             fullWidth
             multiline
@@ -361,16 +330,11 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
               sx: { fontSize: '0.875rem' }
             }}
           />
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Action Buttons */}
-      <Box
-        display="flex"
-        gap={2}
-        justifyContent="flex-end"
-        alignItems="center"
-      >
+      <div className="flex gap-4 justify-end items-center">
         <Button
           variant="outlined"
           startIcon={<PreviewIcon />}
@@ -395,7 +359,7 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
         >
           {sending ? <CircularProgress size={20} /> : 'Send Email'}
         </Button>
-      </Box>
+      </div>
 
       {/* Preview Dialog */}
       <Dialog
@@ -452,7 +416,7 @@ const EmailComposer = observer(({ onEmailSent, onShowSnackbar }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 });
 

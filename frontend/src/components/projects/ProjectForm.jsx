@@ -110,7 +110,7 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
       </div>
 
       <form onSubmit={formik.handleSubmit}>
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3 }} className="bg-white dark:bg-gray-800">
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }} onClose={() => setError('')}>
               {error}
@@ -131,6 +131,14 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
               size="small"
               required
               autoFocus
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'var(--tw-bg-opacity, 1) ? rgb(255 255 255) : rgb(55 65 81)',
+                },
+                '& .MuiInputLabel-root': { color: 'inherit' },
+                '& .MuiOutlinedInput-input': { color: 'inherit' },
+              }}
+              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
             />
 
             <TextField
@@ -141,6 +149,7 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
               onChange={formik.handleChange}
               disabled={loading}
               size="small"
+              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
             />
 
             <div className="grid grid-cols-2 gap-3">
@@ -156,6 +165,7 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
                 helperText={formik.touched.contact_email && formik.errors.contact_email}
                 disabled={loading}
                 size="small"
+                className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
               />
 
               <TextField
@@ -166,6 +176,7 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
                 onChange={formik.handleChange}
                 disabled={loading}
                 size="small"
+                className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
               />
             </div>
           </div>
@@ -175,7 +186,7 @@ const QuickAddClientModal = ({ open, onClose, onSuccess }) => {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50"
             >
               Cancel
             </button>
@@ -268,7 +279,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
       </div>
 
       <form onSubmit={formik.handleSubmit}>
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3 }} className="bg-white dark:bg-gray-800">
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }} onClose={() => setError('')}>
               {error}
@@ -289,6 +300,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
               size="small"
               required
               autoFocus
+              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
             />
 
             <TextField
@@ -299,6 +311,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
               onChange={formik.handleChange}
               disabled={loading}
               size="small"
+              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
             />
 
             <div className="grid grid-cols-2 gap-3">
@@ -314,6 +327,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
                 helperText={formik.touched.contact_email && formik.errors.contact_email}
                 disabled={loading}
                 size="small"
+                className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
               />
 
               <TextField
@@ -324,6 +338,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
                 onChange={formik.handleChange}
                 disabled={loading}
                 size="small"
+                className="dark:[&_.MuiOutlinedInput-root]:bg-gray-700 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
               />
             </div>
           </div>
@@ -333,7 +348,7 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50"
             >
               Cancel
             </button>
@@ -376,19 +391,19 @@ const SectionHeader = ({ icon, title, subtitle, isOpen, onToggle, optional, bgCo
   <button
     type="button"
     onClick={onToggle}
-    className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50/80 transition-colors"
+    className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50/80 dark:hover:bg-gray-700/50 transition-colors"
   >
     <div className="flex items-center gap-3">
-      <div className={`p-2 ${bgColor} rounded-lg ${iconColor}`}>
+      <div className={`p-2 ${bgColor} dark:bg-opacity-20 rounded-lg ${iconColor}`}>
         {icon}
       </div>
       <div className="text-left">
-        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
-        {optional && !subtitle && <span className="text-xs text-gray-400">Optional</span>}
+        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
+        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
+        {optional && !subtitle && <span className="text-xs text-gray-400 dark:text-gray-500">Optional</span>}
       </div>
     </div>
-    <div className={`p-1 rounded-full transition-colors ${isOpen ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}>
+    <div className={`p-1 rounded-full transition-colors ${isOpen ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>
       {isOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
     </div>
   </button>
@@ -678,7 +693,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
       </div>
 
       <form onSubmit={formik.handleSubmit} className="flex flex-col max-h-[calc(100vh-200px)]">
-        <DialogContent sx={{ p: 0, overflow: 'auto', flex: 1 }}>
+        <DialogContent sx={{ p: 0, overflow: 'auto', flex: 1 }} className="bg-white dark:bg-gray-800">
           {formik.errors.submit && (
             <div className="px-6 pt-4">
               <Alert severity="error" sx={{ borderRadius: '8px' }}>
@@ -690,7 +705,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
           <div className="p-6 space-y-4">
 
             {/* Basic Information Section */}
-            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
               <SectionHeader
                 icon={<CategoryIcon fontSize="small" />}
                 title="Basic Information"
@@ -699,10 +714,10 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                 onToggle={() => toggleSection('basic')}
               />
               <Collapse in={sectionsOpen.basic}>
-                <div className="p-5 space-y-5 border-t border-gray-100">
+                <div className="p-5 space-y-5 border-t border-gray-100 dark:border-gray-600">
                   {/* Project Name */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                       Project Name <span className="text-red-500">*</span>
                     </label>
                     <TextField
@@ -722,12 +737,13 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           backgroundColor: 'white',
                         }
                       }}
+                      className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputLabel-root]:text-gray-300"
                     />
                   </div>
 
                   {/* Project Types */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                       Project Types <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -746,7 +762,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-200 ${
                               isSelected
                                 ? option.color + ' border-current shadow-sm scale-105'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-200 border-gray-200 dark:border-gray-500 hover:border-gray-300 dark:hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-500'
                             }`}
                           >
                             {option.label}
@@ -767,7 +783,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                   {/* Status */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         Status <span className="text-red-500">*</span>
                       </label>
                       <TextField
@@ -787,6 +803,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiSelect-icon]:text-gray-300"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <MenuItem key={option.value} value={option.value}>
@@ -797,7 +814,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Sub-Status</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Sub-Status</label>
                       <TextField
                         fullWidth
                         name="current_sub_status"
@@ -813,6 +830,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
                   </div>
@@ -820,7 +838,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                   {/* Client & Architect */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         Client <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-2">
@@ -888,9 +906,9 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             return (
                               <li key={option.id} {...otherProps}>
                                 <div className="flex flex-col py-1">
-                                  <span className="font-medium text-gray-900">{option.name}</span>
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">{option.name}</span>
                                   {option.company_name && (
-                                    <span className="text-xs text-gray-500">{option.company_name}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{option.company_name}</span>
                                   )}
                                 </div>
                               </li>
@@ -918,7 +936,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Architect / Designer</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Architect / Designer</label>
                       <div className="flex gap-2">
                         <Autocomplete
                           fullWidth
@@ -982,9 +1000,9 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             return (
                               <li key={option.id} {...otherProps}>
                                 <div className="flex flex-col py-1">
-                                  <span className="font-medium text-gray-900">{option.name}</span>
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">{option.name}</span>
                                   {option.company_name && (
-                                    <span className="text-xs text-gray-500">{option.company_name}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{option.company_name}</span>
                                   )}
                                 </div>
                               </li>
@@ -1016,7 +1034,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
             </div>
 
             {/* Location Section */}
-            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
               <SectionHeader
                 icon={<LocationIcon fontSize="small" />}
                 title="Location"
@@ -1027,9 +1045,9 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                 iconColor="text-green-600"
               />
               <Collapse in={sectionsOpen.location}>
-                <div className="p-5 space-y-4 border-t border-gray-100">
+                <div className="p-5 space-y-4 border-t border-gray-100 dark:border-gray-600">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                       Project Address <span className="text-red-500">*</span>
                     </label>
                     <TextField
@@ -1051,11 +1069,12 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           backgroundColor: 'white',
                         }
                       }}
+                      className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Legal Address</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Legal Address</label>
                     <TextField
                       fullWidth
                       name="legal_address"
@@ -1071,6 +1090,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           backgroundColor: 'white',
                         }
                       }}
+                      className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                     />
                   </div>
                 </div>
@@ -1078,7 +1098,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
             </div>
 
             {/* Timeline Section */}
-            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
               <SectionHeader
                 icon={<CalendarIcon fontSize="small" />}
                 title="Timeline"
@@ -1089,10 +1109,10 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                 iconColor="text-orange-600"
               />
               <Collapse in={sectionsOpen.timeline}>
-                <div className="p-5 space-y-4 border-t border-gray-100">
+                <div className="p-5 space-y-4 border-t border-gray-100 dark:border-gray-600">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         Due Date <span className="text-red-500">*</span>
                       </label>
                       <TextField
@@ -1113,10 +1133,11 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Rough-in Date</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Rough-in Date</label>
                       <TextField
                         fullWidth
                         name="rough_in_date"
@@ -1133,10 +1154,11 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Final Inspection</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Final Inspection</label>
                       <TextField
                         fullWidth
                         name="final_inspection_date"
@@ -1153,12 +1175,13 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Due Date Notes</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Due Date Notes</label>
                     <TextField
                       fullWidth
                       name="due_date_note"
@@ -1176,6 +1199,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           backgroundColor: 'white',
                         }
                       }}
+                      className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                     />
                   </div>
                 </div>
@@ -1183,7 +1207,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
             </div>
 
             {/* Action Items Section */}
-            <div className="bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden">
+            <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 overflow-hidden">
               <SectionHeader
                 icon={<AssignmentIcon fontSize="small" />}
                 title="Action Items & Notes"
@@ -1195,10 +1219,10 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                 optional
               />
               <Collapse in={sectionsOpen.details}>
-                <div className="p-5 space-y-4 border-t border-indigo-100">
+                <div className="p-5 space-y-4 border-t border-indigo-100 dark:border-indigo-800">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Open Items</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Open Items</label>
                       <TextField
                         fullWidth
                         name="current_open_items"
@@ -1216,11 +1240,12 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Action Items</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Action Items</label>
                       <TextField
                         fullWidth
                         name="current_action_items"
@@ -1238,6 +1263,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                             backgroundColor: 'white',
                           }
                         }}
+                        className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                       />
                     </div>
                   </div>
@@ -1246,7 +1272,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
             </div>
 
             {/* Billing Section */}
-            <div className="bg-amber-50 rounded-xl border border-amber-100 overflow-hidden">
+            <div className="bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-100 dark:border-amber-800 overflow-hidden">
               <SectionHeader
                 icon={<MoneyIcon fontSize="small" />}
                 title="Billing Information"
@@ -1258,9 +1284,9 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                 optional
               />
               <Collapse in={sectionsOpen.billing}>
-                <div className="p-5 border-t border-amber-100">
+                <div className="p-5 border-t border-amber-100 dark:border-amber-800">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Billing Information</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Billing Information</label>
                     <TextField
                       fullWidth
                       name="billing_info"
@@ -1278,6 +1304,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           backgroundColor: 'white',
                         }
                       }}
+                      className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white"
                     />
                   </div>
                 </div>
@@ -1288,8 +1315,8 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
         </DialogContent>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             <span className="text-red-500">*</span> Required fields
           </p>
           <div className="flex items-center gap-3">
@@ -1297,7 +1324,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 hover:border-gray-400 dark:hover:border-gray-400 transition-all disabled:opacity-50"
             >
               Cancel
             </button>

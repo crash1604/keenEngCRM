@@ -104,10 +104,10 @@ const ArchitectsGrid = observer(({ architects, loading }) => {
   }
 
   return (
-    <div className="flex h-full bg-gray-100">
+    <div className="flex bg-gray-100 dark:bg-gray-900" style={{ minHeight: 600 }}>
       {/* AG Grid */}
       <div className={`${selectedArchitect ? 'w-1/3' : 'w-full'} transition-all duration-300`}>
-        <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+        <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 600, width: '100%' }}>
           <AgGridReact
             rowData={architects}
             columnDefs={columnDefs}
@@ -128,11 +128,11 @@ const ArchitectsGrid = observer(({ architects, loading }) => {
             floatingFiltersHeight={36}
             loadingOverlayComponent={() => (
               <div className="flex justify-center items-center h-32">
-                <div className="text-gray-600">Loading architects...</div>
+                <div className="text-gray-600 dark:text-gray-400">Loading architects...</div>
               </div>
             )}
             noRowsOverlayComponent={() => (
-              <div className="flex flex-col justify-center items-center h-32 text-gray-500">
+              <div className="flex flex-col justify-center items-center h-32 text-gray-500 dark:text-gray-400">
                 <div className="text-lg font-medium">No architects found</div>
                 <div className="text-sm">Click "Add Architect" to create your first architect</div>
               </div>

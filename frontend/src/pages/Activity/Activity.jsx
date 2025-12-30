@@ -3,14 +3,10 @@ import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import {
-  Box,
-  Typography,
-  Paper,
   Chip,
   Button,
   TextField,
-  MenuItem,
-  Stack
+  MenuItem
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -505,24 +501,24 @@ const Activity = () => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 32px)', display: 'flex', flexDirection: 'column', p: 2, bgcolor: '#f9fafb' }}>
+    <div className="space-y-6">
       {/* Header */}
-      <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-          <Box>
-            <Typography variant="h5" fontWeight="bold" color="text.primary">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Activity Log
-            </Typography>
-            <Box display="flex" gap={1} mt={0.5} alignItems="center" flexWrap="wrap">
-              <Typography variant="body2" color="text.secondary">
+            </h1>
+            <div className="flex gap-2 mt-1 items-center flex-wrap">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 Total: {stats.total} activities
-              </Typography>
+              </span>
               <Chip label="Read Only" size="small" color="info" variant="outlined" />
               {loading && <Chip label="Refreshing..." size="small" color="primary" />}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <Box display="flex" gap={2} alignItems="center">
+          <div className="flex gap-3 items-center">
             <TextField
               select
               size="small"
@@ -547,13 +543,13 @@ const Activity = () => {
             >
               Refresh
             </Button>
-          </Box>
-        </Box>
-      </Paper>
+          </div>
+        </div>
+      </div>
 
       {/* Filter Bar */}
-      <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
           <TextField
             size="small"
             placeholder="Search all columns..."
@@ -588,22 +584,22 @@ const Activity = () => {
             Clear
           </Button>
 
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto', display: { xs: 'none', md: 'block' } }}>
+          <span className="hidden md:block ml-auto text-xs text-gray-500 dark:text-gray-400">
             Use column headers for filtering by User, Project, Action, Time
-          </Typography>
-        </Stack>
-      </Paper>
+          </span>
+        </div>
+      </div>
 
       {/* Error Display */}
       {error && (
-        <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: '#fef2f2', border: '1px solid #fecaca' }}>
-          <Typography color="error">{error}</Typography>
-        </Paper>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-2xl p-4">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </div>
       )}
 
       {/* AG Grid */}
-      <Paper elevation={0} sx={{ flex: 1, borderRadius: 2, overflow: 'hidden', minHeight: 400 }}>
-        <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px]">
+        <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 500, width: '100%' }}>
           <AgGridReact
             ref={gridRef}
             rowData={activities}
@@ -623,26 +619,26 @@ const Activity = () => {
             domLayout="normal"
             suppressHorizontalScroll={false}
             loadingOverlayComponent={() => (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+              <div className="flex justify-center items-center h-24">
                 <LoadingSpinner size="md" text="Loading..." />
               </div>
             )}
             noRowsOverlayComponent={() => (
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100px', color: '#6b7280' }}>
-                <Typography variant="h6">No activity logs found</Typography>
-                <Typography variant="body2">Activity will appear here as changes are made</Typography>
+              <div className="flex flex-col justify-center items-center h-24 text-gray-500 dark:text-gray-400">
+                <p className="text-lg font-medium">No activity logs found</p>
+                <p className="text-sm">Activity will appear here as changes are made</p>
               </div>
             )}
           />
         </div>
-      </Paper>
+      </div>
 
       {/* Statistics Summary */}
-      <Paper elevation={0} sx={{ p: 1.5, mt: 2, borderRadius: 2 }}>
-        <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
             Summary:
-          </Typography>
+          </span>
           {Object.entries(stats.actionCounts).map(([action, count]) => (
             <Chip
               key={action}
@@ -652,9 +648,9 @@ const Activity = () => {
               sx={{ fontSize: '0.7rem', height: 24 }}
             />
           ))}
-        </Box>
-      </Paper>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 
