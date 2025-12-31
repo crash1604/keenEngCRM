@@ -15,6 +15,8 @@ const applyTheme = (theme) => {
     const root = document.documentElement;
     root.classList.remove('dark', 'light');
     root.classList.add(theme === 'dark' ? 'dark' : 'light');
+    // Set AG Grid theme mode (using 'dark-blue' for dark mode)
+    document.body.dataset.agThemeMode = theme === 'dark' ? 'dark-blue' : 'light';
   }
 };
 

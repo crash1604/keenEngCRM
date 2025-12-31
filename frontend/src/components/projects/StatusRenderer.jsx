@@ -19,6 +19,7 @@ export const STATUS_CONFIG = {
     bgColor: '#f3f4f6',
     textColor: '#4b5563',
     borderColor: '#d1d5db',
+    tailwindClasses: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600',
     Icon: HourglassEmptyIcon
   },
   in_progress: {
@@ -27,6 +28,7 @@ export const STATUS_CONFIG = {
     bgColor: '#dbeafe',
     textColor: '#1d4ed8',
     borderColor: '#93c5fd',
+    tailwindClasses: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
     Icon: SyncIcon
   },
   submitted: {
@@ -35,6 +37,7 @@ export const STATUS_CONFIG = {
     bgColor: '#fef3c7',
     textColor: '#b45309',
     borderColor: '#fcd34d',
+    tailwindClasses: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
     Icon: SendIcon
   },
   completed: {
@@ -43,6 +46,7 @@ export const STATUS_CONFIG = {
     bgColor: '#dcfce7',
     textColor: '#15803d',
     borderColor: '#86efac',
+    tailwindClasses: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
     Icon: CheckCircleIcon
   },
   closed_paid: {
@@ -51,6 +55,7 @@ export const STATUS_CONFIG = {
     bgColor: '#e0e7ff',
     textColor: '#4338ca',
     borderColor: '#a5b4fc',
+    tailwindClasses: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700',
     Icon: PaidIcon
   },
   cancelled: {
@@ -59,6 +64,7 @@ export const STATUS_CONFIG = {
     bgColor: '#fee2e2',
     textColor: '#b91c1c',
     borderColor: '#fca5a5',
+    tailwindClasses: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
     Icon: CancelIcon
   },
   on_hold: {
@@ -67,6 +73,7 @@ export const STATUS_CONFIG = {
     bgColor: '#fef9c3',
     textColor: '#a16207',
     borderColor: '#fde047',
+    tailwindClasses: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
     Icon: PauseIcon
   }
 };
@@ -87,38 +94,21 @@ const StatusRenderer = (props) => {
 
   // Handle null/undefined values
   if (!value) {
-    return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>-</span>;
+    return <span className="text-gray-400 dark:text-gray-500 italic">-</span>;
   }
 
   const config = STATUS_CONFIG[value] || {
     label: value.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    bgColor: '#f3f4f6',
-    textColor: '#4b5563',
-    borderColor: '#d1d5db',
+    tailwindClasses: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600',
     Icon: AssignmentIcon
   };
 
-  const { Icon } = config;
+  const { Icon, tailwindClasses } = config;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', height: 'fit-content' }}>
+    <div className="flex items-center h-fit">
       <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '4px 10px',
-          margin: '6px 0',
-          borderRadius: '9999px',
-          backgroundColor: config.bgColor,
-          color: config.textColor,
-          border: `1px solid ${config.borderColor}`,
-          fontSize: '12px',
-          fontWeight: 600,
-          whiteSpace: 'nowrap',
-          height: 'fit-content',
-          maxHeight: '26px',
-        }}
+        className={`inline-flex items-center gap-1 px-2.5 py-1 my-1.5 rounded-full border text-xs font-semibold whitespace-nowrap h-fit max-h-[26px] ${tailwindClasses}`}
       >
         <Icon style={{ fontSize: 14 }} />
         {config.label}

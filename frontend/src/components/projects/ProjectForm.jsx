@@ -377,13 +377,13 @@ const QuickAddArchitectModal = ({ open, onClose, onSuccess }) => {
 };
 
 const PROJECT_TYPE_OPTIONS = [
-  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 text-blue-700 border-blue-300', selectedBg: 'bg-blue-500' },
-  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 text-yellow-700 border-yellow-300', selectedBg: 'bg-yellow-500' },
-  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 text-cyan-700 border-cyan-300', selectedBg: 'bg-cyan-500' },
-  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 text-green-700 border-green-300', selectedBg: 'bg-green-500' },
-  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 text-red-700 border-red-300', selectedBg: 'bg-red-500' },
-  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 text-purple-700 border-purple-300', selectedBg: 'bg-purple-500' },
-  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 text-gray-700 border-gray-300', selectedBg: 'bg-gray-500' },
+  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700', selectedBg: 'bg-blue-500' },
+  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700', selectedBg: 'bg-yellow-500' },
+  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-700', selectedBg: 'bg-cyan-500' },
+  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700', selectedBg: 'bg-green-500' },
+  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700', selectedBg: 'bg-red-500' },
+  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700', selectedBg: 'bg-purple-500' },
+  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600', selectedBg: 'bg-gray-500' },
 ];
 
 // Section Header Component with improved styling
@@ -869,6 +869,27 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           loading={loadingClients}
                           disabled={loading}
                           noOptionsText={loadingClients ? "Loading..." : "No clients found - click + to add"}
+                          slotProps={{
+                            paper: {
+                              sx: {
+                                '.dark &': {
+                                  backgroundColor: 'rgb(55 65 81)',
+                                  '& .MuiAutocomplete-option': {
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: 'rgb(75 85 99)',
+                                    },
+                                    '&[aria-selected="true"]': {
+                                      backgroundColor: 'rgb(59 130 246 / 0.3)',
+                                    },
+                                  },
+                                  '& .MuiAutocomplete-noOptions': {
+                                    color: 'rgb(156 163 175)',
+                                  },
+                                },
+                              },
+                            },
+                          }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -876,11 +897,21 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                               error={formik.touched.client && Boolean(formik.errors.client)}
                               helperText={formik.touched.client && formik.errors.client}
                               placeholder="Search clients..."
+                              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputBase-input::placeholder]:text-gray-400"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: '8px',
                                   backgroundColor: 'white',
-                                }
+                                },
+                                '.dark &  .MuiOutlinedInput-root': {
+                                  backgroundColor: 'rgb(75 85 99)',
+                                },
+                                '.dark & .MuiOutlinedInput-input': {
+                                  color: 'white',
+                                },
+                                '.dark & .MuiSvgIcon-root': {
+                                  color: 'rgb(156 163 175)',
+                                },
                               }}
                               InputProps={{
                                 ...params.InputProps,
@@ -965,16 +996,47 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
                           loading={loadingArchitects}
                           disabled={loading}
                           noOptionsText={loadingArchitects ? "Loading..." : "No architects found - click + to add"}
+                          slotProps={{
+                            paper: {
+                              sx: {
+                                '.dark &': {
+                                  backgroundColor: 'rgb(55 65 81)',
+                                  '& .MuiAutocomplete-option': {
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: 'rgb(75 85 99)',
+                                    },
+                                    '&[aria-selected="true"]': {
+                                      backgroundColor: 'rgb(59 130 246 / 0.3)',
+                                    },
+                                  },
+                                  '& .MuiAutocomplete-noOptions': {
+                                    color: 'rgb(156 163 175)',
+                                  },
+                                },
+                              },
+                            },
+                          }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               size="small"
                               placeholder="Search architects..."
+                              className="dark:[&_.MuiOutlinedInput-root]:bg-gray-600 dark:[&_.MuiOutlinedInput-input]:text-white dark:[&_.MuiInputBase-input::placeholder]:text-gray-400"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: '8px',
                                   backgroundColor: 'white',
-                                }
+                                },
+                                '.dark & .MuiOutlinedInput-root': {
+                                  backgroundColor: 'rgb(75 85 99)',
+                                },
+                                '.dark & .MuiOutlinedInput-input': {
+                                  color: 'white',
+                                },
+                                '.dark & .MuiSvgIcon-root': {
+                                  color: 'rgb(156 163 175)',
+                                },
                               }}
                               InputProps={{
                                 ...params.InputProps,

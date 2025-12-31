@@ -237,6 +237,13 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 borderColor: '#2563eb',
               },
+              '.dark &': {
+                backgroundColor: 'rgb(55 65 81)',
+                borderColor: 'rgb(75 85 99)',
+                '&:hover': {
+                  borderColor: '#3b82f6',
+                },
+              },
             }}
           >
               <CardContent sx={{ flex: 1, p: 2, pb: 1.5, overflow: 'hidden' }}>
@@ -251,6 +258,9 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       maxWidth: '60%',
+                      '.dark &': {
+                        color: 'white',
+                      },
                     }}
                     title={template.name}
                   >
@@ -267,6 +277,10 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                           bgcolor: '#dbeafe',
                           color: '#1d4ed8',
                           fontWeight: 600,
+                          '.dark &': {
+                            bgcolor: 'rgba(59, 130, 246, 0.3)',
+                            color: '#93c5fd',
+                          },
                         }}
                       />
                     )}
@@ -279,6 +293,10 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                         bgcolor: template.is_active ? '#dcfce7' : '#f1f5f9',
                         color: template.is_active ? '#166534' : '#64748b',
                         fontWeight: 500,
+                        '.dark &': {
+                          bgcolor: template.is_active ? 'rgba(34, 197, 94, 0.3)' : 'rgb(75 85 99)',
+                          color: template.is_active ? '#86efac' : '#9ca3af',
+                        },
                       }}
                     />
                   </Box>
@@ -295,12 +313,16 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                     fontSize: '0.7rem',
                     borderColor: '#e2e8f0',
                     color: '#64748b',
+                    '.dark &': {
+                      borderColor: 'rgb(75 85 99)',
+                      color: '#9ca3af',
+                    },
                   }}
                 />
 
                 {/* Subject */}
                 <Box mb={1.5}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={500} display="block" mb={0.25}>
+                  <Typography variant="caption" fontWeight={500} display="block" mb={0.25} sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
                     SUBJECT
                   </Typography>
                   <Typography
@@ -314,6 +336,9 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                       color: 'text.primary',
                       fontSize: '0.8rem',
                       lineHeight: 1.4,
+                      '.dark &': {
+                        color: 'rgb(229 231 235)',
+                      },
                     }}
                     title={template.subject}
                   >
@@ -322,7 +347,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                 </Box>
 
                 {/* Created By */}
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
                   By {template.created_by_name || 'Unknown'}
                 </Typography>
               </CardContent>
@@ -336,6 +361,10 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                   borderColor: 'divider',
                   bgcolor: '#f8fafc',
                   minHeight: 44,
+                  '.dark &': {
+                    bgcolor: 'rgb(31 41 55)',
+                    borderColor: 'rgb(75 85 99)',
+                  },
                 }}
               >
                 <Box display="flex" gap={0.5}>
@@ -397,19 +426,39 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
       )}
 
       {/* Template Form Dialog */}
-      <Dialog open={showForm} onClose={handleCloseForm} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{ pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Dialog
+        open={showForm}
+        onClose={handleCloseForm}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            '.dark &': {
+              backgroundColor: 'rgb(31 41 55)',
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          pb: 1,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          '.dark &': {
+            color: 'white',
+            borderColor: 'rgb(55 65 81)',
+          }
+        }}>
           <Typography variant="h6" fontWeight={600}>
             {editMode ? 'Edit Template' : 'Create New Template'}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
             {editMode ? 'Update the template details below' : 'Fill in the details to create a new email template'}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
           {/* Top Section - Basic Info */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={2}>
+            <Typography variant="subtitle2" fontWeight={600} mb={2} sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
               BASIC INFORMATION
             </Typography>
             <Grid container spacing={2}>
@@ -421,16 +470,39 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                   label="Template Name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
+                  sx={{
+                    '.dark & .MuiOutlinedInput-root': {
+                      backgroundColor: 'rgb(55 65 81)',
+                      color: 'white',
+                      '& input': { color: 'white' },
+                    },
+                    '.dark & .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgb(75 85 99)',
+                    },
+                    '.dark & .MuiInputLabel-root': {
+                      color: 'rgb(156 163 175)',
+                    },
+                  }}
                 />
               </Grid>
 
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth required size="small">
-                  <InputLabel>Template Type</InputLabel>
+                  <InputLabel sx={{ '.dark &': { color: 'rgb(156 163 175)' } }}>Template Type</InputLabel>
                   <Select
                     value={formData.template_type}
                     onChange={(e) => handleInputChange('template_type', e.target.value)}
                     label="Template Type"
+                    sx={{
+                      '.dark &': {
+                        backgroundColor: 'rgb(55 65 81)',
+                        color: 'white',
+                        '& .MuiSelect-icon': { color: 'rgb(156 163 175)' },
+                      },
+                      '.dark & .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgb(75 85 99)',
+                      },
+                    }}
                   >
                     {TEMPLATE_TYPES.map((type) => (
                       <MenuItem key={type.value} value={type.value}>
@@ -451,7 +523,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                         size="small"
                       />
                     }
-                    label={<Typography variant="body2">Active</Typography>}
+                    label={<Typography variant="body2" sx={{ '.dark &': { color: 'rgb(229 231 235)' } }}>Active</Typography>}
                   />
                   <FormControlLabel
                     control={
@@ -461,7 +533,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                         size="small"
                       />
                     }
-                    label={<Typography variant="body2">Default</Typography>}
+                    label={<Typography variant="body2" sx={{ '.dark &': { color: 'rgb(229 231 235)' } }}>Default</Typography>}
                   />
                 </Box>
               </Grid>
@@ -471,7 +543,7 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
 
           {/* Email Subject - Full Width Row */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1.5} sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
               EMAIL SUBJECT <Typography component="span" variant="caption" color="error">*</Typography>
             </Typography>
             <TextField
@@ -485,13 +557,25 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                 '& .MuiInputBase-root': {
                   fontSize: '0.9rem',
                 },
+                '.dark & .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgb(55 65 81)',
+                  color: 'white',
+                  '& input': { color: 'white' },
+                  '& input::placeholder': { color: 'rgb(156 163 175)' },
+                },
+                '.dark & .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgb(75 85 99)',
+                },
+                '.dark & .MuiFormHelperText-root': {
+                  color: 'rgb(156 163 175)',
+                },
               }}
             />
           </Box>
 
           {/* Main Content Section - HTML Body */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1.5} sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
               HTML BODY <Typography component="span" variant="caption" color="error">*</Typography>
             </Typography>
             <TextField
@@ -516,14 +600,29 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                     resize: 'vertical',
                   },
                 },
+                '.dark & .MuiInputBase-root': {
+                  bgcolor: 'rgb(55 65 81)',
+                },
+                '.dark & .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgb(55 65 81)',
+                  color: 'white',
+                  '& textarea': { color: 'white' },
+                  '& textarea::placeholder': { color: 'rgb(156 163 175)' },
+                },
+                '.dark & .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgb(75 85 99)',
+                },
+                '.dark & .MuiFormHelperText-root': {
+                  color: 'rgb(156 163 175)',
+                },
               }}
             />
           </Box>
 
           {/* Plain Text Section */}
           <Box>
-            <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
-              PLAIN TEXT BODY <Typography component="span" variant="caption" color="text.secondary">(Optional)</Typography>
+            <Typography variant="subtitle2" fontWeight={600} mb={1.5} sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(156 163 175)' } }}>
+              PLAIN TEXT BODY <Typography component="span" variant="caption" sx={{ color: 'text.secondary', '.dark &': { color: 'rgb(107 114 128)' } }}>(Optional)</Typography>
             </Typography>
             <TextField
               fullWidth
@@ -547,11 +646,34 @@ const EmailTemplates = observer(({ onShowSnackbar }) => {
                     resize: 'vertical',
                   },
                 },
+                '.dark & .MuiInputBase-root': {
+                  bgcolor: 'rgb(55 65 81)',
+                },
+                '.dark & .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgb(55 65 81)',
+                  color: 'white',
+                  '& textarea': { color: 'white' },
+                  '& textarea::placeholder': { color: 'rgb(156 163 175)' },
+                },
+                '.dark & .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgb(75 85 99)',
+                },
+                '.dark & .MuiFormHelperText-root': {
+                  color: 'rgb(156 163 175)',
+                },
               }}
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <DialogActions sx={{
+          px: 3,
+          py: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          '.dark &': {
+            borderColor: 'rgb(55 65 81)',
+          },
+        }}>
           <Button onClick={handleCloseForm} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>

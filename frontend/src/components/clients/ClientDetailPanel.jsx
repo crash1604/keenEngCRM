@@ -17,22 +17,22 @@ const ACTIVITY_TAB = { id: 'activity', label: 'Activity', icon: 'M12 8v4l3 3m6-3
 
 // Action type colors for activity
 const ACTION_TYPE_COLORS = {
-  client_created: { bg: 'bg-green-100', text: 'text-green-700', label: 'Created' },
-  client_updated: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Updated' },
-  client_archived: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Archived' },
-  client_restored: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Restored' },
-  field_updated: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Field Updated' },
+  client_created: { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-700 dark:text-green-300', label: 'Created' },
+  client_updated: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-700 dark:text-blue-300', label: 'Updated' },
+  client_archived: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', label: 'Archived' },
+  client_restored: { bg: 'bg-emerald-100 dark:bg-emerald-900/50', text: 'text-emerald-700 dark:text-emerald-300', label: 'Restored' },
+  field_updated: { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-700 dark:text-yellow-300', label: 'Field Updated' },
 };
 
 // Status badge colors for projects
 const STATUS_COLORS = {
-  not_started: 'bg-gray-100 text-gray-700 border-gray-300',
-  in_progress: 'bg-blue-100 text-blue-700 border-blue-300',
-  submitted: 'bg-purple-100 text-purple-700 border-purple-300',
-  completed: 'bg-green-100 text-green-700 border-green-300',
-  closed_paid: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  cancelled: 'bg-red-100 text-red-700 border-red-300',
-  on_hold: 'bg-amber-100 text-amber-700 border-amber-300',
+  not_started: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600',
+  in_progress: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+  submitted: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700',
+  completed: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
+  closed_paid: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
+  cancelled: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+  on_hold: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
 };
 
 const STATUS_LABELS = {
@@ -47,13 +47,13 @@ const STATUS_LABELS = {
 
 // Project type colors
 const PROJECT_TYPE_COLORS = {
-  M: 'bg-blue-100 text-blue-700',
-  E: 'bg-yellow-100 text-yellow-700',
-  P: 'bg-cyan-100 text-cyan-700',
-  EM: 'bg-green-100 text-green-700',
-  FP: 'bg-red-100 text-red-700',
-  TI: 'bg-purple-100 text-purple-700',
-  VI: 'bg-gray-100 text-gray-700',
+  M: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300',
+  E: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300',
+  P: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300',
+  EM: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300',
+  FP: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300',
+  TI: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
+  VI: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
 };
 
 // Section Header Component
@@ -207,8 +207,8 @@ const ClientDetailPanel = ({
         {saveStatus?.show && (
           <div className={`absolute top-4 right-16 z-10 px-3 py-2 rounded-lg text-sm font-medium shadow-lg transition-all ${
             saveStatus.success
-              ? 'bg-green-100 text-green-700 border border-green-200'
-              : 'bg-red-100 text-red-700 border border-red-200'
+              ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
+              : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700'
           }`}>
             {saveStatus.success ? (
               <span className="flex items-center gap-1">
@@ -246,8 +246,8 @@ const ClientDetailPanel = ({
                 </div>
                 <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full border ${
                   formData.is_active !== false
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : 'bg-gray-100 text-gray-700 border-gray-300'
+                    ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
                 }`}>
                   {formData.is_active !== false ? 'Active' : 'Inactive'}
                 </span>
@@ -320,7 +320,7 @@ const ClientDetailPanel = ({
             </svg>
             {PROJECTS_TAB.label}
             {clientProjects.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-200 text-indigo-800 rounded-full">
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-200 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-200 rounded-full">
                 {clientProjects.length}
               </span>
             )}
@@ -401,17 +401,17 @@ const ClientDetailPanel = ({
                             {(activity.old_value || activity.new_value) && (
                               <div className="flex items-center gap-2 text-xs">
                                 {activity.old_value && (
-                                  <span className="text-red-600 line-through bg-red-50 px-2 py-0.5 rounded">
+                                  <span className="text-red-600 dark:text-red-400 line-through bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded">
                                     {activity.old_value}
                                   </span>
                                 )}
                                 {activity.old_value && activity.new_value && (
-                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                   </svg>
                                 )}
                                 {activity.new_value && (
-                                  <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium">
+                                  <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded font-medium">
                                     {activity.new_value}
                                   </span>
                                 )}
@@ -534,14 +534,14 @@ const ClientDetailPanel = ({
             /* Info View */
             <>
               {/* Basic Information Section */}
-          <section id="client-basic-info" className="bg-blue-50 rounded-xl p-5 border border-blue-200 scroll-mt-4">
+          <section id="client-basic-info" className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800 scroll-mt-4">
             <SectionHeader
-              icon={<svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+              icon={<svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
               title="Basic Information"
               subtitle="Client and company details"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg p-4 border border-blue-100">
+              <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
                 <FormField
                   label="Client Name"
                   fieldName="name"
@@ -554,7 +554,7 @@ const ClientDetailPanel = ({
                   onChange={onChange}
                 />
               </div>
-              <div className="bg-white rounded-lg p-4 border border-blue-100">
+              <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
                 <FormField
                   label="Company Name"
                   fieldName="company_name"
@@ -571,9 +571,9 @@ const ClientDetailPanel = ({
           </section>
 
           {/* Contact Section */}
-          <section id="client-contact" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+          <section id="client-contact" className="bg-white dark:bg-gray-700/50 rounded-xl p-5 border border-gray-200 dark:border-gray-600 scroll-mt-4">
             <SectionHeader
-              icon={<svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+              icon={<svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
               title="Contact Information"
               subtitle="Email, phone, and contact person"
             />
@@ -617,14 +617,14 @@ const ClientDetailPanel = ({
           </section>
 
           {/* Address Section */}
-          <section id="client-address" className="bg-white rounded-xl p-5 border border-gray-200 scroll-mt-4">
+          <section id="client-address" className="bg-white dark:bg-gray-700/50 rounded-xl p-5 border border-gray-200 dark:border-gray-600 scroll-mt-4">
             <SectionHeader
-              icon={<svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              icon={<svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
               title="Address Information"
               subtitle="Physical and billing addresses"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-4">
                 <FormField
                   label="Address"
                   fieldName="address"
@@ -638,7 +638,7 @@ const ClientDetailPanel = ({
                   onChange={onChange}
                 />
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-4">
                 <FormField
                   label="Billing Address"
                   fieldName="billing_address"
@@ -656,13 +656,13 @@ const ClientDetailPanel = ({
           </section>
 
           {/* Notes Section */}
-          <section id="client-notes" className="bg-amber-50 rounded-xl p-5 border border-amber-200 scroll-mt-4">
+          <section id="client-notes" className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-5 border border-amber-200 dark:border-amber-800 scroll-mt-4">
             <SectionHeader
-              icon={<svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+              icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
               title="Notes"
               subtitle="Additional information and comments"
             />
-            <div className="bg-white rounded-lg p-4 border border-amber-100">
+            <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-amber-100 dark:border-amber-800">
               <FormField
                 label="Notes"
                 fieldName="notes"
@@ -679,9 +679,9 @@ const ClientDetailPanel = ({
           </section>
 
           {/* System Info Section */}
-          <section id="client-system-info" className="bg-gray-50 rounded-xl p-5 border border-gray-200 scroll-mt-4">
+          <section id="client-system-info" className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5 border border-gray-200 dark:border-gray-600 scroll-mt-4">
             <SectionHeader
-              icon={<svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              icon={<svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
               title="System Information"
               subtitle="Account and record details"
             />

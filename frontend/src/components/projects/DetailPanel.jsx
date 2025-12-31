@@ -21,37 +21,37 @@ const ACTIVITY_TAB = { id: 'activity', label: 'Activity', icon: 'M12 8v4l3 3m6-3
 
 // Action type colors for activity
 const ACTION_TYPE_COLORS = {
-  project_created: { bg: 'bg-green-100', text: 'text-green-700', label: 'Created' },
-  project_updated: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Updated' },
-  status_change: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Status Change' },
-  field_updated: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Field Updated' },
-  note_added: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Note Added' },
-  inspection_scheduled: { bg: 'bg-indigo-100', text: 'text-indigo-700', label: 'Inspection' },
-  due_date_changed: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Due Date' },
-  client_changed: { bg: 'bg-pink-100', text: 'text-pink-700', label: 'Client Changed' },
-  architect_changed: { bg: 'bg-violet-100', text: 'text-violet-700', label: 'Architect Changed' },
-  manager_changed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Manager Changed' },
+  project_created: { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-700 dark:text-green-300', label: 'Created' },
+  project_updated: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-700 dark:text-blue-300', label: 'Updated' },
+  status_change: { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-700 dark:text-purple-300', label: 'Status Change' },
+  field_updated: { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-700 dark:text-yellow-300', label: 'Field Updated' },
+  note_added: { bg: 'bg-cyan-100 dark:bg-cyan-900/50', text: 'text-cyan-700 dark:text-cyan-300', label: 'Note Added' },
+  inspection_scheduled: { bg: 'bg-indigo-100 dark:bg-indigo-900/50', text: 'text-indigo-700 dark:text-indigo-300', label: 'Inspection' },
+  due_date_changed: { bg: 'bg-orange-100 dark:bg-orange-900/50', text: 'text-orange-700 dark:text-orange-300', label: 'Due Date' },
+  client_changed: { bg: 'bg-pink-100 dark:bg-pink-900/50', text: 'text-pink-700 dark:text-pink-300', label: 'Client Changed' },
+  architect_changed: { bg: 'bg-violet-100 dark:bg-violet-900/50', text: 'text-violet-700 dark:text-violet-300', label: 'Architect Changed' },
+  manager_changed: { bg: 'bg-red-100 dark:bg-red-900/50', text: 'text-red-700 dark:text-red-300', label: 'Manager Changed' },
 };
 
 const PROJECT_TYPE_OPTIONS = [
-  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 text-blue-700' },
-  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 text-yellow-700' },
-  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 text-cyan-700' },
-  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 text-green-700' },
-  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 text-red-700' },
-  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 text-purple-700' },
-  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 text-gray-700' }
+  { value: 'M', label: 'Mechanical', color: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' },
+  { value: 'E', label: 'Electrical', color: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300' },
+  { value: 'P', label: 'Plumbing', color: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300' },
+  { value: 'EM', label: 'Energy Modelling', color: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' },
+  { value: 'FP', label: 'Fire Protection', color: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' },
+  { value: 'TI', label: 'Tenant Improvement', color: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' },
+  { value: 'VI', label: 'Verification Pending', color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' }
 ];
 
 const STATUS_COLORS = {
-  not_started: 'bg-gray-100 text-gray-700 border-gray-300',
-  in_progress: 'bg-blue-100 text-blue-700 border-blue-300',
-  submitted: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-  approved: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  completed: 'bg-green-100 text-green-700 border-green-300',
-  cancelled: 'bg-red-100 text-red-700 border-red-300',
-  on_hold: 'bg-orange-100 text-orange-700 border-orange-300',
-  closed_paid: 'bg-indigo-100 text-indigo-700 border-indigo-300'
+  not_started: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600',
+  in_progress: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+  submitted: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+  approved: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
+  completed: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
+  cancelled: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+  on_hold: 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+  closed_paid: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700'
 };
 
 // Section Header Component

@@ -248,7 +248,8 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
             
             <Box
               sx={{
-                border: '2px dashed #ccc',
+                border: '2px dashed',
+                borderColor: 'divider',
                 borderRadius: 2,
                 p: 4,
                 textAlign: 'center',
@@ -256,6 +257,12 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
                 '&:hover': {
                   borderColor: 'primary.main',
                   backgroundColor: 'action.hover',
+                },
+                '.dark &': {
+                  borderColor: 'rgb(75 85 99)',
+                  '&:hover': {
+                    borderColor: 'primary.light',
+                  },
                 },
               }}
               onClick={() => document.getElementById('file-upload').click()}
@@ -316,7 +323,7 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
               </Alert>
             )}
 
-            <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 300, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -395,7 +402,7 @@ const BulkUpload = ({ open, onClose, onSuccess, onError }) => {
                 <Typography variant="subtitle2" gutterBottom>
                   Upload Errors:
                 </Typography>
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} sx={{ '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
 
 import Tooltip from './Tooltip';
 import DetailPanel from './DetailPanel';
@@ -153,6 +153,7 @@ const ProjectsGrid = forwardRef(({ projects, loading, onFilterChanged }, ref) =>
         <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
           <AgGridReact
             ref={gridRef}
+            theme={themeQuartz}
             rowData={projects}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}

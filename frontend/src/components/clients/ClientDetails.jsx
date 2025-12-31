@@ -82,7 +82,7 @@ const ClientDetails = ({ open, onClose, clientId }) => {
 
           {/* Contact Information */}
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', '.dark &': { backgroundColor: 'rgb(55 65 81)', borderColor: 'rgb(75 85 99)' } }}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 Contact Information
               </Typography>
@@ -117,7 +117,7 @@ const ClientDetails = ({ open, onClose, clientId }) => {
 
           {/* Company Information */}
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', '.dark &': { backgroundColor: 'rgb(55 65 81)', borderColor: 'rgb(75 85 99)' } }}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 Company Information
               </Typography>
@@ -152,7 +152,7 @@ const ClientDetails = ({ open, onClose, clientId }) => {
 
           {/* Dates */}
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', '.dark &': { backgroundColor: 'rgb(55 65 81)', borderColor: 'rgb(75 85 99)' } }}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 Dates
               </Typography>
@@ -179,7 +179,7 @@ const ClientDetails = ({ open, onClose, clientId }) => {
 
           {/* Account Status */}
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', '.dark &': { backgroundColor: 'rgb(55 65 81)', borderColor: 'rgb(75 85 99)' } }}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 Account Status
               </Typography>
@@ -199,7 +199,7 @@ const ClientDetails = ({ open, onClose, clientId }) => {
           {/* Notes */}
           {client.notes && (
             <Grid item xs={12}>
-              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', '.dark &': { backgroundColor: 'rgb(55 65 81)', borderColor: 'rgb(75 85 99)' } }}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   <Box display="flex" alignItems="center" gap={1}>
                     <NotesIcon fontSize="small" />

@@ -1,7 +1,7 @@
 // src/pages/Dashboard/Dashboard.jsx
 import React, { useEffect, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { STATUS_CONFIG } from '../../components/projects/StatusRenderer';
 import {
@@ -40,14 +40,14 @@ const STATUS_CHART_COLORS = {
 
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const { 
-    dashboardStats, 
-    overdueProjects, 
-    upcomingInspections, 
-    loading: projectsLoading, 
+  const {
+    dashboardStats,
+    overdueProjects,
+    upcomingInspections,
+    loading: projectsLoading,
     fetchDashboardStats,
     fetchOverdueProjects,
-    fetchUpcomingInspections 
+    fetchUpcomingInspections
   } = useProjectStore();
 
   const {
@@ -360,8 +360,9 @@ const Dashboard = () => {
               <LoadingSpinner size="sm" text="Loading activities..." />
             </div>
           ) : activityRowData.length > 0 ? (
-            <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 400, width: '100%' }}>
+            <div style={{ height: 400, width: '100%' }}>
               <AgGridReact
+                theme={themeQuartz}
                 rowData={activityRowData}
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}

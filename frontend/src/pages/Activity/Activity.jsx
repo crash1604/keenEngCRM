@@ -524,7 +524,22 @@ const Activity = () => {
               size="small"
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value)}
-              sx={{ minWidth: 160 }}
+              sx={{
+                minWidth: 160,
+                '.dark & .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgb(55 65 81)',
+                  color: 'white',
+                },
+                '.dark & .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgb(75 85 99)',
+                },
+                '.dark & .MuiInputLabel-root': {
+                  color: 'rgb(156 163 175)',
+                },
+                '.dark & .MuiSelect-icon': {
+                  color: 'rgb(156 163 175)',
+                },
+              }}
               label="View"
             >
               {availableViewModes.map((mode) => (
@@ -555,9 +570,20 @@ const Activity = () => {
             placeholder="Search all columns..."
             value={quickFilterText}
             onChange={onQuickFilterChange}
-            sx={{ minWidth: 220 }}
+            sx={{
+              minWidth: 220,
+              '.dark & .MuiOutlinedInput-root': {
+                backgroundColor: 'rgb(55 65 81)',
+                color: 'white',
+                '& input': { color: 'white' },
+                '& input::placeholder': { color: 'rgb(156 163 175)' },
+              },
+              '.dark & .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(75 85 99)',
+              },
+            }}
             InputProps={{
-              startAdornment: <FilterIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
+              startAdornment: <FilterIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20, '.dark &': { color: 'rgb(156 163 175)' } }} />,
             }}
           />
 
@@ -568,7 +594,23 @@ const Activity = () => {
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 150 }}
+            sx={{
+              width: 150,
+              '.dark & .MuiOutlinedInput-root': {
+                backgroundColor: 'rgb(55 65 81)',
+                color: 'white',
+                '& input': { color: 'white' },
+              },
+              '.dark & .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(75 85 99)',
+              },
+              '.dark & .MuiInputLabel-root': {
+                color: 'rgb(156 163 175)',
+              },
+              '.dark & .MuiInputLabel-root.Mui-focused': {
+                color: '#3b82f6',
+              },
+            }}
           />
           <TextField
             size="small"
@@ -577,7 +619,23 @@ const Activity = () => {
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ width: 150 }}
+            sx={{
+              width: 150,
+              '.dark & .MuiOutlinedInput-root': {
+                backgroundColor: 'rgb(55 65 81)',
+                color: 'white',
+                '& input': { color: 'white' },
+              },
+              '.dark & .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgb(75 85 99)',
+              },
+              '.dark & .MuiInputLabel-root': {
+                color: 'rgb(156 163 175)',
+              },
+              '.dark & .MuiInputLabel-root.Mui-focused': {
+                color: '#3b82f6',
+              },
+            }}
           />
 
           <Button variant="text" startIcon={<ClearIcon />} onClick={clearAllFilters} size="small">
@@ -599,7 +657,7 @@ const Activity = () => {
 
       {/* AG Grid */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px]">
-        <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 500, width: '100%' }}>
+        <div className="ag-theme-quartz dark:ag-theme-quartz-dark-blue" style={{ height: 500, width: '100%' }}>
           <AgGridReact
             ref={gridRef}
             rowData={activities}
@@ -645,7 +703,14 @@ const Activity = () => {
               label={`${ACTION_CONFIG[action]?.label || action}: ${count}`}
               size="small"
               variant="outlined"
-              sx={{ fontSize: '0.7rem', height: 24 }}
+              sx={{
+                fontSize: '0.7rem',
+                height: 24,
+                '.dark &': {
+                  borderColor: 'rgb(75 85 99)',
+                  color: 'rgb(209 213 219)',
+                },
+              }}
             />
           ))}
         </div>

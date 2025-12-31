@@ -143,7 +143,7 @@ const StatisticsPanel = ({ open, onClose }) => {
             <Grid item xs={12}>
               <Grid container spacing={2}>
                 <Grid item xs={6} sm={3}>
-                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center', '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                     <Typography variant="h4" fontWeight="bold" color="primary">
                       {stats.total}
                     </Typography>
@@ -154,7 +154,7 @@ const StatisticsPanel = ({ open, onClose }) => {
                   </Paper>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center', '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                     <Typography variant="h4" fontWeight="bold" color="success.main">
                       {stats.active}
                     </Typography>
@@ -165,7 +165,7 @@ const StatisticsPanel = ({ open, onClose }) => {
                   </Paper>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center', '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                     <Typography variant="h4" fontWeight="bold" color="error.main">
                       {stats.inactive}
                     </Typography>
@@ -176,7 +176,7 @@ const StatisticsPanel = ({ open, onClose }) => {
                   </Paper>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper elevation={2} sx={{ p: 2, textAlign: 'center', '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                     <Typography variant="h4" fontWeight="bold" color="info.main">
                       {stats.withUsers}
                     </Typography>
@@ -191,7 +191,7 @@ const StatisticsPanel = ({ open, onClose }) => {
 
             {/* Charts */}
             <Grid item xs={12} md={6}>
-              <Paper elevation={1} sx={{ p: 2, height: 300 }}>
+              <Paper elevation={1} sx={{ p: 2, height: 300, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                   Monthly Client Growth
                 </Typography>
@@ -209,7 +209,7 @@ const StatisticsPanel = ({ open, onClose }) => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Paper elevation={1} sx={{ p: 2, height: 300 }}>
+              <Paper elevation={1} sx={{ p: 2, height: 300, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                   Status Distribution
                 </Typography>
@@ -237,7 +237,7 @@ const StatisticsPanel = ({ open, onClose }) => {
 
             {/* Top Companies */}
             <Grid item xs={12}>
-              <Paper elevation={1} sx={{ p: 2 }}>
+              <Paper elevation={1} sx={{ p: 2, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                   Top Companies
                 </Typography>
@@ -262,7 +262,7 @@ const StatisticsPanel = ({ open, onClose }) => {
 
             {/* Additional Stats */}
             <Grid item xs={12} md={6}>
-              <Paper elevation={1} sx={{ p: 2 }}>
+              <Paper elevation={1} sx={{ p: 2, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                   User Account Stats
                 </Typography>
@@ -296,7 +296,7 @@ const StatisticsPanel = ({ open, onClose }) => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Paper elevation={1} sx={{ p: 2 }}>
+              <Paper elevation={1} sx={{ p: 2, '.dark &': { backgroundColor: 'rgb(55 65 81)' } }}>
                 <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                   Activity Ratio
                 </Typography>

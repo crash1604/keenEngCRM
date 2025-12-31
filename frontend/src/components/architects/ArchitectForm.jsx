@@ -74,12 +74,12 @@ const CloseIcon = () => (
 // Section Header Component
 const SectionHeader = ({ icon, title, subtitle }) => (
   <div className="flex items-center gap-3 mb-4">
-    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
       {icon}
     </div>
     <div>
-      <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-      {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
+      {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
     </div>
   </div>
 );
@@ -102,8 +102,8 @@ const FormInput = ({
 
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-        {icon && <span className="text-gray-400">{icon}</span>}
+      <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-200">
+        {icon && <span className="text-gray-400 dark:text-gray-500">{icon}</span>}
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
@@ -118,10 +118,11 @@ const FormInput = ({
           rows={rows}
           className={`w-full px-3 py-2.5 text-sm border rounded-lg transition-all duration-200 resize-none
             ${hasError
-              ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-              : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+              ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/30 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800'
+              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
             }
-            ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
+            ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : ''}
+            text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
             focus:outline-none`}
         />
       ) : (
@@ -135,15 +136,16 @@ const FormInput = ({
           placeholder={placeholder}
           className={`w-full px-3 py-2.5 text-sm border rounded-lg transition-all duration-200
             ${hasError
-              ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-              : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+              ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/30 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800'
+              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
             }
-            ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
+            ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : ''}
+            text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
             focus:outline-none`}
         />
       )}
       {hasError && (
-        <p className="text-xs text-red-600 flex items-center gap-1">
+        <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
@@ -244,6 +246,9 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
         sx: {
           borderRadius: '16px',
           overflow: 'hidden',
+          '.dark &': {
+            backgroundColor: 'rgb(31 41 55)',
+          }
         }
       }}
     >
@@ -296,7 +301,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
 
           <div className="p-6 space-y-6">
             {/* Basic Information Section */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5 border border-gray-100 dark:border-gray-600">
               <SectionHeader
                 icon={<UserIcon />}
                 title="Basic Information"
@@ -322,7 +327,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
             </div>
 
             {/* Contact Information Section */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5 border border-gray-100 dark:border-gray-600">
               <SectionHeader
                 icon={<EmailIcon />}
                 title="Contact Information"
@@ -356,7 +361,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
             </div>
 
             {/* Professional Details Section */}
-            <div className="bg-indigo-50 rounded-xl p-5 border border-indigo-100">
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-5 border border-indigo-100 dark:border-indigo-800">
               <SectionHeader
                 icon={<BadgeIcon />}
                 title="Professional Details"
@@ -384,7 +389,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
             </div>
 
             {/* Address Section */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5 border border-gray-100 dark:border-gray-600">
               <SectionHeader
                 icon={<LocationIcon />}
                 title="Address Information"
@@ -402,7 +407,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
             </div>
 
             {/* Notes Section */}
-            <div className="bg-amber-50 rounded-xl p-5 border border-amber-100">
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-5 border border-amber-100 dark:border-amber-800">
               <SectionHeader
                 icon={<NotesIcon />}
                 title="Additional Notes"
@@ -422,8 +427,8 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
         </DialogContent>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             <span className="text-red-500">*</span> Required field
           </p>
           <div className="flex items-center gap-3">
@@ -431,7 +436,7 @@ const ArchitectForm = ({ open, onClose, architect, editMode, onSuccess, onError 
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all disabled:opacity-50"
             >
               Cancel
             </button>

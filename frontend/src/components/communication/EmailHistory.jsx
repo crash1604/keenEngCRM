@@ -232,13 +232,20 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
         onClose={handleCloseDetails}
         maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: {
+            '.dark &': {
+              backgroundColor: 'rgb(31 41 55)',
+            }
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ '.dark &': { color: 'white' } }}>
           <Typography variant="h6" fontWeight="bold">
             Email Details
           </Typography>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ '.dark &': { borderColor: 'rgb(55 65 81)' } }}>
           {selectedLog && (
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -326,10 +333,22 @@ const EmailHistory = observer(({ onShowSnackbar }) => {
                 </Typography>
                 <Paper
                   variant="outlined"
-                  sx={{ p: 2, maxHeight: 300, overflow: 'auto', bgcolor: '#f9fafb' }}
+                  sx={{
+                    p: 2,
+                    maxHeight: 300,
+                    overflow: 'auto',
+                    bgcolor: '#f9fafb',
+                    '.dark &': {
+                      bgcolor: 'rgb(55 65 81)',
+                      borderColor: 'rgb(75 85 99)',
+                    }
+                  }}
                 >
                   {selectedLog.body_html ? (
-                    <div dangerouslySetInnerHTML={{ __html: selectedLog.body_html }} />
+                    <div
+                      dangerouslySetInnerHTML={{ __html: selectedLog.body_html }}
+                      className="dark:text-gray-200"
+                    />
                   ) : (
                     <Typography variant="body2" color="text.secondary">
                       No content available
