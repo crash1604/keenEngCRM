@@ -1,0 +1,9 @@
+Year,Job Number,Project Name,Project Type,Status,Current Sub Status,Current Open Items,Current Action Items,Client,Architect/Designer,Mechanical Manager,Due Date,Due Date Note,Rough In Date,Rough In Note,Final Inspection Date,Final Inspection Note,Address,Legal Address,Billing Info,Created At,Updated At,Last Status Change
+2025,2025-6336,homeland v1,P,Submitted,,,,Homeland Developers,,John Doe,2026-01-28,,,,,,asdfghjk,,,2025-12-31 04:33:25,2025-12-31 04:34:56,
+2025,2025-0161,Veterinary Clinic Plumbing Design,P,Completed,,"more notes and open items
+
+edit by employee alice",more notes for open items,Green Building Solutions,Emily Rodriguez,John Doe,2025-12-28,something,,another thing,2025-12-16,why is this note here?,"4900 Park Place, Memphis, TN 38101",,,2025-12-04 22:22:02,2025-12-31 04:06:17,
+2025,2025-6094,University Dormitory Plumbing,P,In Progress,,,,Green Building Solutions,Emily Rodriguez,John Doe,2026-02-04,,,,,,"3300 Valley Rd, Sacramento, CA 95814",,,2025-12-04 22:21:41,2025-12-04 22:21:41,
+2025,2025-9773,Senior Living Facility Plumbing,P,In Progress,,,,Green Building Solutions,,John Doe,2025-12-14,,,,,,"1700 Metro Plaza, Columbus, OH 43201",,,2025-12-04 22:20:59,2025-12-04 22:20:59,
+2025,2025-9311,School Campus Plumbing Upgrade,P,In Progress,,,,Metro Commercial Properties,Lisa Anderson,John Doe,2025-12-29,,,,,,"3600 Industry Ave, Chicago, IL 60601",,,2025-12-04 22:20:16,2025-12-04 22:20:16,
+2025,2025-9698,Hotel Plumbing System Renovation,P,On Hold,Awaiting funding approval,,,Green Building Solutions,Lisa Anderson,John Doe,2026-02-28,,,,,,"200 Hospitality Way, Miami, FL 33101",,,2025-12-04 22:16:08,2025-12-04 22:16:08,

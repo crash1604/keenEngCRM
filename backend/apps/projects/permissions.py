@@ -29,9 +29,9 @@ class ProjectPermissions(permissions.BasePermission):
         if request.user.role == 'manager':
             return True
         
-        # Employees can only modify projects they manage
+        # Employees can modify any project
         if request.user.role == 'employee':
-            return obj.mechanical_manager == request.user
+            return True
         
         # Clients and architects can only view (handled by get_queryset)
         return False

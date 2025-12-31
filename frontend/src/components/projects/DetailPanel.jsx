@@ -242,7 +242,7 @@ const DetailPanel = ({
   const daysUntilDue = getDaysUntilDue();
 
   return (
-    <div className="w-2/3 p-4 animate-slide-in">
+    <div className="w-2/3 p-4 animate-slide-in bg-gray-100 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg h-full flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700 relative">
 
         {/* Save Status Toast */}
@@ -283,9 +283,9 @@ const DetailPanel = ({
                 </span>
                 {daysUntilDue !== null && (
                   <span className={`text-xs font-medium px-2 py-1 rounded ${
-                    daysUntilDue < 0 ? 'bg-red-100 text-red-700' :
-                    daysUntilDue <= 7 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
+                    daysUntilDue < 0 ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' :
+                    daysUntilDue <= 7 ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300' :
+                    'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
                   }`}>
                     {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)}d overdue` :
                      daysUntilDue === 0 ? 'Due today' :

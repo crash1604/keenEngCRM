@@ -39,6 +39,18 @@ const ProjectsGrid = forwardRef(({ projects, loading, onFilterChanged }, ref) =>
         return gridRef.current.api.getFilterModel();
       }
       return null;
+    },
+    getDisplayedRows: () => {
+      if (gridRef.current?.api) {
+        const displayedRows = [];
+        gridRef.current.api.forEachNodeAfterFilterAndSort((node) => {
+          if (node.data) {
+            displayedRows.push(node.data);
+          }
+        });
+        return displayedRows;
+      }
+      return [];
     }
   }));
 
@@ -145,7 +157,7 @@ const ProjectsGrid = forwardRef(({ projects, loading, onFilterChanged }, ref) =>
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <Tooltip content={tooltipContent} position={tooltipPosition} />
 
       {/* AG Grid */}

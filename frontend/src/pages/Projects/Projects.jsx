@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Snackbar, Alert, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import { useProjectStore } from '../../stores/project.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -60,9 +61,131 @@ const Projects = () => {
     }
   };
 
-  const handleExport = async () => {
-    const { exportProjects } = useProjectStore.getState();
-    await exportProjects();
+  const handleExport = () => {
+    try {
+      // Get the currently displayed (filtered) rows from the grid
+      const displayedRows = gridRef.current?.getDisplayedRows() || [];
+
+      if (displayedRows.length === 0) {
+        setSnackbar({
+          open: true,
+          message: 'No projects to export',
+          severity: 'warning'
+        });
+        return;
+      }
+
+      // Define CSV headers matching all Project model fields
+      const headers = [
+        'Year',
+        'Job Number',
+        'Project Name',
+        'Project Type',
+        'Status',
+        'Current Sub Status',
+        'Current Open Items',
+        'Current Action Items',
+        'Client',
+        'Architect/Designer',
+        'Mechanical Manager',
+        'Due Date',
+        'Due Date Note',
+        'Rough In Date',
+        'Rough In Note',
+        'Final Inspection Date',
+        'Final Inspection Note',
+        'Address',
+        'Legal Address',
+        'Billing Info',
+        'Created At',
+        'Updated At',
+        'Last Status Change'
+      ];
+
+      // Helper to escape CSV values
+      const escapeCSV = (value) => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      // Helper to format date
+      const formatDate = (date) => {
+        if (!date) return '';
+        return new Date(date).toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      };
+
+      // Helper to format datetime
+      const formatDateTime = (date) => {
+        if (!date) return '';
+        return new Date(date).toLocaleString('en-CA', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).replace(',', '');
+      };
+
+      // Convert rows to CSV
+      const csvRows = displayedRows.map(project => [
+        escapeCSV(project.year),
+        escapeCSV(project.job_number),
+        escapeCSV(project.project_name),
+        escapeCSV(Array.isArray(project.project_type) ? project.project_type.join(', ') : project.project_type),
+        escapeCSV(project.status_display || project.status),
+        escapeCSV(project.current_sub_status),
+        escapeCSV(project.current_open_items),
+        escapeCSV(project.current_action_items),
+        escapeCSV(project.client_name || project.client?.name || ''),
+        escapeCSV(project.architect_name || project.architect_designer?.name || ''),
+        escapeCSV(project.manager_name || project.mechanical_manager?.full_name || ''),
+        escapeCSV(formatDate(project.due_date)),
+        escapeCSV(project.due_date_note),
+        escapeCSV(formatDate(project.rough_in_date)),
+        escapeCSV(project.rough_in_note),
+        escapeCSV(formatDate(project.final_inspection_date)),
+        escapeCSV(project.final_inspection_note),
+        escapeCSV(project.address),
+        escapeCSV(project.legal_address),
+        escapeCSV(project.billing_info),
+        escapeCSV(formatDateTime(project.created_at)),
+        escapeCSV(formatDateTime(project.updated_at)),
+        escapeCSV(formatDateTime(project.last_status_change))
+      ].join(','));
+
+      // Combine headers and rows
+      const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `projects_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setSnackbar({
+        open: true,
+        message: `Exported ${displayedRows.length} project${displayedRows.length !== 1 ? 's' : ''} successfully!`,
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to export projects',
+        severity: 'error'
+      });
+    }
   };
 
   // Modal handlers
@@ -144,6 +267,23 @@ const Projects = () => {
                 Clear Filters
               </button>
             )}
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              onClick={handleExport}
+              sx={{
+                borderColor: '#10b981',
+                color: '#10b981',
+                '&:hover': {
+                  borderColor: '#059669',
+                  bgcolor: 'rgba(16, 185, 129, 0.08)'
+                },
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Export
+            </Button>
             <Button
               variant="contained"
               startIcon={<AddIcon />}

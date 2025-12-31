@@ -258,30 +258,68 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def export(self, request):
         """
-        Export projects to CSV
+        Export projects to CSV with all fields from the Project model
         """
         import csv
         from django.http import HttpResponse
-        
+
         queryset = self.get_queryset()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="projects_export.csv"'
-        
+
         writer = csv.writer(response)
+        # Header row with all Project model fields
         writer.writerow([
-            'Job Number', 'Project Name', 'Client', 'Status', 
-            'Due Date', 'Manager', 'Project Types'
+            'Year',
+            'Job Number',
+            'Project Name',
+            'Project Type',
+            'Status',
+            'Current Sub Status',
+            'Current Open Items',
+            'Current Action Items',
+            'Client',
+            'Architect/Designer',
+            'Mechanical Manager',
+            'Due Date',
+            'Due Date Note',
+            'Rough In Date',
+            'Rough In Note',
+            'Final Inspection Date',
+            'Final Inspection Note',
+            'Address',
+            'Legal Address',
+            'Billing Info',
+            'Created At',
+            'Updated At',
+            'Last Status Change'
         ])
-        
+
         for project in queryset:
             writer.writerow([
+                project.year,
                 project.job_number,
                 project.project_name,
-                str(project.client),
+                ', '.join(project.get_project_types_list()),
                 project.get_status_display(),
-                project.due_date,
+                project.current_sub_status or '',
+                project.current_open_items or '',
+                project.current_action_items or '',
+                str(project.client) if project.client else '',
+                str(project.architect_designer) if project.architect_designer else '',
                 project.mechanical_manager.get_full_name() if project.mechanical_manager else '',
-                ', '.join(project.get_project_types_list())
+                project.due_date.strftime('%Y-%m-%d') if project.due_date else '',
+                project.due_date_note or '',
+                project.rough_in_date.strftime('%Y-%m-%d') if project.rough_in_date else '',
+                project.rough_in_note or '',
+                project.final_inspection_date.strftime('%Y-%m-%d') if project.final_inspection_date else '',
+                project.final_inspection_note or '',
+                project.address or '',
+                project.legal_address or '',
+                project.billing_info or '',
+                project.created_at.strftime('%Y-%m-%d %H:%M:%S') if project.created_at else '',
+                project.updated_at.strftime('%Y-%m-%d %H:%M:%S') if project.updated_at else '',
+                project.last_status_change.strftime('%Y-%m-%d %H:%M:%S') if project.last_status_change else ''
             ])
-        
+
         return response

@@ -6,8 +6,14 @@ const formatDate = (value, options = { month: 'short', day: 'numeric', year: 'nu
   return new Date(value).toLocaleDateString('en-US', options);
 };
 
-// Reusable empty cell style
-const emptyCellStyle = { color: '#9ca3af', fontStyle: 'italic' };
+// Helper to check dark mode
+const isDarkMode = () => document.documentElement.classList.contains('dark');
+
+// Reusable empty cell style (with dark mode support)
+const getEmptyCellStyle = () => ({
+  color: isDarkMode() ? '#6b7280' : '#9ca3af',
+  fontStyle: 'italic'
+});
 
 export const useProjectColumnDefs = () => {
   return useMemo(() => [
@@ -41,7 +47,7 @@ export const useProjectColumnDefs = () => {
       headerName: 'Sub Status',
       width: 150,
       valueFormatter: (params) => params.value || '-',
-      cellStyle: (params) => !params.value ? emptyCellStyle : null
+      cellStyle: (params) => !params.value ? getEmptyCellStyle() : null
     },
     {
       field: 'client_name',
@@ -67,15 +73,26 @@ export const useProjectColumnDefs = () => {
       width: 130,
       valueFormatter: (params) => formatDate(params.value),
       cellStyle: (params) => {
-        if (!params.value) return emptyCellStyle;
+        if (!params.value) return getEmptyCellStyle();
         const dueDate = new Date(params.value);
         const today = new Date();
         const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        const dark = isDarkMode();
 
         if (daysUntilDue < 0 && params.data.status !== 'completed') {
-          return { backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: 600 };
+          // Overdue - red styling
+          return {
+            backgroundColor: dark ? '#7f1d1d' : '#fef2f2',
+            color: dark ? '#fca5a5' : '#dc2626',
+            fontWeight: 600
+          };
         } else if (daysUntilDue <= 7 && params.data.status !== 'completed') {
-          return { backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 500 };
+          // Due soon - amber/yellow styling
+          return {
+            backgroundColor: dark ? '#78350f' : '#fffbeb',
+            color: dark ? '#fcd34d' : '#d97706',
+            fontWeight: 500
+          };
         }
         return null;
       }
@@ -85,14 +102,14 @@ export const useProjectColumnDefs = () => {
       headerName: 'Rough In',
       width: 120,
       valueFormatter: (params) => formatDate(params.value, { month: 'short', day: 'numeric' }),
-      cellStyle: (params) => !params.value ? emptyCellStyle : null
+      cellStyle: (params) => !params.value ? getEmptyCellStyle() : null
     },
     {
       field: 'final_inspection_date',
       headerName: 'Final Insp',
       width: 120,
       valueFormatter: (params) => formatDate(params.value, { month: 'short', day: 'numeric' }),
-      cellStyle: (params) => !params.value ? emptyCellStyle : null
+      cellStyle: (params) => !params.value ? getEmptyCellStyle() : null
     },
     {
       field: 'year',

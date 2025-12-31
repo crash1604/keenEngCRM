@@ -10,6 +10,8 @@ from django.conf import settings
 
 from .models import User
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from apps.clients.models import Client
+from apps.architects.models import Architect
 
 
 def set_auth_cookies(response, access_token, refresh_token):
@@ -69,6 +71,30 @@ class UserRegistrationView(APIView):
                 user = serializer.save()
                 user.last_login = timezone.now()
                 user.save()
+
+                # If user is a client, create a corresponding Client record
+                if user.role == 'client':
+                    try:
+                        Client.objects.create(
+                            name=f"{user.first_name} {user.last_name}".strip() or user.email,
+                            contact_email=user.email,
+                            user_account=user,
+                            is_active=True
+                        )
+                    except Exception as e:
+                        print(f"Warning: Could not create Client record: {e}")
+
+                # If user is an architect, create a corresponding Architect record
+                if user.role == 'architect':
+                    try:
+                        Architect.objects.create(
+                            name=f"{user.first_name} {user.last_name}".strip() or user.email,
+                            contact_email=user.email,
+                            user_account=user,
+                            is_active=True
+                        )
+                    except Exception as e:
+                        print(f"Warning: Could not create Architect record: {e}")
 
                 # Generate tokens
                 refresh = RefreshToken.for_user(user)
