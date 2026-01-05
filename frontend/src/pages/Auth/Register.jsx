@@ -11,7 +11,6 @@ export const Register = () => {
     password2: '',
     first_name: '',
     last_name: '',
-    phone: '',
     role: 'employee',
   });
   const [formErrors, setFormErrors] = useState({});
@@ -210,23 +209,6 @@ export const Register = () => {
                 <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
               )}
             </div>
-
-            {/* Phone Field */}
-            {/* <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number (Optional)
-              </label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="+1 (555) 123-4567"
-                disabled={isLoading}
-              />
-            </div> */}
 
             {/* Role Field */}
             <div>

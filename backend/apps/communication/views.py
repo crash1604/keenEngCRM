@@ -11,6 +11,7 @@ from .serializers import (
     SendEmailSerializer, PreviewEmailSerializer
 )
 from .email_service import CommunicationEmailService
+from .tasks import send_email_async
 
 
 class EmailTemplateViewSet(viewsets.ModelViewSet):
@@ -123,23 +124,55 @@ class CommunicationViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def send_email(self, request):
-        """Send email from template"""
+        """Send email from template asynchronously using Celery"""
         serializer = SendEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            result = CommunicationEmailService.send_email_from_template(
-                project_id=serializer.validated_data['project_id'],
-                template_id=serializer.validated_data['template_id'],
-                recipient_email=serializer.validated_data.get('recipient_email'),
-                cc_emails=serializer.validated_data.get('cc_emails'),
-                bcc_emails=serializer.validated_data.get('bcc_emails'),
-                custom_subject=serializer.validated_data.get('custom_subject'),
-                custom_body=serializer.validated_data.get('custom_body'),
-                sent_by=request.user
-            )
+            # Check if async sending should be used
+            use_async = request.query_params.get('async', 'true').lower() == 'true'
 
-            return Response(result, status=status.HTTP_200_OK)
+            project_id = serializer.validated_data['project_id']
+            template_id = serializer.validated_data['template_id']
+            sent_by_id = request.user.id
+
+            # Build kwargs for optional parameters
+            kwargs = {}
+            if serializer.validated_data.get('recipient_email'):
+                kwargs['recipient_email'] = serializer.validated_data['recipient_email']
+            if serializer.validated_data.get('cc_emails'):
+                kwargs['cc_emails'] = serializer.validated_data['cc_emails']
+            if serializer.validated_data.get('bcc_emails'):
+                kwargs['bcc_emails'] = serializer.validated_data['bcc_emails']
+            if serializer.validated_data.get('custom_subject'):
+                kwargs['custom_subject'] = serializer.validated_data['custom_subject']
+            if serializer.validated_data.get('custom_body'):
+                kwargs['custom_body'] = serializer.validated_data['custom_body']
+
+            if use_async:
+                # Send email asynchronously via Celery
+                task = send_email_async.delay(
+                    project_id=project_id,
+                    template_id=template_id,
+                    sent_by_id=sent_by_id,
+                    **kwargs
+                )
+
+                return Response({
+                    'success': True,
+                    'message': 'Email queued for sending',
+                    'task_id': task.id,
+                    'status': 'queued'
+                }, status=status.HTTP_202_ACCEPTED)
+            else:
+                # Send email synchronously (fallback)
+                result = CommunicationEmailService.send_email_from_template(
+                    project_id=project_id,
+                    template_id=template_id,
+                    sent_by=request.user,
+                    **kwargs
+                )
+                return Response(result, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(

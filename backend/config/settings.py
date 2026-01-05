@@ -215,3 +215,41 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =============================================================================
+# Email Configuration - AWS SES
+# =============================================================================
+
+# Use console backend in development, SES in production
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django_ses.SESBackend'
+
+# AWS SES Configuration
+AWS_SES_REGION_NAME = os.environ.get('AWS_SES_REGION', 'us-east-1')
+AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
+
+# AWS Credentials - If using IAM roles on EC2/ECS, these are not needed
+# If running locally or need explicit credentials, set these in .env
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
+
+# Fallback sender email (used only if manager email not available)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'KEEN Engineering <noreply@example.com>')
+
+# Company info for email templates
+COMPANY_NAME = os.environ.get('COMPANY_NAME', 'KEEN Engineering')
+COMPANY_WEBSITE = os.environ.get('COMPANY_WEBSITE', 'www.keenengineering.com')
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'support@keenengineering.com')
+
+# =============================================================================
+# Celery Configuration
+# =============================================================================
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE

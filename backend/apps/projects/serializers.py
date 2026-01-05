@@ -7,22 +7,23 @@ User = get_user_model()
 
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True)
+    client_email = serializers.EmailField(source='client.contact_email', read_only=True)
     architect_name = serializers.CharField(source='architect_designer.name', read_only=True)
     manager_name = serializers.CharField(source='mechanical_manager.get_full_name', read_only=True)
     project_types_list = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     is_overdue = serializers.SerializerMethodField()
     days_until_due = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Project
         fields = [
             'id', 'year', 'job_number', 'project_name', 'project_type',
             'project_types_list', 'status', 'status_display', 'current_sub_status',
             'current_open_items', 'current_action_items', 'client', 'client_name',
-            'architect_designer', 'architect_name', 'mechanical_manager', 'manager_name',
-            'due_date', 'due_date_note', 'rough_in_date', 'rough_in_note',
-            'final_inspection_date', 'final_inspection_note', 'address', 
+            'client_email', 'architect_designer', 'architect_name', 'mechanical_manager',
+            'manager_name', 'due_date', 'due_date_note', 'rough_in_date', 'rough_in_note',
+            'final_inspection_date', 'final_inspection_note', 'address',
             'legal_address', 'billing_info', 'created_at', 'updated_at',
             'is_overdue', 'days_until_due'
         ]

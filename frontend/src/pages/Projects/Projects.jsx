@@ -5,7 +5,6 @@ import AddIcon from '@mui/icons-material/Add';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import { useProjectStore } from '../../stores/project.store';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ProjectsGrid from '../../components/projects/ProjectsGrid';
 import ProjectForm from '../../components/projects/ProjectForm';
 
@@ -18,12 +17,8 @@ const Projects = () => {
     error,
     filters,
     fetchProjects,
-    setFilters,
     updateProjectStatus
   } = useProjectStore();
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debugInfo, setDebugInfo] = useState(null);
 
   // Modal state
   const [formOpen, setFormOpen] = useState(false);
@@ -37,26 +32,13 @@ const Projects = () => {
     severity: 'success'
   });
 
-  // Debug helper (keep your existing debug code)
-  const testAPI = async () => {
-    // ... your existing debug code
-  };
-
   useEffect(() => {
     fetchProjects();
-    testAPI();
   }, [fetchProjects, filters]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setFilters({ search: searchTerm, page: 1 });
-  };
 
   const handleStatusChange = async (projectId, newStatus) => {
     const result = await updateProjectStatus(projectId, newStatus);
     if (result.success) {
-      console.log('Status updated successfully');
-      // Optionally refresh the projects list
       fetchProjects();
     }
   };
@@ -234,25 +216,8 @@ const Projects = () => {
     }
   }, []);
 
-  const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'not_started', label: 'Not Started' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'submitted', label: 'Submitted' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' }
-  ];
-
   return (
     <div className="space-y-6">
-      {/* Debug Information - Keep your existing debug panel */}
-      {debugInfo && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-          {/* Your existing debug content */}
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex justify-between items-center">

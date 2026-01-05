@@ -104,10 +104,10 @@ const ClientsGrid = observer(({ clients, loading }) => {
   }
 
   return (
-    <div className="flex bg-gray-100 dark:bg-gray-900" style={{ minHeight: 600 }}>
+    <div className="flex flex-1 min-h-0 bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
       {/* AG Grid */}
-      <div className={`${selectedClient ? 'w-1/3' : 'w-full'} transition-all duration-300`}>
-        <div className="ag-theme-quartz dark:ag-theme-quartz-dark" style={{ height: 600, width: '100%' }}>
+      <div className={`${selectedClient ? 'w-1/3' : 'w-full'} h-full transition-all duration-300`}>
+        <div className="ag-theme-quartz dark:ag-theme-quartz-dark h-full w-full">
           <AgGridReact
             rowData={clients}
             columnDefs={columnDefs}

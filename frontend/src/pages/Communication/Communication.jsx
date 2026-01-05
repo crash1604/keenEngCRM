@@ -26,34 +26,12 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const Communication = observer(() => {
-  console.log('Communication component rendering');
   const [activeTab, setActiveTab] = useState(0);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-
-  useEffect(() => {
-    // Disabled for now - will be handled by child components
-    // Fetch initial data based on active tab
-    // const loadData = async () => {
-    //   try {
-    //     if (activeTab === 0) {
-    //       // Email History tab
-    //       await communicationStore.fetchEmailLogs();
-    //       await communicationStore.fetchEmailStatistics();
-    //     } else if (activeTab === 2) {
-    //       // Templates tab
-    //       await communicationStore.fetchTemplates();
-    //     }
-    //   } catch (error) {
-    //     console.error('Error loading communication data:', error);
-    //     handleShowSnackbar('Failed to load data', 'error');
-    //   }
-    // };
-    // loadData();
-  }, [activeTab]);
 
   useEffect(() => {
     // Clean up on unmount

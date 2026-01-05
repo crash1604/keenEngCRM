@@ -1,7 +1,7 @@
 // src/pages/Activity/Activity.jsx
 import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
 import {
   Chip,
   Button,
@@ -23,6 +23,7 @@ import {
   Architecture as ArchitectureIcon,
   ManageAccounts as ManageAccountsIcon,
   Assignment as AssignmentIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { useActivityStore } from '../../stores/activity.store';
 import { useAuthStore } from '../../stores/auth.store';
@@ -30,6 +31,9 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+// Helper to check dark mode
+const isDarkMode = () => document.documentElement.classList.contains('dark');
 
 // Action type options for filter
 const ACTION_TYPES = [
@@ -45,6 +49,7 @@ const ACTION_TYPES = [
   { value: 'client_changed', label: 'Client Changed' },
   { value: 'architect_changed', label: 'Architect Changed' },
   { value: 'manager_changed', label: 'Manager Changed' },
+  { value: 'email_sent', label: 'Email Sent' },
   // Client actions
   { value: 'client_created', label: 'Client Created' },
   { value: 'client_updated', label: 'Client Updated' },
@@ -57,29 +62,30 @@ const ACTION_TYPES = [
   { value: 'architect_activated', label: 'Architect Activated' },
 ];
 
-// Action type configuration for display
+// Action type configuration for display (with light and dark mode colors)
 const ACTION_CONFIG = {
   // Project actions
-  status_change: { label: 'Status Change', color: '#3b82f6', bgColor: '#dbeafe', Icon: SyncIcon },
-  note_added: { label: 'Note Added', color: '#22c55e', bgColor: '#dcfce7', Icon: NoteAddIcon },
-  field_updated: { label: 'Field Updated', color: '#eab308', bgColor: '#fef9c3', Icon: EditIconMui },
-  inspection_scheduled: { label: 'Inspection', color: '#a855f7', bgColor: '#f3e8ff', Icon: EventIcon },
-  due_date_changed: { label: 'Due Date', color: '#f97316', bgColor: '#ffedd5', Icon: ScheduleIcon },
-  project_created: { label: 'Project Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
-  project_updated: { label: 'Project Updated', color: '#6366f1', bgColor: '#e0e7ff', Icon: UpdateIcon },
-  client_changed: { label: 'Client Changed', color: '#ec4899', bgColor: '#fce7f3', Icon: PeopleIcon },
-  architect_changed: { label: 'Architect Changed', color: '#06b6d4', bgColor: '#cffafe', Icon: ArchitectureIcon },
-  manager_changed: { label: 'Manager Changed', color: '#f43f5e', bgColor: '#ffe4e6', Icon: ManageAccountsIcon },
+  status_change: { label: 'Status Change', light: { color: '#3b82f6', bgColor: '#dbeafe' }, dark: { color: '#93c5fd', bgColor: '#1e3a5f' }, Icon: SyncIcon },
+  note_added: { label: 'Note Added', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: NoteAddIcon },
+  field_updated: { label: 'Field Updated', light: { color: '#eab308', bgColor: '#fef9c3' }, dark: { color: '#fcd34d', bgColor: '#78350f' }, Icon: EditIconMui },
+  inspection_scheduled: { label: 'Inspection', light: { color: '#a855f7', bgColor: '#f3e8ff' }, dark: { color: '#c4b5fd', bgColor: '#4c1d95' }, Icon: EventIcon },
+  due_date_changed: { label: 'Due Date', light: { color: '#f97316', bgColor: '#ffedd5' }, dark: { color: '#fdba74', bgColor: '#7c2d12' }, Icon: ScheduleIcon },
+  project_created: { label: 'Project Created', light: { color: '#10b981', bgColor: '#d1fae5' }, dark: { color: '#6ee7b7', bgColor: '#064e3b' }, Icon: AddCircleIcon },
+  project_updated: { label: 'Project Updated', light: { color: '#6366f1', bgColor: '#e0e7ff' }, dark: { color: '#a5b4fc', bgColor: '#312e81' }, Icon: UpdateIcon },
+  client_changed: { label: 'Client Changed', light: { color: '#ec4899', bgColor: '#fce7f3' }, dark: { color: '#f9a8d4', bgColor: '#831843' }, Icon: PeopleIcon },
+  architect_changed: { label: 'Architect Changed', light: { color: '#06b6d4', bgColor: '#cffafe' }, dark: { color: '#67e8f9', bgColor: '#164e63' }, Icon: ArchitectureIcon },
+  manager_changed: { label: 'Manager Changed', light: { color: '#f43f5e', bgColor: '#ffe4e6' }, dark: { color: '#fda4af', bgColor: '#881337' }, Icon: ManageAccountsIcon },
+  email_sent: { label: 'Email Sent', light: { color: '#14b8a6', bgColor: '#ccfbf1' }, dark: { color: '#5eead4', bgColor: '#134e4a' }, Icon: EmailIcon },
   // Client actions
-  client_created: { label: 'Client Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
-  client_updated: { label: 'Client Updated', color: '#ec4899', bgColor: '#fce7f3', Icon: EditIconMui },
-  client_archived: { label: 'Client Archived', color: '#6b7280', bgColor: '#f3f4f6', Icon: PeopleIcon },
-  client_restored: { label: 'Client Restored', color: '#22c55e', bgColor: '#dcfce7', Icon: PeopleIcon },
+  client_created: { label: 'Client Created', light: { color: '#10b981', bgColor: '#d1fae5' }, dark: { color: '#6ee7b7', bgColor: '#064e3b' }, Icon: AddCircleIcon },
+  client_updated: { label: 'Client Updated', light: { color: '#ec4899', bgColor: '#fce7f3' }, dark: { color: '#f9a8d4', bgColor: '#831843' }, Icon: EditIconMui },
+  client_archived: { label: 'Client Archived', light: { color: '#6b7280', bgColor: '#f3f4f6' }, dark: { color: '#9ca3af', bgColor: '#374151' }, Icon: PeopleIcon },
+  client_restored: { label: 'Client Restored', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: PeopleIcon },
   // Architect actions
-  architect_created: { label: 'Architect Created', color: '#10b981', bgColor: '#d1fae5', Icon: AddCircleIcon },
-  architect_updated: { label: 'Architect Updated', color: '#8b5cf6', bgColor: '#ede9fe', Icon: EditIconMui },
-  architect_deactivated: { label: 'Architect Deactivated', color: '#6b7280', bgColor: '#f3f4f6', Icon: ArchitectureIcon },
-  architect_activated: { label: 'Architect Activated', color: '#22c55e', bgColor: '#dcfce7', Icon: ArchitectureIcon },
+  architect_created: { label: 'Architect Created', light: { color: '#10b981', bgColor: '#d1fae5' }, dark: { color: '#6ee7b7', bgColor: '#064e3b' }, Icon: AddCircleIcon },
+  architect_updated: { label: 'Architect Updated', light: { color: '#8b5cf6', bgColor: '#ede9fe' }, dark: { color: '#c4b5fd', bgColor: '#4c1d95' }, Icon: EditIconMui },
+  architect_deactivated: { label: 'Architect Deactivated', light: { color: '#6b7280', bgColor: '#f3f4f6' }, dark: { color: '#9ca3af', bgColor: '#374151' }, Icon: ArchitectureIcon },
+  architect_activated: { label: 'Architect Activated', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: ArchitectureIcon },
 };
 
 // View mode options (client and architect only visible to admin/manager)
@@ -91,18 +97,25 @@ const VIEW_MODES = [
   { value: 'architect', label: 'Architect Activity', adminOnly: true },
 ];
 
-// Entity type configuration for display
+// Entity type configuration for display (with light and dark mode colors)
 const ENTITY_CONFIG = {
-  project: { label: 'Project', color: '#3b82f6', bgColor: '#dbeafe' },
-  client: { label: 'Client', color: '#ec4899', bgColor: '#fce7f3' },
-  architect: { label: 'Architect', color: '#8b5cf6', bgColor: '#ede9fe' },
+  project: { label: 'Project', light: { color: '#3b82f6', bgColor: '#dbeafe' }, dark: { color: '#93c5fd', bgColor: '#1e3a5f' } },
+  client: { label: 'Client', light: { color: '#ec4899', bgColor: '#fce7f3' }, dark: { color: '#f9a8d4', bgColor: '#831843' } },
+  architect: { label: 'Architect', light: { color: '#8b5cf6', bgColor: '#ede9fe' }, dark: { color: '#c4b5fd', bgColor: '#4c1d95' } },
 };
 
 // Cell Renderer Components
 const ActionTypeCellRenderer = (props) => {
   const { value } = props;
-  const config = ACTION_CONFIG[value] || { label: value || 'Unknown', color: '#6b7280', bgColor: '#f3f4f6', Icon: AssignmentIcon };
+  const dark = isDarkMode();
+  const config = ACTION_CONFIG[value] || {
+    label: value || 'Unknown',
+    light: { color: '#6b7280', bgColor: '#f3f4f6' },
+    dark: { color: '#9ca3af', bgColor: '#374151' },
+    Icon: AssignmentIcon
+  };
   const { Icon } = config;
+  const colors = dark ? config.dark : config.light;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -114,8 +127,8 @@ const ActionTypeCellRenderer = (props) => {
           margin: '6px 0',
           padding: '4px 8px',
           borderRadius: '12px',
-          backgroundColor: config.bgColor,
-          color: config.color,
+          backgroundColor: colors.bgColor,
+          color: colors.color,
           fontSize: '12px',
           fontWeight: 500,
           height: 'fit-content',
@@ -131,9 +144,10 @@ const ActionTypeCellRenderer = (props) => {
 
 const TimestampCellRenderer = (props) => {
   const { value } = props;
+  const dark = isDarkMode();
 
   if (!value) {
-    return <span style={{ color: '#9ca3af' }}>-</span>;
+    return <span style={{ color: dark ? '#6b7280' : '#9ca3af' }}>-</span>;
   }
 
   const date = new Date(value);
@@ -166,8 +180,8 @@ const TimestampCellRenderer = (props) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }} title={fullDateTime}>
-      <span style={{ fontWeight: 500, fontSize: '13px' }}>{relativeTime}</span>
-      <span style={{ color: '#6b7280', fontSize: '11px' }}>
+      <span style={{ fontWeight: 500, fontSize: '13px', color: dark ? '#e5e7eb' : 'inherit' }}>{relativeTime}</span>
+      <span style={{ color: dark ? '#9ca3af' : '#6b7280', fontSize: '11px' }}>
         {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
       </span>
     </div>
@@ -176,7 +190,13 @@ const TimestampCellRenderer = (props) => {
 
 const EntityTypeCellRenderer = (props) => {
   const { value } = props;
-  const config = ENTITY_CONFIG[value] || { label: value || 'Unknown', color: '#6b7280', bgColor: '#f3f4f6' };
+  const dark = isDarkMode();
+  const config = ENTITY_CONFIG[value] || {
+    label: value || 'Unknown',
+    light: { color: '#6b7280', bgColor: '#f3f4f6' },
+    dark: { color: '#9ca3af', bgColor: '#374151' }
+  };
+  const colors = dark ? config.dark : config.light;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -188,8 +208,8 @@ const EntityTypeCellRenderer = (props) => {
           margin: '6px 0',
           padding: '4px 8px',
           borderRadius: '12px',
-          backgroundColor: config.bgColor,
-          color: config.color,
+          backgroundColor: colors.bgColor,
+          color: colors.color,
           fontSize: '11px',
           fontWeight: 500,
           height: 'fit-content',
@@ -204,6 +224,7 @@ const EntityTypeCellRenderer = (props) => {
 
 const EntityCellRenderer = (props) => {
   const { data } = props;
+  const dark = isDarkMode();
   const entityType = data?.entity_type;
 
   // Get entity name based on type
@@ -222,16 +243,16 @@ const EntityCellRenderer = (props) => {
   }
 
   if (!entityName) {
-    return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>-</span>;
+    return <span style={{ color: dark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' }}>-</span>;
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
-      <span style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: dark ? '#e5e7eb' : 'inherit' }}>
         {entityName}
       </span>
       {secondaryInfo && (
-        <span style={{ color: '#6b7280', fontSize: '11px', fontFamily: entityType === 'project' ? 'monospace' : 'inherit' }}>
+        <span style={{ color: dark ? '#9ca3af' : '#6b7280', fontSize: '11px', fontFamily: entityType === 'project' ? 'monospace' : 'inherit' }}>
           {secondaryInfo}
         </span>
       )}
@@ -241,11 +262,12 @@ const EntityCellRenderer = (props) => {
 
 const UserCellRenderer = (props) => {
   const { data } = props;
+  const dark = isDarkMode();
   const userName = data?.user_name;
   const userEmail = data?.user_email;
 
   if (!userName) {
-    return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>System</span>;
+    return <span style={{ color: dark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' }}>System</span>;
   }
 
   const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -257,18 +279,18 @@ const UserCellRenderer = (props) => {
           width: '28px',
           height: '28px',
           borderRadius: '50%',
-          backgroundColor: '#e0e7ff',
+          backgroundColor: dark ? '#312e81' : '#e0e7ff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '11px',
           fontWeight: 600,
-          color: '#4f46e5',
+          color: dark ? '#a5b4fc' : '#4f46e5',
         }}
       >
         {initials}
       </div>
-      <span style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' }}>
+      <span style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px', color: dark ? '#e5e7eb' : 'inherit' }}>
         {userName}
       </span>
     </div>
@@ -277,22 +299,23 @@ const UserCellRenderer = (props) => {
 
 const ChangesCellRenderer = (props) => {
   const { data } = props;
+  const dark = isDarkMode();
   const oldValue = data?.old_value;
   const newValue = data?.new_value;
 
   if (!oldValue && !newValue) {
-    return <span style={{ color: '#9ca3af' }}>-</span>;
+    return <span style={{ color: dark ? '#6b7280' : '#9ca3af' }}>-</span>;
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: '2px' }}>
       {oldValue && (
-        <span style={{ color: '#dc2626', textDecoration: 'line-through', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ color: dark ? '#fca5a5' : '#dc2626', textDecoration: 'line-through', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {oldValue}
         </span>
       )}
       {newValue && (
-        <span style={{ color: '#16a34a', fontWeight: 500, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ color: dark ? '#86efac' : '#16a34a', fontWeight: 500, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {newValue}
         </span>
       )}
@@ -657,9 +680,10 @@ const Activity = () => {
 
       {/* AG Grid */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px]">
-        <div className="ag-theme-quartz dark:ag-theme-quartz-dark-blue" style={{ height: 500, width: '100%' }}>
+        <div className="ag-theme-quartz" style={{ height: 500, width: '100%' }}>
           <AgGridReact
             ref={gridRef}
+            theme={themeQuartz}
             rowData={activities}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}

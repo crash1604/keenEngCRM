@@ -23,6 +23,7 @@ class ActivityLog(models.Model):
         ('client_changed', 'Client Changed'),
         ('architect_changed', 'Architect Changed'),
         ('manager_changed', 'Manager Changed'),
+        ('email_sent', 'Email Sent'),
         # Client actions
         ('client_created', 'Client Created'),
         ('client_updated', 'Client Updated'),

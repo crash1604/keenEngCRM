@@ -1,6 +1,7 @@
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from apps.projects.models import Project
+from apps.activity.models import ActivityLog
 from .models import EmailLog, EmailTemplate
 from .template_service import EmailTemplateRenderer
 
@@ -77,15 +78,26 @@ class CommunicationEmailService:
         )
 
         try:
-            # Create email message
+            # Determine sender email - use logged-in manager's email
+            if sent_by and sent_by.email:
+                # Format: "Manager Name" <manager@company.com>
+                sender_name = sent_by.get_full_name() or sent_by.email
+                from_email = f'"{sender_name}" <{sent_by.email}>'
+                reply_to = [sent_by.email]
+            else:
+                # Fallback to default if no manager specified
+                from_email = settings.DEFAULT_FROM_EMAIL
+                reply_to = [project.mechanical_manager.email] if project.mechanical_manager and project.mechanical_manager.email else None
+
+            # Create email message with manager as sender
             email = EmailMultiAlternatives(
                 subject=subject,
                 body=body_text or "Please view this email in HTML format",
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 to=[recipient_email],
                 cc=cc_list,
                 bcc=bcc_list,
-                reply_to=[project.mechanical_manager.email] if project.mechanical_manager.email else None
+                reply_to=reply_to
             )
 
             # Attach HTML version
@@ -102,6 +114,17 @@ class CommunicationEmailService:
             # Update log status
             email_log.status = 'sent'
             email_log.save()
+
+            # Create activity log entry for the email sent
+            sender_info = f' by {sent_by.get_full_name()}' if sent_by else ''
+            ActivityLog.objects.create(
+                entity_type='project',
+                project=project,
+                action_type='email_sent',
+                description=f'Email sent{sender_info} to {recipient_email}: "{subject}"',
+                new_value=f'Template: {template.name}',
+                user=sent_by
+            )
 
             return {
                 'success': True,

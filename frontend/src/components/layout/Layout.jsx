@@ -19,7 +19,9 @@ const Layout = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
-          <Outlet /> {/* This is where child routes will render */}
+          <div className="h-full flex flex-col">
+            <Outlet /> {/* This is where child routes will render */}
+          </div>
         </main>
       </div>
     </div>

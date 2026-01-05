@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import FormField from './FormField';
 import { STATUS_OPTIONS } from './StatusRenderer';
 import { activityService } from '../../services/activity';
+import { useAuthStore } from '../../stores/auth.store';
+import SendUpdateModal from './SendUpdateModal';
 
 // Tab configuration (info tabs - scrollable sections)
 const INFO_TABS = [
@@ -31,6 +33,7 @@ const ACTION_TYPE_COLORS = {
   client_changed: { bg: 'bg-pink-100 dark:bg-pink-900/50', text: 'text-pink-700 dark:text-pink-300', label: 'Client Changed' },
   architect_changed: { bg: 'bg-violet-100 dark:bg-violet-900/50', text: 'text-violet-700 dark:text-violet-300', label: 'Architect Changed' },
   manager_changed: { bg: 'bg-red-100 dark:bg-red-900/50', text: 'text-red-700 dark:text-red-300', label: 'Manager Changed' },
+  email_sent: { bg: 'bg-teal-100 dark:bg-teal-900/50', text: 'text-teal-700 dark:text-teal-300', label: 'Email Sent' },
 };
 
 const PROJECT_TYPE_OPTIONS = [
@@ -135,6 +138,11 @@ const DetailPanel = ({
   const [viewMode, setViewMode] = useState('info'); // 'info' or 'activity'
   const [projectActivity, setProjectActivity] = useState([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
+  const [showSendUpdateModal, setShowSendUpdateModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  // Get current user to check role
+  const { user } = useAuthStore();
 
   // Fetch activity for this project
   const fetchProjectActivity = async () => {
@@ -302,14 +310,28 @@ const DetailPanel = ({
                 ))}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Send Update Button - Only for managers and admins */}
+              {(user?.role === 'manager' || user?.role === 'admin') && (
+                <button
+                  onClick={() => setShowSendUpdateModal(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-blue-200 dark:border-blue-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Send Update
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Quick Info Bar */}
@@ -805,7 +827,33 @@ const DetailPanel = ({
           )}
 
         </div>
+
+        {/* Success Message Toast */}
+        {successMessage && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 px-4 py-3 rounded-lg text-sm font-medium shadow-lg bg-green-100 dark:bg-green-900/70 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+            <span className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {successMessage}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Send Update Modal */}
+      <SendUpdateModal
+        open={showSendUpdateModal}
+        onClose={() => setShowSendUpdateModal(false)}
+        project={selectedProject}
+        onSuccess={(message) => {
+          setSuccessMessage(message);
+          // Re-fetch activity to show the new email activity
+          fetchProjectActivity();
+          // Auto-hide success message after 3 seconds
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }}
+      />
     </div>
   );
 };
