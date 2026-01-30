@@ -8,6 +8,8 @@ from .views import (
     UserProfileView,
     CustomTokenRefreshView,
     AuthStatusView,
+    EmailSettingsView,
+    TestEmailSettingsView,
 )
 
 app_name = 'users'
@@ -20,4 +22,8 @@ urlpatterns = [
     path('status/', AuthStatusView.as_view(), name='auth_status'),
     path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+    # Email Settings
+    path('email-settings/', EmailSettingsView.as_view(), name='email_settings'),
+    path('email-settings/test/', TestEmailSettingsView.as_view(), name='test_email_settings'),
 ]

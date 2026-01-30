@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -423,6 +423,14 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
   const [showQuickAddClient, setShowQuickAddClient] = useState(false);
   const [showQuickAddArchitect, setShowQuickAddArchitect] = useState(false);
 
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+
+  // Ref to track if form has been initialized (prevents reset on client/architect list updates)
+  const formInitializedRef = useRef(false);
+  // Refs to store newly created entities that need to be selected after list refresh
+  const pendingClientRef = useRef(null);
+  const pendingArchitectRef = useRef(null);
+
   const [sectionsOpen, setSectionsOpen] = useState({
     basic: true,
     location: true,
@@ -453,7 +461,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
     setLoadingClients(true);
     try {
       await clientStore.fetchClients(1);
-      let clientList = clientStore.clients || [];
+      let clientList = [...(clientStore.clients || [])]; // Spread to force new array reference
 
       if (searchQuery) {
         const sanitized = sanitizeSearchInput(searchQuery).toLowerCase();
@@ -476,7 +484,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
     setLoadingArchitects(true);
     try {
       await architectStore.fetchArchitects(1);
-      let architectList = architectStore.architects || [];
+      let architectList = [...(architectStore.architects || [])]; // Spread to force new array reference
 
       if (searchQuery) {
         const sanitized = sanitizeSearchInput(searchQuery).toLowerCase();
@@ -495,24 +503,24 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
     }
   };
 
-  const handleQuickAddClientSuccess = (newClient) => {
+  const handleQuickAddClientSuccess = async (newClient) => {
     setShowQuickAddClient(false);
-    fetchClients().then(() => {
-      if (newClient?.id) {
-        setSelectedClient(newClient);
-        formik.setFieldValue('client', newClient.id);
-      }
-    });
+    if (newClient?.id) {
+      // Store pending client to be selected after list refresh
+      pendingClientRef.current = newClient;
+      // Refresh clients list from database - this triggers useEffect to select pending client
+      await fetchClients();
+    }
   };
 
-  const handleQuickAddArchitectSuccess = (newArchitect) => {
+  const handleQuickAddArchitectSuccess = async (newArchitect) => {
     setShowQuickAddArchitect(false);
-    fetchArchitects().then(() => {
-      if (newArchitect?.id) {
-        setSelectedArchitect(newArchitect);
-        formik.setFieldValue('architect_designer', newArchitect.id);
-      }
-    });
+    if (newArchitect?.id) {
+      // Store pending architect to be selected after list refresh
+      pendingArchitectRef.current = newArchitect;
+      // Refresh architects list from database - this triggers useEffect to select pending architect
+      await fetchArchitects();
+    }
   };
 
   const validationSchema = Yup.object({
@@ -582,54 +590,152 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
     },
   });
 
+  // Effect for initial form setup - only runs when 'open' changes
   useEffect(() => {
-    if (open && project && editMode) {
-      const projectTypes = project.project_type ? project.project_type.split(',').map(t => t.trim()) : [];
-      formik.setValues({
-        project_name: project.project_name || '',
-        project_type: projectTypes,
-        client: project.client || '',
-        architect_designer: project.architect_designer || '',
-        status: project.status || 'not_started',
-        address: project.address || '',
-        legal_address: project.legal_address || '',
-        due_date: project.due_date || '',
-        rough_in_date: project.rough_in_date || '',
-        final_inspection_date: project.final_inspection_date || '',
-        current_sub_status: project.current_sub_status || '',
-        current_open_items: project.current_open_items || '',
-        current_action_items: project.current_action_items || '',
-        due_date_note: project.due_date_note || '',
-        billing_info: project.billing_info || '',
-      });
-
-      if (project.client && clients.length > 0) {
-        const clientObj = clients.find(c => c.id === project.client);
-        if (clientObj) setSelectedClient(clientObj);
+    if (open) {
+      if (editMode && project) {
+        // Edit mode - populate form with existing project data
+        const projectTypes = project.project_type ? project.project_type.split(',').map(t => t.trim()) : [];
+        formik.setValues({
+          project_name: project.project_name || '',
+          project_type: projectTypes,
+          client: project.client || '',
+          architect_designer: project.architect_designer || '',
+          status: project.status || 'not_started',
+          address: project.address || '',
+          legal_address: project.legal_address || '',
+          due_date: project.due_date || '',
+          rough_in_date: project.rough_in_date || '',
+          final_inspection_date: project.final_inspection_date || '',
+          current_sub_status: project.current_sub_status || '',
+          current_open_items: project.current_open_items || '',
+          current_action_items: project.current_action_items || '',
+          due_date_note: project.due_date_note || '',
+          billing_info: project.billing_info || '',
+        });
+        setSectionsOpen({
+          basic: true,
+          location: true,
+          timeline: true,
+          details: true,
+          billing: true,
+        });
+      } else if (!formInitializedRef.current) {
+        // New project mode - only reset form on initial open
+        formik.resetForm();
+        setSelectedClient(null);
+        setSelectedArchitect(null);
+        pendingClientRef.current = null;
+        pendingArchitectRef.current = null;
       }
-      if (project.architect_designer && architects.length > 0) {
-        const architectObj = architects.find(a => a.id === project.architect_designer);
-        if (architectObj) setSelectedArchitect(architectObj);
-      }
-
-      setSectionsOpen({
-        basic: true,
-        location: true,
-        timeline: true,
-        details: true,
-        billing: true,
-      });
-    } else if (open && !editMode) {
-      formik.resetForm();
-      setSelectedClient(null);
-      setSelectedArchitect(null);
+      formInitializedRef.current = true;
+    } else {
+      // Form closed - reset initialization flag
+      formInitializedRef.current = false;
     }
-  }, [open, project, editMode, clients, architects]);
+  }, [open, editMode, project]);
+
+  // Separate effect to populate client selections when lists are loaded
+  useEffect(() => {
+    if (!open || !clients.length) return;
+
+    // Check for pending client from quick add
+    if (pendingClientRef.current) {
+      const newClient = clients.find(c => c.id === pendingClientRef.current.id);
+      if (newClient) {
+        setSelectedClient(newClient);
+        formik.setFieldValue('client', newClient.id);
+        pendingClientRef.current = null;
+      }
+    }
+    // Check for edit mode client selection
+    else if (editMode && project?.client && !selectedClient) {
+      const clientObj = clients.find(c => c.id === project.client);
+      if (clientObj) {
+        setSelectedClient(clientObj);
+      }
+    }
+  }, [open, clients, editMode, project]);
+
+  // Separate effect for architect selection
+  useEffect(() => {
+    if (!open || !architects.length) return;
+
+    // Check for pending architect from quick add
+    if (pendingArchitectRef.current) {
+      const newArchitect = architects.find(a => a.id === pendingArchitectRef.current.id);
+      if (newArchitect) {
+        setSelectedArchitect(newArchitect);
+        // Ensure formik value is set (in case of race condition)
+        formik.setFieldValue('architect_designer', newArchitect.id);
+        pendingArchitectRef.current = null;
+      }
+    }
+    // Check for edit mode architect selection
+    else if (editMode && project?.architect_designer && !selectedArchitect) {
+      const architectObj = architects.find(a => a.id === project.architect_designer);
+      if (architectObj) setSelectedArchitect(architectObj);
+    }
+  }, [open, architects, editMode, project]);
+
+  // Sync formik client value when selectedClient changes
+  useEffect(() => {
+    if (selectedClient?.id !== undefined && selectedClient?.id !== null) {
+      const currentValue = formik.values.client;
+      if (currentValue !== selectedClient.id) {
+        formik.setFieldValue('client', selectedClient.id);
+      }
+    }
+  }, [selectedClient]);
+
+  // Sync formik architect value when selectedArchitect changes
+  useEffect(() => {
+    if (selectedArchitect?.id !== undefined && selectedArchitect?.id !== null) {
+      const currentValue = formik.values.architect_designer;
+      if (currentValue !== selectedArchitect.id) {
+        formik.setFieldValue('architect_designer', selectedArchitect.id);
+      }
+    }
+  }, [selectedArchitect]);
+
+  // Check if form has any data entered
+  const hasFormData = () => {
+    const values = formik.values;
+    return (
+      values.project_name?.trim() ||
+      values.project_type?.length > 0 ||
+      values.client ||
+      values.architect_designer ||
+      values.address?.trim() ||
+      values.legal_address?.trim() ||
+      values.current_sub_status?.trim() ||
+      values.current_open_items?.trim() ||
+      values.current_action_items?.trim() ||
+      values.due_date_note?.trim() ||
+      values.billing_info?.trim() ||
+      selectedClient ||
+      selectedArchitect
+    );
+  };
+
+  const handleCloseAttempt = () => {
+    if (hasFormData() && !editMode) {
+      setShowCloseConfirmation(true);
+    } else if (formik.dirty && editMode) {
+      setShowCloseConfirmation(true);
+    } else {
+      handleClose();
+    }
+  };
 
   const handleClose = () => {
     formik.resetForm();
     setSelectedClient(null);
     setSelectedArchitect(null);
+    setShowCloseConfirmation(false);
+    // Clear pending refs
+    pendingClientRef.current = null;
+    pendingArchitectRef.current = null;
     onClose();
   };
 
@@ -637,15 +743,20 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
   const requiredFields = ['project_name', 'project_type', 'client', 'address', 'status', 'due_date'];
   const filledRequired = requiredFields.filter(field => {
     const value = formik.values[field];
+    // For client field, check both formik value and selectedClient object
+    if (field === 'client') {
+      return !!(value || selectedClient?.id);
+    }
     if (Array.isArray(value)) return value.length > 0;
     return value && value.toString().trim() !== '';
   }).length;
   const completionPercent = Math.round((filledRequired / requiredFields.length) * 100);
 
   return (
+    <>
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={handleCloseAttempt}
       maxWidth="md"
       fullWidth
       PaperProps={{
@@ -658,7 +769,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-white relative">
         <button
-          onClick={handleClose}
+          onClick={handleCloseAttempt}
           className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/20 transition-colors"
         >
           <CloseIcon />
@@ -1384,7 +1495,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={handleCloseAttempt}
               disabled={loading}
               className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 hover:border-gray-400 dark:hover:border-gray-400 transition-all disabled:opacity-50"
             >
@@ -1392,7 +1503,7 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
             </button>
             <button
               type="submit"
-              disabled={loading || !formik.isValid}
+              disabled={loading || completionPercent !== 100}
               className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
             >
               {loading ? (
@@ -1427,6 +1538,55 @@ const ProjectForm = ({ open, onClose, project, editMode, onSuccess, onError }) =
         onSuccess={handleQuickAddArchitectSuccess}
       />
     </Dialog>
+
+    {/* Close Confirmation Dialog */}
+    <Dialog
+      open={showCloseConfirmation}
+      onClose={() => setShowCloseConfirmation(false)}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: '16px', overflow: 'hidden' }
+      }}
+    >
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/20 rounded-lg">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Unsaved Changes</h2>
+            <p className="text-amber-100 text-xs">You have entered data that will be lost</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 bg-white dark:bg-gray-800">
+        <p className="text-gray-600 dark:text-gray-300 text-sm">
+          Are you sure you want to close this form? All the information you've entered will be lost and cannot be recovered.
+        </p>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            type="button"
+            onClick={() => setShowCloseConfirmation(false)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all"
+          >
+            Continue Editing
+          </button>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-all"
+          >
+            Discard Changes
+          </button>
+        </div>
+      </div>
+    </Dialog>
+    </>
   );
 };
 

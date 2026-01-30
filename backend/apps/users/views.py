@@ -8,8 +8,8 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.conf import settings
 
-from .models import User
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from .models import User, EmailSettings
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, EmailSettingsSerializer
 from apps.clients.models import Client
 from apps.architects.models import Architect
 
@@ -307,3 +307,174 @@ class AuthStatusView(APIView):
             'isAuthenticated': False,
             'user': None
         })
+
+
+class EmailSettingsView(APIView):
+    """
+    View for managing user email/SMTP settings.
+    Users can configure their own email provider settings.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """Get current user's email settings."""
+        try:
+            email_settings = request.user.email_settings
+            serializer = EmailSettingsSerializer(email_settings)
+            return Response(serializer.data)
+        except EmailSettings.DoesNotExist:
+            return Response({
+                'message': 'No email settings configured',
+                'configured': False
+            }, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """Create email settings for current user."""
+        # Check if settings already exist
+        if hasattr(request.user, 'email_settings'):
+            return Response({
+                'error': 'Email settings already exist. Use PUT to update.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = EmailSettingsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        """Update current user's email settings."""
+        try:
+            email_settings = request.user.email_settings
+        except EmailSettings.DoesNotExist:
+            # Create if doesn't exist
+            serializer = EmailSettingsSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = EmailSettingsSerializer(email_settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        """Delete current user's email settings."""
+        try:
+            email_settings = request.user.email_settings
+            email_settings.delete()
+            return Response({
+                'message': 'Email settings deleted successfully'
+            }, status=status.HTTP_204_NO_CONTENT)
+        except EmailSettings.DoesNotExist:
+            return Response({
+                'error': 'No email settings to delete'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class TestEmailSettingsView(APIView):
+    """
+    View to test/verify email settings by sending a test email.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """Send a test email to verify settings work."""
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        print(f"=== Testing email settings for user: {request.user.email} ===")
+
+        try:
+            email_settings = request.user.email_settings
+            print(f"Email settings found: provider={email_settings.provider}, email={email_settings.email_address}")
+        except EmailSettings.DoesNotExist:
+            print("ERROR: No email settings found")
+            return Response({
+                'error': 'No email settings configured'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        config = email_settings.get_smtp_config()
+        print(f"SMTP config: host={config.get('host')}, port={config.get('port')}, has_password={bool(config.get('password'))}")
+
+        if not config.get('password'):
+            print("ERROR: Password not configured")
+            return Response({
+                'error': 'Email password not configured. Please save your settings with a password first.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Create test message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'KEEN CRM - Email Settings Test'
+            msg['From'] = f"{config['display_name']} <{config['email']}>"
+            msg['To'] = config['email']  # Send to self
+
+            text_content = "This is a test email from KEEN Engineering CRM. Your email settings are configured correctly!"
+            html_content = """
+            <html>
+            <body style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2 style="color: #2563eb;">Email Settings Test</h2>
+                <p>This is a test email from <strong>KEEN Engineering CRM</strong>.</p>
+                <p style="color: #10b981; font-weight: bold;">Your email settings are configured correctly!</p>
+                <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
+                <p style="color: #6b7280; font-size: 12px;">
+                    Provider: {provider}<br>
+                    SMTP Host: {host}:{port}
+                </p>
+            </body>
+            </html>
+            """.format(
+                provider=email_settings.get_provider_display(),
+                host=config['host'],
+                port=config['port']
+            )
+
+            msg.attach(MIMEText(text_content, 'plain'))
+            msg.attach(MIMEText(html_content, 'html'))
+
+            # Connect and send
+            print(f"Connecting to SMTP server: {config['host']}:{config['port']}")
+            with smtplib.SMTP(config['host'], config['port'], timeout=30) as server:
+                if config.get('use_tls', True):
+                    print("Starting TLS...")
+                    server.starttls()
+                print(f"Logging in as: {config['email']}")
+                server.login(config['email'], config['password'])
+                print("Login successful, sending message...")
+                server.send_message(msg)
+                print("Message sent successfully!")
+
+            # Update verification status
+            email_settings.is_verified = True
+            email_settings.last_verified_at = timezone.now()
+            email_settings.save()
+
+            return Response({
+                'success': True,
+                'message': f"Test email sent successfully to {config['email']}"
+            })
+
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"SMTP Authentication Error: {e}")
+            return Response({
+                'error': 'Authentication failed. Please check your email and app password.',
+                'details': 'For Outlook/Microsoft 365, you need to use an App Password. For Gmail, you need to enable 2FA and create an App Password.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except smtplib.SMTPException as e:
+            print(f"SMTP Exception: {e}")
+            return Response({
+                'error': 'SMTP error occurred',
+                'details': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            import traceback
+            print(f"Unexpected error: {e}")
+            traceback.print_exc()
+            return Response({
+                'error': 'Failed to send test email',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

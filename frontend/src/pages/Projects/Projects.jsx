@@ -1,4 +1,3 @@
-// src/pages/Projects/Projects.jsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Snackbar, Alert, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,10 +6,41 @@ import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import { useProjectStore } from '../../stores/project.store';
 import ProjectsGrid from '../../components/projects/ProjectsGrid';
 import ProjectForm from '../../components/projects/ProjectForm';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { formatDateISO, formatDateTime, escapeCSV, downloadCSV } from '../../utils/helpers';
+
+// CSV Export headers configuration
+const CSV_HEADERS = [
+  { label: 'Year', getValue: (p) => p.year },
+  { label: 'Job Number', getValue: (p) => p.job_number },
+  { label: 'Project Name', getValue: (p) => p.project_name },
+  { label: 'Project Type', getValue: (p) => Array.isArray(p.project_type) ? p.project_type.join(', ') : p.project_type },
+  { label: 'Status', getValue: (p) => p.status_display || p.status },
+  { label: 'Current Sub Status', getValue: (p) => p.current_sub_status },
+  { label: 'Current Open Items', getValue: (p) => p.current_open_items },
+  { label: 'Current Action Items', getValue: (p) => p.current_action_items },
+  { label: 'Client', getValue: (p) => p.client_name || p.client?.name || '' },
+  { label: 'Architect/Designer', getValue: (p) => p.architect_name || p.architect_designer?.name || '' },
+  { label: 'Mechanical Manager', getValue: (p) => p.manager_name || p.mechanical_manager?.full_name || '' },
+  { label: 'Due Date', getValue: (p) => formatDateISO(p.due_date) },
+  { label: 'Due Date Note', getValue: (p) => p.due_date_note },
+  { label: 'Rough In Date', getValue: (p) => formatDateISO(p.rough_in_date) },
+  { label: 'Rough In Note', getValue: (p) => p.rough_in_note },
+  { label: 'Final Inspection Date', getValue: (p) => formatDateISO(p.final_inspection_date) },
+  { label: 'Final Inspection Note', getValue: (p) => p.final_inspection_note },
+  { label: 'Address', getValue: (p) => p.address },
+  { label: 'Legal Address', getValue: (p) => p.legal_address },
+  { label: 'Billing Info', getValue: (p) => p.billing_info },
+  { label: 'Created At', getValue: (p) => formatDateTime(p.created_at) },
+  { label: 'Updated At', getValue: (p) => formatDateTime(p.updated_at) },
+  { label: 'Last Status Change', getValue: (p) => formatDateTime(p.last_status_change) },
+];
 
 const Projects = () => {
   const gridRef = useRef(null);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const { snackbar, showSuccess, showError, showWarning, closeSnackbar } = useSnackbar();
+
   const {
     projects,
     loading,
@@ -20,189 +50,71 @@ const Projects = () => {
     updateProjectStatus
   } = useProjectStore();
 
-  // Modal state
-  const [formOpen, setFormOpen] = useState(false);
+  // Modal state - using showForm for consistency with other pages
+  const [showForm, setShowForm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [editMode, setEditMode] = useState(false);
-
-  // Snackbar state
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects, filters]);
 
-  const handleStatusChange = async (projectId, newStatus) => {
-    const result = await updateProjectStatus(projectId, newStatus);
-    if (result.success) {
-      fetchProjects();
-    }
-  };
-
-  const handleExport = () => {
+  const handleStatusChange = useCallback(async (projectId, newStatus) => {
     try {
-      // Get the currently displayed (filtered) rows from the grid
+      const result = await updateProjectStatus(projectId, newStatus);
+      if (result.success) {
+        fetchProjects();
+      }
+    } catch (err) {
+      showError('Failed to update project status');
+    }
+  }, [updateProjectStatus, fetchProjects, showError]);
+
+  const handleExport = useCallback(() => {
+    try {
       const displayedRows = gridRef.current?.getDisplayedRows() || [];
 
       if (displayedRows.length === 0) {
-        setSnackbar({
-          open: true,
-          message: 'No projects to export',
-          severity: 'warning'
-        });
+        showWarning('No projects to export');
         return;
       }
 
-      // Define CSV headers matching all Project model fields
-      const headers = [
-        'Year',
-        'Job Number',
-        'Project Name',
-        'Project Type',
-        'Status',
-        'Current Sub Status',
-        'Current Open Items',
-        'Current Action Items',
-        'Client',
-        'Architect/Designer',
-        'Mechanical Manager',
-        'Due Date',
-        'Due Date Note',
-        'Rough In Date',
-        'Rough In Note',
-        'Final Inspection Date',
-        'Final Inspection Note',
-        'Address',
-        'Legal Address',
-        'Billing Info',
-        'Created At',
-        'Updated At',
-        'Last Status Change'
-      ];
+      const headerRow = CSV_HEADERS.map(h => h.label).join(',');
+      const dataRows = displayedRows.map(project =>
+        CSV_HEADERS.map(h => escapeCSV(h.getValue(project))).join(',')
+      );
+      const csvContent = [headerRow, ...dataRows].join('\n');
 
-      // Helper to escape CSV values
-      const escapeCSV = (value) => {
-        if (value === null || value === undefined) return '';
-        const str = String(value);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
+      const filename = `projects_export_${new Date().toISOString().split('T')[0]}.csv`;
+      downloadCSV(csvContent, filename);
 
-      // Helper to format date
-      const formatDate = (date) => {
-        if (!date) return '';
-        return new Date(date).toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      };
-
-      // Helper to format datetime
-      const formatDateTime = (date) => {
-        if (!date) return '';
-        return new Date(date).toLocaleString('en-CA', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        }).replace(',', '');
-      };
-
-      // Convert rows to CSV
-      const csvRows = displayedRows.map(project => [
-        escapeCSV(project.year),
-        escapeCSV(project.job_number),
-        escapeCSV(project.project_name),
-        escapeCSV(Array.isArray(project.project_type) ? project.project_type.join(', ') : project.project_type),
-        escapeCSV(project.status_display || project.status),
-        escapeCSV(project.current_sub_status),
-        escapeCSV(project.current_open_items),
-        escapeCSV(project.current_action_items),
-        escapeCSV(project.client_name || project.client?.name || ''),
-        escapeCSV(project.architect_name || project.architect_designer?.name || ''),
-        escapeCSV(project.manager_name || project.mechanical_manager?.full_name || ''),
-        escapeCSV(formatDate(project.due_date)),
-        escapeCSV(project.due_date_note),
-        escapeCSV(formatDate(project.rough_in_date)),
-        escapeCSV(project.rough_in_note),
-        escapeCSV(formatDate(project.final_inspection_date)),
-        escapeCSV(project.final_inspection_note),
-        escapeCSV(project.address),
-        escapeCSV(project.legal_address),
-        escapeCSV(project.billing_info),
-        escapeCSV(formatDateTime(project.created_at)),
-        escapeCSV(formatDateTime(project.updated_at)),
-        escapeCSV(formatDateTime(project.last_status_change))
-      ].join(','));
-
-      // Combine headers and rows
-      const csvContent = [headers.join(','), ...csvRows].join('\n');
-
-      // Create and download the file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `projects_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      setSnackbar({
-        open: true,
-        message: `Exported ${displayedRows.length} project${displayedRows.length !== 1 ? 's' : ''} successfully!`,
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Export error:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to export projects',
-        severity: 'error'
-      });
+      showSuccess(`Exported ${displayedRows.length} project${displayedRows.length !== 1 ? 's' : ''} successfully!`);
+    } catch (err) {
+      showError('Failed to export projects');
     }
-  };
+  }, [showSuccess, showError, showWarning]);
 
   // Modal handlers
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     setSelectedProject(null);
     setEditMode(false);
-    setFormOpen(true);
-  };
+    setShowForm(true);
+  }, []);
 
-  const handleCloseForm = () => {
-    setFormOpen(false);
+  const handleCloseForm = useCallback(() => {
+    setShowForm(false);
     setSelectedProject(null);
     setEditMode(false);
-  };
+  }, []);
 
-  const handleFormSuccess = () => {
-    setSnackbar({
-      open: true,
-      message: editMode ? 'Project updated successfully!' : 'Project created successfully!',
-      severity: 'success'
-    });
+  const handleFormSuccess = useCallback(() => {
+    showSuccess(editMode ? 'Project updated successfully!' : 'Project created successfully!');
     fetchProjects();
-  };
+  }, [editMode, fetchProjects, showSuccess]);
 
-  const handleFormError = (errorMessage) => {
-    setSnackbar({
-      open: true,
-      message: errorMessage || 'Failed to save project',
-      severity: 'error'
-    });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
+  const handleFormError = useCallback((errorMessage) => {
+    showError(errorMessage || 'Failed to save project');
+  }, [showError]);
 
   // Filter handlers
   const handleFilterChanged = useCallback((hasFilters) => {
@@ -217,14 +129,15 @@ const Projects = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 min-h-0 flex flex-col gap-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 shrink-0">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
               <button
+                type="button"
                 onClick={handleClearFilters}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200"
               >
@@ -273,7 +186,7 @@ const Projects = () => {
       )}
 
       {/* AG Grid Component */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
         <ProjectsGrid
           ref={gridRef}
           projects={projects}
@@ -283,37 +196,9 @@ const Projects = () => {
         />
       </div>
 
-      {/* Quick Stats */}
-      {projects.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Projects</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{projects.length}</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</div>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {projects.filter(p => p.status === 'in_progress').length}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {projects.filter(p => p.days_until_due < 0).length}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</div>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {projects.filter(p => p.status === 'completed').length}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Project Form Modal */}
       <ProjectForm
-        open={formOpen}
+        open={showForm}
         onClose={handleCloseForm}
         project={selectedProject}
         editMode={editMode}
@@ -325,14 +210,10 @@ const Projects = () => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

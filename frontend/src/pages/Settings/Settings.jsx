@@ -1,11 +1,5 @@
-// src/pages/Settings/Settings.jsx
-import React, { useState, useEffect } from 'react';
-import {
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Switch,
-} from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Alert, Snackbar, CircularProgress, Switch } from '@mui/material';
 import {
   Person as PersonIcon,
   Lock as LockIcon,
@@ -17,9 +11,15 @@ import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   SettingsBrightness as SystemIcon,
+  Email as EmailIcon,
+  CheckCircle as CheckCircleIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/auth.store';
 import { useUIStore } from '../../stores/ui.store';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { validateEmail, validateRequired } from '../../utils/validators';
+import api from '../../services/api';
 
 // Section Header Component
 const SectionHeader = ({ icon, title, subtitle }) => (
@@ -89,6 +89,7 @@ const Settings = () => {
   const { user, updateProfile, changePassword, logout } = useAuthStore();
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
+  const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -121,12 +122,25 @@ const Settings = () => {
     weekly_digest: false,
   });
 
-  // Snackbar state
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
+  // Email settings state
+  const [emailSettings, setEmailSettings] = useState({
+    provider: 'outlook',
+    provider_display: '',
+    email_address: '',
+    email_password: '',
+    display_name: '',
+    smtp_host: '',
+    smtp_port: 587,
+    use_tls: true,
+    has_password: false,
+    last_verified_at: null,
   });
+  const [emailSettingsLoading, setEmailSettingsLoading] = useState(false);
+  const [emailTestLoading, setEmailTestLoading] = useState(false);
+  const [emailSettingsErrors, setEmailSettingsErrors] = useState({});
+  const [emailConfigured, setEmailConfigured] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   // Initialize profile data from user
   useEffect(() => {
@@ -139,77 +153,190 @@ const Settings = () => {
     }
   }, [user]);
 
+  // Fetch email settings on mount
+  useEffect(() => {
+    const fetchEmailSettings = async () => {
+      try {
+        const response = await api.get('/auth/email-settings/');
+        if (response.data && response.data.configured !== false) {
+          setEmailSettings({
+            provider: response.data.provider || 'outlook',
+            provider_display: response.data.provider_display || '',
+            email_address: response.data.email_address || '',
+            email_password: '', // Never returned from backend
+            display_name: response.data.display_name || '',
+            smtp_host: response.data.smtp_host || '',
+            smtp_port: response.data.smtp_port || 587,
+            use_tls: response.data.use_tls !== false,
+            has_password: response.data.has_password || false,
+            last_verified_at: response.data.last_verified_at || null,
+          });
+          setEmailConfigured(true);
+          setEmailVerified(response.data.is_verified || false);
+        }
+      } catch (error) {
+        // No email settings configured yet - that's okay
+        console.log('No email settings configured');
+      }
+    };
+    fetchEmailSettings();
+  }, []);
+
+  // Handle email settings change
+  const handleEmailSettingsChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setEmailSettings(prev => ({ ...prev, [name]: value }));
+    if (emailSettingsErrors[name]) {
+      setEmailSettingsErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  }, [emailSettingsErrors]);
+
+  // Handle provider change
+  const handleProviderChange = useCallback((e) => {
+    const provider = e.target.value;
+    setEmailSettings(prev => ({
+      ...prev,
+      provider,
+      smtp_host: provider === 'outlook' ? 'smtp.office365.com' :
+                 provider === 'gmail' ? 'smtp.gmail.com' : prev.smtp_host,
+      smtp_port: 587,
+      use_tls: true,
+    }));
+  }, []);
+
+  // Validate email settings
+  const validateEmailSettings = useCallback(() => {
+    const errors = {};
+    if (!validateRequired(emailSettings.email_address)) {
+      errors.email_address = 'Email address is required';
+    } else if (!validateEmail(emailSettings.email_address)) {
+      errors.email_address = 'Please enter a valid email address';
+    }
+    if (!emailConfigured && !validateRequired(emailSettings.email_password)) {
+      errors.email_password = 'App password is required';
+    }
+    if (emailSettings.provider === 'custom') {
+      if (!validateRequired(emailSettings.smtp_host)) {
+        errors.smtp_host = 'SMTP host is required';
+      }
+    }
+    setEmailSettingsErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [emailSettings, emailConfigured]);
+
+  // Save email settings
+  const handleEmailSettingsSave = useCallback(async () => {
+    if (!validateEmailSettings()) return;
+
+    setEmailSettingsLoading(true);
+    try {
+      const payload = {
+        provider: emailSettings.provider,
+        email_address: emailSettings.email_address,
+        display_name: emailSettings.display_name,
+        smtp_host: emailSettings.smtp_host,
+        smtp_port: emailSettings.smtp_port,
+        use_tls: emailSettings.use_tls,
+      };
+      if (emailSettings.email_password?.trim()) {
+        payload.email_password = emailSettings.email_password;
+      }
+
+      const response = await api.put('/auth/email-settings/', payload);
+
+      setEmailSettings(prev => ({
+        ...prev,
+        email_password: '',
+        provider_display: response.data.provider_display || '',
+        has_password: response.data.has_password || false,
+        last_verified_at: response.data.last_verified_at || null,
+      }));
+      setEmailConfigured(true);
+      setEmailVerified(response.data.is_verified || false);
+
+      showSuccess('Email settings saved successfully. Please test your configuration.');
+    } catch (error) {
+      showError(error.response?.data?.error || 'Failed to save email settings');
+    } finally {
+      setEmailSettingsLoading(false);
+    }
+  }, [emailSettings, validateEmailSettings, showSuccess, showError]);
+
+  // Test email settings
+  const handleTestEmailSettings = useCallback(async () => {
+    setEmailTestLoading(true);
+    try {
+      const response = await api.post('/auth/email-settings/test/');
+      setEmailVerified(true);
+      setEmailSettings(prev => ({
+        ...prev,
+        last_verified_at: new Date().toISOString(),
+      }));
+      showSuccess(response.data.message || 'Test email sent successfully!');
+    } catch (error) {
+      showError(error.response?.data?.error || 'Failed to send test email');
+    } finally {
+      setEmailTestLoading(false);
+    }
+  }, [showSuccess, showError]);
+
   // Handle profile form change
-  const handleProfileChange = (e) => {
+  const handleProfileChange = useCallback((e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (profileErrors[name]) {
       setProfileErrors(prev => ({ ...prev, [name]: '' }));
     }
-  };
+  }, [profileErrors]);
 
   // Validate profile form
-  const validateProfile = () => {
+  const validateProfile = useCallback(() => {
     const errors = {};
-    if (!profileData.first_name.trim()) {
+    if (!validateRequired(profileData.first_name)) {
       errors.first_name = 'First name is required';
     }
-    if (!profileData.last_name.trim()) {
+    if (!validateRequired(profileData.last_name)) {
       errors.last_name = 'Last name is required';
     }
-    if (!profileData.email.trim()) {
+    if (!validateRequired(profileData.email)) {
       errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
+    } else if (!validateEmail(profileData.email)) {
       errors.email = 'Please enter a valid email address';
     }
     setProfileErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [profileData]);
 
   // Handle profile save
-  const handleProfileSave = async () => {
+  const handleProfileSave = useCallback(async () => {
     if (!validateProfile()) return;
 
     setProfileLoading(true);
     try {
       const result = await updateProfile(profileData);
       if (result.success) {
-        setSnackbar({
-          open: true,
-          message: 'Profile updated successfully',
-          severity: 'success',
-        });
+        showSuccess('Profile updated successfully');
       } else {
-        setSnackbar({
-          open: true,
-          message: result.error || 'Failed to update profile',
-          severity: 'error',
-        });
+        showError(result.error || 'Failed to update profile');
       }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while updating profile',
-        severity: 'error',
-      });
+    } catch {
+      showError('An error occurred while updating profile');
     } finally {
       setProfileLoading(false);
     }
-  };
+  }, [profileData, validateProfile, updateProfile, showSuccess, showError]);
 
   // Handle password form change
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = useCallback((e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (passwordErrors[name]) {
       setPasswordErrors(prev => ({ ...prev, [name]: '' }));
     }
-  };
+  }, [passwordErrors]);
 
   // Validate password form
-  const validatePassword = () => {
+  const validatePassword = useCallback(() => {
     const errors = {};
     if (!passwordData.current_password) {
       errors.current_password = 'Current password is required';
@@ -226,10 +353,10 @@ const Settings = () => {
     }
     setPasswordErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [passwordData]);
 
   // Handle password save
-  const handlePasswordSave = async () => {
+  const handlePasswordSave = useCallback(async () => {
     if (!validatePassword()) return;
 
     setPasswordLoading(true);
@@ -239,55 +366,37 @@ const Settings = () => {
         new_password: passwordData.new_password,
       });
       if (result.success) {
-        setSnackbar({
-          open: true,
-          message: 'Password changed successfully',
-          severity: 'success',
-        });
-        // Clear password form
+        showSuccess('Password changed successfully');
         setPasswordData({
           current_password: '',
           new_password: '',
           confirm_password: '',
         });
       } else {
-        setSnackbar({
-          open: true,
-          message: result.error || 'Failed to change password',
-          severity: 'error',
-        });
+        showError(result.error || 'Failed to change password');
       }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while changing password',
-        severity: 'error',
-      });
+    } catch {
+      showError('An error occurred while changing password');
     } finally {
       setPasswordLoading(false);
     }
-  };
+  }, [passwordData, validatePassword, changePassword, showSuccess, showError]);
 
   // Handle notification toggle
-  const handleNotificationChange = (name) => (event) => {
+  const handleNotificationChange = useCallback((name) => (event) => {
     setNotifications(prev => ({ ...prev, [name]: event.target.checked }));
-    // In a real app, you'd save this to the backend
-    setSnackbar({
-      open: true,
-      message: 'Notification preference updated',
-      severity: 'success',
-    });
-  };
+    showSuccess('Notification preference updated');
+  }, [showSuccess]);
 
   // Toggle password visibility
-  const togglePasswordVisibility = (field) => {
+  const togglePasswordVisibility = useCallback((field) => {
     setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
-  };
+  }, []);
 
   // Handle theme change
-  const handleThemeChange = (newTheme) => {
+  const handleThemeChange = useCallback((newTheme) => {
     setTheme(newTheme);
-  };
+  }, [setTheme]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -513,6 +622,258 @@ const Settings = () => {
         </div>
       </div>
 
+      {/* Email Settings */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <SectionHeader
+          icon={<EmailIcon />}
+          title="Email Configuration"
+          subtitle="Configure your email settings to send emails from the CRM"
+        />
+
+        {/* Current Configuration Status Card */}
+        <div className={`mb-6 p-4 rounded-xl border ${
+          emailConfigured
+            ? emailVerified
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+            : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+        }`}>
+          <div className="flex items-start gap-4">
+            <div className={`p-2 rounded-lg ${
+              emailConfigured
+                ? emailVerified
+                  ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                  : 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400'
+                : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+            }`}>
+              {emailConfigured ? (
+                emailVerified ? (
+                  <CheckCircleIcon />
+                ) : (
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                )
+              ) : (
+                <EmailIcon />
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className={`font-semibold ${
+                  emailConfigured
+                    ? emailVerified
+                      ? 'text-green-800 dark:text-green-300'
+                      : 'text-amber-800 dark:text-amber-300'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}>
+                  {emailConfigured
+                    ? emailVerified
+                      ? 'Email Configured & Verified'
+                      : 'Email Configured - Verification Required'
+                    : 'No Email Account Configured'}
+                </h3>
+              </div>
+              {emailConfigured ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">Sending from:</span>{' '}
+                    <span className="font-mono bg-white dark:bg-gray-800 px-2 py-0.5 rounded">
+                      {emailSettings.email_address}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Provider:</span>{' '}
+                    {emailSettings.provider_display || (
+                      emailSettings.provider === 'outlook' ? 'Microsoft Outlook / Office 365' :
+                      emailSettings.provider === 'gmail' ? 'Gmail' : 'Custom SMTP'
+                    )}
+                  </p>
+                  {emailSettings.display_name && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Display Name:</span> {emailSettings.display_name}
+                    </p>
+                  )}
+                  {emailSettings.last_verified_at && (
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                      <span className="font-medium">Last verified:</span>{' '}
+                      {new Date(emailSettings.last_verified_at).toLocaleString()}
+                    </p>
+                  )}
+                  {!emailSettings.has_password && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                      <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Password not set - please enter your app password below
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Configure your email account below to send emails directly from the CRM using your own email address.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Provider Selection */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Email Provider
+            </label>
+            <select
+              value={emailSettings.provider}
+              onChange={handleProviderChange}
+              className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:outline-none"
+            >
+              <option value="outlook">Microsoft Outlook / Office 365</option>
+              <option value="gmail">Gmail</option>
+              <option value="custom">Custom SMTP Server</option>
+            </select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {emailSettings.provider === 'outlook' && 'Uses smtp.office365.com - You\'ll need an App Password from your Microsoft account'}
+              {emailSettings.provider === 'gmail' && 'Uses smtp.gmail.com - You\'ll need to enable 2FA and create an App Password'}
+              {emailSettings.provider === 'custom' && 'Enter your own SMTP server details'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Email Address */}
+            <FormInput
+              label="Email Address"
+              name="email_address"
+              type="email"
+              value={emailSettings.email_address}
+              onChange={handleEmailSettingsChange}
+              placeholder="your.email@company.com"
+              disabled={emailSettingsLoading}
+              error={emailSettingsErrors.email_address}
+              required
+            />
+
+            {/* Display Name */}
+            <FormInput
+              label="Display Name"
+              name="display_name"
+              value={emailSettings.display_name}
+              onChange={handleEmailSettingsChange}
+              placeholder="John Smith"
+              disabled={emailSettingsLoading}
+            />
+          </div>
+
+          {/* App Password */}
+          <div className="max-w-md">
+            <FormInput
+              label={emailConfigured ? "App Password (leave blank to keep current)" : "App Password"}
+              name="email_password"
+              type={showEmailPassword ? 'text' : 'password'}
+              value={emailSettings.email_password}
+              onChange={handleEmailSettingsChange}
+              placeholder={emailConfigured ? "••••••••••••" : "Enter your app password"}
+              disabled={emailSettingsLoading}
+              error={emailSettingsErrors.email_password}
+              required={!emailConfigured}
+              endAdornment={
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPassword(!showEmailPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showEmailPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                </button>
+              }
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {emailSettings.provider === 'outlook' && (
+                <>For Outlook/Office 365: Go to <a href="https://account.microsoft.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Microsoft Security Settings</a> → App passwords</>
+              )}
+              {emailSettings.provider === 'gmail' && (
+                <>For Gmail: Enable 2FA, then go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">App Passwords</a></>
+              )}
+              {emailSettings.provider === 'custom' && 'Enter the password for your SMTP server'}
+            </p>
+          </div>
+
+          {/* Custom SMTP Settings */}
+          {emailSettings.provider === 'custom' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <FormInput
+                label="SMTP Host"
+                name="smtp_host"
+                value={emailSettings.smtp_host}
+                onChange={handleEmailSettingsChange}
+                placeholder="smtp.example.com"
+                disabled={emailSettingsLoading}
+                error={emailSettingsErrors.smtp_host}
+                required
+              />
+              <FormInput
+                label="SMTP Port"
+                name="smtp_port"
+                type="number"
+                value={emailSettings.smtp_port}
+                onChange={handleEmailSettingsChange}
+                placeholder="587"
+                disabled={emailSettingsLoading}
+              />
+              <div className="flex items-center gap-3 pt-6">
+                <Switch
+                  checked={emailSettings.use_tls}
+                  onChange={(e) => setEmailSettings(prev => ({ ...prev, use_tls: e.target.checked }))}
+                  color="primary"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Use TLS</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={handleEmailSettingsSave}
+            disabled={emailSettingsLoading}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            {emailSettingsLoading ? (
+              <>
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <SaveIcon fontSize="small" />
+                <span>Save Settings</span>
+              </>
+            )}
+          </button>
+
+          {emailConfigured && (
+            <button
+              onClick={handleTestEmailSettings}
+              disabled={emailTestLoading || emailSettingsLoading}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {emailTestLoading ? (
+                <>
+                  <CircularProgress size={16} />
+                  <span>Sending Test...</span>
+                </>
+              ) : (
+                <>
+                  <SendIcon fontSize="small" />
+                  <span>Send Test Email</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Appearance Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <SectionHeader
@@ -658,11 +1019,11 @@ const Settings = () => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          onClose={closeSnackbar}
           severity={snackbar.severity}
           variant="filled"
           sx={{ width: '100%' }}

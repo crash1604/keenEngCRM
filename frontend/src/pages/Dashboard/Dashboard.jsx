@@ -1,8 +1,9 @@
-// src/pages/Dashboard/Dashboard.jsx
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Snackbar, Alert } from '@mui/material';
 import { STATUS_CONFIG } from '../../components/projects/StatusRenderer';
 import {
   Sync as SyncIcon,
@@ -23,23 +24,37 @@ import { useAuthStore } from '../../stores/auth.store';
 import { useProjectStore } from '../../stores/project.store';
 import { useActivityStore } from '../../stores/activity.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { capitalizeFirst, formatDate, formatRelativeTime } from '../../utils/helpers';
+import { capitalizeFirst, formatDate, formatRelativeTime, isAdminOrManager as checkIsAdminOrManager } from '../../utils/helpers';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { STATUS_CHART_COLORS, ROUTES } from '../../utils/constants';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// Chart colors for each status (vibrant colors for pie chart)
-const STATUS_CHART_COLORS = {
-  not_started: '#9ca3af',   // Gray
-  in_progress: '#2563eb',   // Blue
-  submitted: '#ea580c',     // Orange
-  completed: '#16a34a',     // Green
-  closed_paid: '#7c3aed',   // Purple
-  cancelled: '#dc2626',     // Red
-  on_hold: '#ca8a04'        // Yellow/Gold
+// Fallback colors for chart if status not found
+const FALLBACK_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#dc2626', '#7c3aed', '#ca8a04', '#9ca3af'];
+
+// Activity icon configuration
+const ACTIVITY_ICONS = {
+  status_change: { Icon: SyncIcon, color: '#3b82f6' },
+  note_added: { Icon: NoteAddIcon, color: '#22c55e' },
+  field_updated: { Icon: EditIcon, color: '#eab308' },
+  inspection_scheduled: { Icon: EventIcon, color: '#a855f7' },
+  due_date_changed: { Icon: ScheduleIcon, color: '#f97316' },
+  project_created: { Icon: AddCircleIcon, color: '#10b981' },
+  project_updated: { Icon: UpdateIcon, color: '#6366f1' },
+  client_changed: { Icon: PeopleIcon, color: '#ec4899' },
+  architect_changed: { Icon: ArchitectureIcon, color: '#06b6d4' },
+  manager_changed: { Icon: ManageAccountsIcon, color: '#f43f5e' },
 };
 
+const DEFAULT_ACTIVITY_ICON = { Icon: AssignmentIcon, color: '#6b7280' };
+
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { snackbar, showError, closeSnackbar } = useSnackbar();
+  const [dataError, setDataError] = useState(null);
+
   const {
     dashboardStats,
     overdueProjects,
@@ -58,58 +73,50 @@ const Dashboard = () => {
     fetchMyActivity
   } = useActivityStore();
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
+  const isAdminOrManager = checkIsAdminOrManager(user?.role);
+
+  // Load dashboard data with error handling
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setDataError(null);
       await Promise.all([
         fetchDashboardStats(),
         fetchOverdueProjects(),
         fetchUpcomingInspections()
       ]);
-    };
+    } catch (err) {
+      const message = 'Failed to load dashboard data';
+      setDataError(message);
+      showError(message);
+    }
+  }, [fetchDashboardStats, fetchOverdueProjects, fetchUpcomingInspections, showError]);
 
-    loadDashboardData();
-  }, [fetchDashboardStats, fetchOverdueProjects, fetchUpcomingInspections]);
-
-  useEffect(() => {
-    const loadActivityData = async () => {
-      if (user?.role === 'admin' || user?.role === 'manager') {
-        // Admin/Manager: Show all activity logs
+  // Load activity data with error handling
+  const loadActivityData = useCallback(async () => {
+    try {
+      if (isAdminOrManager) {
         await fetchActivityLogs({ page_size: 100 });
       } else {
-        // Other users: Show only their activity
         await fetchMyActivity({ page_size: 100 });
       }
-    };
-
-    loadActivityData();
-  }, [user, fetchActivityLogs, fetchMyActivity]);
-
-  // Get the appropriate activity data based on user role
-  const getRecentActivities = () => {
-    if (user?.role === 'admin' || user?.role === 'manager') {
-      return activityLogs;
-    } else {
-      return myActivity;
+    } catch (err) {
+      showError('Failed to load activity data');
     }
-  };
+  }, [isAdminOrManager, fetchActivityLogs, fetchMyActivity, showError]);
 
-  const recentActivities = getRecentActivities();
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  // Activity icon configuration
-  const ACTIVITY_ICONS = {
-    'status_change': { Icon: SyncIcon, color: '#3b82f6' },
-    'note_added': { Icon: NoteAddIcon, color: '#22c55e' },
-    'field_updated': { Icon: EditIcon, color: '#eab308' },
-    'inspection_scheduled': { Icon: EventIcon, color: '#a855f7' },
-    'due_date_changed': { Icon: ScheduleIcon, color: '#f97316' },
-    'project_created': { Icon: AddCircleIcon, color: '#10b981' },
-    'project_updated': { Icon: UpdateIcon, color: '#6366f1' },
-    'client_changed': { Icon: PeopleIcon, color: '#ec4899' },
-    'architect_changed': { Icon: ArchitectureIcon, color: '#06b6d4' },
-    'manager_changed': { Icon: ManageAccountsIcon, color: '#f43f5e' }
-  };
+  useEffect(() => {
+    loadActivityData();
+  }, [loadActivityData]);
 
-  // AG Grid row data - transform activities for grid display
+  const recentActivities = useMemo(() => {
+    return isAdminOrManager ? activityLogs : myActivity;
+  }, [isAdminOrManager, activityLogs, myActivity]);
+
+  // AG Grid row data
   const activityRowData = useMemo(() => {
     return recentActivities.map((activity) => ({
       id: activity.id,
@@ -123,52 +130,25 @@ const Dashboard = () => {
     }));
   }, [recentActivities]);
 
-  // Icon cell renderer component
-  const IconCellRenderer = (props) => {
+  // Icon cell renderer
+  const IconCellRenderer = useCallback((props) => {
     const actionType = props.data?.action_type;
-    const config = ACTIVITY_ICONS[actionType] || { Icon: AssignmentIcon, color: '#6b7280' };
+    const config = ACTIVITY_ICONS[actionType] || DEFAULT_ACTIVITY_ICON;
     const { Icon, color } = config;
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
         <Icon style={{ fontSize: 18, color }} />
       </div>
     );
-  };
+  }, []);
 
   // AG Grid column definitions
   const columnDefs = useMemo(() => {
     const baseColumns = [
-      {
-        field: 'action_type',
-        headerName: '',
-        width: 50,
-        sortable: false,
-        filter: false,
-        cellRenderer: IconCellRenderer
-      },
-      {
-        field: 'action',
-        headerName: 'Action',
-        flex: 2,
-        minWidth: 200,
-        sortable: true,
-        filter: true
-      },
-      {
-        field: 'project',
-        headerName: 'Project',
-        flex: 1,
-        minWidth: 120,
-        sortable: true,
-        filter: true
-      },
-      {
-        field: 'type',
-        headerName: 'Type',
-        width: 130,
-        sortable: true,
-        filter: true
-      },
+      { field: 'action_type', headerName: '', width: 50, sortable: false, filter: false, cellRenderer: IconCellRenderer },
+      { field: 'action', headerName: 'Action', flex: 2, minWidth: 200, sortable: true, filter: true },
+      { field: 'project', headerName: 'Project', flex: 1, minWidth: 120, sortable: true, filter: true },
+      { field: 'type', headerName: 'Type', width: 130, sortable: true, filter: true },
       {
         field: 'time',
         headerName: 'Time',
@@ -183,48 +163,34 @@ const Dashboard = () => {
       }
     ];
 
-    // Add user column for admin/manager
-    if (user?.role === 'admin' || user?.role === 'manager') {
-      baseColumns.splice(3, 0, {
-        field: 'user',
-        headerName: 'User',
-        width: 120,
-        sortable: true,
-        filter: true
-      });
+    if (isAdminOrManager) {
+      baseColumns.splice(3, 0, { field: 'user', headerName: 'User', width: 120, sortable: true, filter: true });
     }
 
     return baseColumns;
-  }, [user?.role]);
+  }, [isAdminOrManager, IconCellRenderer]);
 
-  // AG Grid default column definitions
-  const defaultColDef = useMemo(() => ({
-    resizable: true,
-    sortable: true
-  }), []);
+  const defaultColDef = useMemo(() => ({ resizable: true, sortable: true }), []);
 
-  // AG Grid pagination settings
-  const paginationPageSize = 10;
-  const paginationPageSizeSelector = [10];
-
-  // Pie chart data for project status breakdown
+  // Pie chart data
   const pieChartData = useMemo(() => {
     if (!dashboardStats?.by_status) return [];
 
-    // Default colors array as fallback
-    const FALLBACK_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#dc2626', '#7c3aed', '#ca8a04', '#9ca3af'];
-
     return Object.entries(dashboardStats.by_status).map(([status, count], index) => {
-      // Try to get color from STATUS_CHART_COLORS, otherwise use fallback
       const color = STATUS_CHART_COLORS[status] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
       return {
         name: STATUS_CONFIG[status]?.label || status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
         value: count,
-        color: color,
+        color,
         fill: color
       };
     });
   }, [dashboardStats?.by_status]);
+
+  // Navigation handlers
+  const handleNavigate = useCallback((path) => {
+    navigate(path);
+  }, [navigate]);
 
   const loading = projectsLoading || activityLoading;
 
@@ -238,6 +204,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Data Error Alert */}
+      {dataError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-2xl p-4">
+          <p className="text-red-600 dark:text-red-400">{dataError}</p>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -351,7 +324,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activities</h2>
             <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-              {user?.role === 'admin' || user?.role === 'manager' ? 'All Activities' : 'My Activities'}
+              {isAdminOrManager ? 'All Activities' : 'My Activities'}
             </span>
           </div>
 
@@ -367,8 +340,8 @@ const Dashboard = () => {
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
                 pagination={true}
-                paginationPageSize={paginationPageSize}
-                paginationPageSizeSelector={paginationPageSizeSelector}
+                paginationPageSize={10}
+                paginationPageSizeSelector={[10]}
                 domLayout="normal"
                 suppressCellFocus={true}
                 rowHeight={45}
@@ -442,8 +415,9 @@ const Dashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
+            type="button"
             className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors duration-150 text-left group"
-            onClick={() => window.location.href = '/projects'}
+            onClick={() => handleNavigate(ROUTES.PROJECTS)}
           >
             <div className="text-blue-600 dark:text-blue-400 font-semibold group-hover:text-blue-700 dark:group-hover:text-blue-300">
               View Projects
@@ -451,7 +425,11 @@ const Dashboard = () => {
             <div className="text-sm text-blue-500 dark:text-blue-500 mt-1">Manage all projects</div>
           </button>
 
-          <button className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors duration-150 text-left group">
+          <button
+            type="button"
+            className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors duration-150 text-left group"
+            onClick={() => handleNavigate(ROUTES.PROJECTS)}
+          >
             <div className="text-green-600 dark:text-green-400 font-semibold group-hover:text-green-700 dark:group-hover:text-green-300">
               Create Project
             </div>
@@ -459,8 +437,9 @@ const Dashboard = () => {
           </button>
 
           <button
+            type="button"
             className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors duration-150 text-left group"
-            onClick={() => window.location.href = '/clients'}
+            onClick={() => handleNavigate(ROUTES.CLIENTS)}
           >
             <div className="text-purple-600 dark:text-purple-400 font-semibold group-hover:text-purple-700 dark:group-hover:text-purple-300">
               Clients
@@ -468,14 +447,30 @@ const Dashboard = () => {
             <div className="text-sm text-purple-500 dark:text-purple-500 mt-1">Manage clients</div>
           </button>
 
-          <button className="p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors duration-150 text-left group">
+          <button
+            type="button"
+            className="p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors duration-150 text-left group"
+            onClick={() => handleNavigate(ROUTES.ACTIVITY)}
+          >
             <div className="text-orange-600 dark:text-orange-400 font-semibold group-hover:text-orange-700 dark:group-hover:text-orange-300">
-              Reports
+              Activity
             </div>
-            <div className="text-sm text-orange-500 dark:text-orange-500 mt-1">View analytics</div>
+            <div className="text-sm text-orange-500 dark:text-orange-500 mt-1">View activity log</div>
           </button>
         </div>
       </div>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

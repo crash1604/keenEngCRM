@@ -1,13 +1,7 @@
-// src/pages/Activity/Activity.jsx
 import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from 'ag-grid-community';
-import {
-  Chip,
-  Button,
-  TextField,
-  MenuItem
-} from '@mui/material';
+import { Chip, Button, TextField, MenuItem, Snackbar, Alert } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   FilterAlt as FilterIcon,
@@ -28,43 +22,14 @@ import {
 import { useActivityStore } from '../../stores/activity.store';
 import { useAuthStore } from '../../stores/auth.store';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useSnackbar } from '../../hooks/useSnackbar';
+import { isDarkMode, formatRelativeTimeShort, getInitials } from '../../utils/helpers';
+import { ACTION_TYPES, ACTIVITY_VIEW_MODES } from '../../utils/constants';
 
-// Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// Helper to check dark mode
-const isDarkMode = () => document.documentElement.classList.contains('dark');
-
-// Action type options for filter
-const ACTION_TYPES = [
-  { value: '', label: 'All Actions' },
-  // Project actions
-  { value: 'status_change', label: 'Status Change' },
-  { value: 'note_added', label: 'Note Added' },
-  { value: 'field_updated', label: 'Field Updated' },
-  { value: 'inspection_scheduled', label: 'Inspection Scheduled' },
-  { value: 'due_date_changed', label: 'Due Date Changed' },
-  { value: 'project_created', label: 'Project Created' },
-  { value: 'project_updated', label: 'Project Updated' },
-  { value: 'client_changed', label: 'Client Changed' },
-  { value: 'architect_changed', label: 'Architect Changed' },
-  { value: 'manager_changed', label: 'Manager Changed' },
-  { value: 'email_sent', label: 'Email Sent' },
-  // Client actions
-  { value: 'client_created', label: 'Client Created' },
-  { value: 'client_updated', label: 'Client Updated' },
-  { value: 'client_archived', label: 'Client Archived' },
-  { value: 'client_restored', label: 'Client Restored' },
-  // Architect actions
-  { value: 'architect_created', label: 'Architect Created' },
-  { value: 'architect_updated', label: 'Architect Updated' },
-  { value: 'architect_deactivated', label: 'Architect Deactivated' },
-  { value: 'architect_activated', label: 'Architect Activated' },
-];
-
-// Action type configuration for display (with light and dark mode colors)
+// Action type configuration for display
 const ACTION_CONFIG = {
-  // Project actions
   status_change: { label: 'Status Change', light: { color: '#3b82f6', bgColor: '#dbeafe' }, dark: { color: '#93c5fd', bgColor: '#1e3a5f' }, Icon: SyncIcon },
   note_added: { label: 'Note Added', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: NoteAddIcon },
   field_updated: { label: 'Field Updated', light: { color: '#eab308', bgColor: '#fef9c3' }, dark: { color: '#fcd34d', bgColor: '#78350f' }, Icon: EditIconMui },
@@ -76,44 +41,39 @@ const ACTION_CONFIG = {
   architect_changed: { label: 'Architect Changed', light: { color: '#06b6d4', bgColor: '#cffafe' }, dark: { color: '#67e8f9', bgColor: '#164e63' }, Icon: ArchitectureIcon },
   manager_changed: { label: 'Manager Changed', light: { color: '#f43f5e', bgColor: '#ffe4e6' }, dark: { color: '#fda4af', bgColor: '#881337' }, Icon: ManageAccountsIcon },
   email_sent: { label: 'Email Sent', light: { color: '#14b8a6', bgColor: '#ccfbf1' }, dark: { color: '#5eead4', bgColor: '#134e4a' }, Icon: EmailIcon },
-  // Client actions
   client_created: { label: 'Client Created', light: { color: '#10b981', bgColor: '#d1fae5' }, dark: { color: '#6ee7b7', bgColor: '#064e3b' }, Icon: AddCircleIcon },
   client_updated: { label: 'Client Updated', light: { color: '#ec4899', bgColor: '#fce7f3' }, dark: { color: '#f9a8d4', bgColor: '#831843' }, Icon: EditIconMui },
   client_archived: { label: 'Client Archived', light: { color: '#6b7280', bgColor: '#f3f4f6' }, dark: { color: '#9ca3af', bgColor: '#374151' }, Icon: PeopleIcon },
   client_restored: { label: 'Client Restored', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: PeopleIcon },
-  // Architect actions
   architect_created: { label: 'Architect Created', light: { color: '#10b981', bgColor: '#d1fae5' }, dark: { color: '#6ee7b7', bgColor: '#064e3b' }, Icon: AddCircleIcon },
   architect_updated: { label: 'Architect Updated', light: { color: '#8b5cf6', bgColor: '#ede9fe' }, dark: { color: '#c4b5fd', bgColor: '#4c1d95' }, Icon: EditIconMui },
   architect_deactivated: { label: 'Architect Deactivated', light: { color: '#6b7280', bgColor: '#f3f4f6' }, dark: { color: '#9ca3af', bgColor: '#374151' }, Icon: ArchitectureIcon },
   architect_activated: { label: 'Architect Activated', light: { color: '#22c55e', bgColor: '#dcfce7' }, dark: { color: '#86efac', bgColor: '#064e3b' }, Icon: ArchitectureIcon },
 };
 
-// View mode options (client and architect only visible to admin/manager)
-const VIEW_MODES = [
-  { value: 'all', label: 'All Activity' },
-  { value: 'my', label: 'My Activity' },
-  { value: 'project', label: 'Project Activity' },
-  { value: 'client', label: 'Client Activity', adminOnly: true },
-  { value: 'architect', label: 'Architect Activity', adminOnly: true },
-];
-
-// Entity type configuration for display (with light and dark mode colors)
 const ENTITY_CONFIG = {
   project: { label: 'Project', light: { color: '#3b82f6', bgColor: '#dbeafe' }, dark: { color: '#93c5fd', bgColor: '#1e3a5f' } },
   client: { label: 'Client', light: { color: '#ec4899', bgColor: '#fce7f3' }, dark: { color: '#f9a8d4', bgColor: '#831843' } },
   architect: { label: 'Architect', light: { color: '#8b5cf6', bgColor: '#ede9fe' }, dark: { color: '#c4b5fd', bgColor: '#4c1d95' } },
 };
 
+const DEFAULT_ACTION_CONFIG = {
+  label: 'Unknown',
+  light: { color: '#6b7280', bgColor: '#f3f4f6' },
+  dark: { color: '#9ca3af', bgColor: '#374151' },
+  Icon: AssignmentIcon
+};
+
+const DEFAULT_ENTITY_CONFIG = {
+  label: 'Unknown',
+  light: { color: '#6b7280', bgColor: '#f3f4f6' },
+  dark: { color: '#9ca3af', bgColor: '#374151' }
+};
+
 // Cell Renderer Components
-const ActionTypeCellRenderer = (props) => {
-  const { value } = props;
+const ActionTypeCellRenderer = ({ value }) => {
   const dark = isDarkMode();
-  const config = ACTION_CONFIG[value] || {
-    label: value || 'Unknown',
-    light: { color: '#6b7280', bgColor: '#f3f4f6' },
-    dark: { color: '#9ca3af', bgColor: '#374151' },
-    Icon: AssignmentIcon
-  };
+  const config = ACTION_CONFIG[value] || { ...DEFAULT_ACTION_CONFIG, label: value || 'Unknown' };
   const { Icon } = config;
   const colors = dark ? config.dark : config.light;
 
@@ -142,8 +102,7 @@ const ActionTypeCellRenderer = (props) => {
   );
 };
 
-const TimestampCellRenderer = (props) => {
-  const { value } = props;
+const TimestampCellRenderer = ({ value }) => {
   const dark = isDarkMode();
 
   if (!value) {
@@ -151,25 +110,7 @@ const TimestampCellRenderer = (props) => {
   }
 
   const date = new Date(value);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  let relativeTime;
-  if (diffMins < 1) {
-    relativeTime = 'Just now';
-  } else if (diffMins < 60) {
-    relativeTime = `${diffMins}m ago`;
-  } else if (diffHours < 24) {
-    relativeTime = `${diffHours}h ago`;
-  } else if (diffDays < 7) {
-    relativeTime = `${diffDays}d ago`;
-  } else {
-    relativeTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
+  const relativeTime = formatRelativeTimeShort(value);
   const fullDateTime = date.toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -188,14 +129,9 @@ const TimestampCellRenderer = (props) => {
   );
 };
 
-const EntityTypeCellRenderer = (props) => {
-  const { value } = props;
+const EntityTypeCellRenderer = ({ value }) => {
   const dark = isDarkMode();
-  const config = ENTITY_CONFIG[value] || {
-    label: value || 'Unknown',
-    light: { color: '#6b7280', bgColor: '#f3f4f6' },
-    dark: { color: '#9ca3af', bgColor: '#374151' }
-  };
+  const config = ENTITY_CONFIG[value] || { ...DEFAULT_ENTITY_CONFIG, label: value || 'Unknown' };
   const colors = dark ? config.dark : config.light;
 
   return (
@@ -222,12 +158,10 @@ const EntityTypeCellRenderer = (props) => {
   );
 };
 
-const EntityCellRenderer = (props) => {
-  const { data } = props;
+const EntityCellRenderer = ({ data }) => {
   const dark = isDarkMode();
   const entityType = data?.entity_type;
 
-  // Get entity name based on type
   let entityName = data?.entity_display_name;
   let secondaryInfo = null;
 
@@ -260,8 +194,7 @@ const EntityCellRenderer = (props) => {
   );
 };
 
-const UserCellRenderer = (props) => {
-  const { data } = props;
+const UserCellRenderer = ({ data }) => {
   const dark = isDarkMode();
   const userName = data?.user_name;
   const userEmail = data?.user_email;
@@ -270,7 +203,7 @@ const UserCellRenderer = (props) => {
     return <span style={{ color: dark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' }}>System</span>;
   }
 
-  const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const initials = getInitials(userName);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: '100%', gap: '8px' }} title={userEmail || ''}>
@@ -297,8 +230,7 @@ const UserCellRenderer = (props) => {
   );
 };
 
-const ChangesCellRenderer = (props) => {
-  const { data } = props;
+const ChangesCellRenderer = ({ data }) => {
   const dark = isDarkMode();
   const oldValue = data?.old_value;
   const newValue = data?.new_value;
@@ -341,7 +273,8 @@ const Activity = () => {
     fetchArchitectActivity,
   } = useActivityStore();
 
-  // Filter states
+  const { snackbar, showError, closeSnackbar } = useSnackbar();
+
   const [viewMode, setViewMode] = useState('all');
   const [quickFilterText, setQuickFilterText] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -349,40 +282,41 @@ const Activity = () => {
 
   const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
 
-  // Filter view modes based on role
   const availableViewModes = useMemo(() => {
-    return VIEW_MODES.filter(mode => !mode.adminOnly || isAdminOrManager);
+    return ACTIVITY_VIEW_MODES.filter(mode => !mode.adminOnly || isAdminOrManager);
   }, [isAdminOrManager]);
 
-  // Load activity data based on view mode
   const loadActivityData = useCallback(async () => {
-    const params = { page_size: 1000 };
+    try {
+      const params = { page_size: 1000 };
 
-    switch (viewMode) {
-      case 'my':
-        await fetchMyActivity(params);
-        break;
-      case 'project':
-        await fetchProjectActivity(params);
-        break;
-      case 'client':
-        await fetchClientActivity(params);
-        break;
-      case 'architect':
-        await fetchArchitectActivity(params);
-        break;
-      case 'all':
-      default:
-        await fetchActivityLogs(params);
-        break;
+      switch (viewMode) {
+        case 'my':
+          await fetchMyActivity(params);
+          break;
+        case 'project':
+          await fetchProjectActivity(params);
+          break;
+        case 'client':
+          await fetchClientActivity(params);
+          break;
+        case 'architect':
+          await fetchArchitectActivity(params);
+          break;
+        case 'all':
+        default:
+          await fetchActivityLogs(params);
+          break;
+      }
+    } catch (err) {
+      showError('Failed to load activity data');
     }
-  }, [viewMode, fetchActivityLogs, fetchMyActivity, fetchProjectActivity, fetchClientActivity, fetchArchitectActivity]);
+  }, [viewMode, fetchActivityLogs, fetchMyActivity, fetchProjectActivity, fetchClientActivity, fetchArchitectActivity, showError]);
 
   useEffect(() => {
     loadActivityData();
   }, [loadActivityData]);
 
-  // Get the appropriate activity data based on view mode
   const activities = useMemo(() => {
     switch (viewMode) {
       case 'my':
@@ -399,71 +333,18 @@ const Activity = () => {
     }
   }, [viewMode, myActivity, projectActivity, clientActivity, architectActivity, activityLogs]);
 
-  // Column definitions
   const columnDefs = useMemo(() => [
-    {
-      field: 'timestamp',
-      headerName: 'Time',
-      width: 130,
-      sort: 'desc',
-      cellRenderer: TimestampCellRenderer,
-    },
-    {
-      field: 'entity_type',
-      headerName: 'Type',
-      width: 100,
-      cellRenderer: EntityTypeCellRenderer,
-    },
-    {
-      field: 'action_type',
-      headerName: 'Action',
-      width: 170,
-      cellRenderer: ActionTypeCellRenderer,
-    },
-    {
-      field: 'entity_display_name',
-      headerName: 'Entity',
-      width: 180,
-      cellRenderer: EntityCellRenderer,
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      flex: 2,
-      minWidth: 200,
-    },
-    {
-      field: 'user_name',
-      headerName: 'User',
-      width: 160,
-      cellRenderer: UserCellRenderer,
-      hide: !isAdminOrManager,
-    },
-    {
-      field: 'changed_field',
-      headerName: 'Field',
-      width: 120,
-      valueFormatter: (params) => params.value || '-',
-    },
-    {
-      field: 'changes',
-      headerName: 'Changes',
-      width: 150,
-      filter: false,
-      sortable: false,
-      cellRenderer: ChangesCellRenderer,
-    },
-    {
-      field: 'ip_address',
-      headerName: 'IP',
-      width: 120,
-      hide: !isAdminOrManager,
-      valueFormatter: (params) => params.value || '-',
-      cellStyle: { fontFamily: 'monospace', fontSize: '12px' },
-    },
+    { field: 'timestamp', headerName: 'Time', width: 130, sort: 'desc', cellRenderer: TimestampCellRenderer },
+    { field: 'entity_type', headerName: 'Type', width: 100, cellRenderer: EntityTypeCellRenderer },
+    { field: 'action_type', headerName: 'Action', width: 170, cellRenderer: ActionTypeCellRenderer },
+    { field: 'entity_display_name', headerName: 'Entity', width: 180, cellRenderer: EntityCellRenderer },
+    { field: 'description', headerName: 'Description', flex: 2, minWidth: 200 },
+    { field: 'user_name', headerName: 'User', width: 160, cellRenderer: UserCellRenderer, hide: !isAdminOrManager },
+    { field: 'changed_field', headerName: 'Field', width: 120, valueFormatter: (params) => params.value || '-' },
+    { field: 'changes', headerName: 'Changes', width: 150, filter: false, sortable: false, cellRenderer: ChangesCellRenderer },
+    { field: 'ip_address', headerName: 'IP', width: 120, hide: !isAdminOrManager, valueFormatter: (params) => params.value || '-', cellStyle: { fontFamily: 'monospace', fontSize: '12px' } },
   ], [isAdminOrManager]);
 
-  // Default column configuration
   const defaultColDef = useMemo(() => ({
     sortable: true,
     filter: true,
@@ -472,40 +353,33 @@ const Activity = () => {
     suppressMovable: true,
   }), []);
 
-  // Pagination options
   const paginationPageSizeSelector = useMemo(() => [20, 50, 100, 200], []);
 
-  // Grid ready handler
   const onGridReady = useCallback((params) => {
     params.api.sizeColumnsToFit();
   }, []);
 
-  // Handle refresh
   const handleRefresh = useCallback(() => {
     loadActivityData();
   }, [loadActivityData]);
 
-  // Handle quick filter
   const onQuickFilterChange = useCallback((e) => {
     const value = e.target.value;
     setQuickFilterText(value);
-    if (gridRef.current?.api) {
-      gridRef.current.api.setGridOption('quickFilterText', value);
-    }
+    gridRef.current?.api?.setGridOption('quickFilterText', value);
   }, []);
 
-  // Clear all filters
   const clearAllFilters = useCallback(() => {
     setQuickFilterText('');
     setDateFrom('');
     setDateTo('');
-    if (gridRef.current?.api) {
-      gridRef.current.api.setFilterModel(null);
-      gridRef.current.api.setGridOption('quickFilterText', '');
+    const api = gridRef.current?.api;
+    if (api) {
+      api.setFilterModel(null);
+      api.setGridOption('quickFilterText', '');
     }
   }, []);
 
-  // Get statistics
   const stats = useMemo(() => {
     const total = activities.length;
     const actionCounts = activities.reduce((acc, activity) => {
@@ -524,14 +398,12 @@ const Activity = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 min-h-0 flex flex-col gap-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 shrink-0">
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Activity Log
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Activity Log</h1>
             <div className="flex gap-2 mt-1 items-center flex-wrap">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Total: {stats.total} activities
@@ -549,36 +421,19 @@ const Activity = () => {
               onChange={(e) => setViewMode(e.target.value)}
               sx={{
                 minWidth: 160,
-                '.dark & .MuiOutlinedInput-root': {
-                  backgroundColor: 'rgb(55 65 81)',
-                  color: 'white',
-                },
-                '.dark & .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgb(75 85 99)',
-                },
-                '.dark & .MuiInputLabel-root': {
-                  color: 'rgb(156 163 175)',
-                },
-                '.dark & .MuiSelect-icon': {
-                  color: 'rgb(156 163 175)',
-                },
+                '.dark & .MuiOutlinedInput-root': { backgroundColor: 'rgb(55 65 81)', color: 'white' },
+                '.dark & .MuiOutlinedInput-notchedOutline': { borderColor: 'rgb(75 85 99)' },
+                '.dark & .MuiInputLabel-root': { color: 'rgb(156 163 175)' },
+                '.dark & .MuiSelect-icon': { color: 'rgb(156 163 175)' },
               }}
               label="View"
             >
               {availableViewModes.map((mode) => (
-                <MenuItem key={mode.value} value={mode.value}>
-                  {mode.label}
-                </MenuItem>
+                <MenuItem key={mode.value} value={mode.value}>{mode.label}</MenuItem>
               ))}
             </TextField>
 
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={handleRefresh}
-              disabled={loading}
-              size="small"
-            >
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading} size="small">
               Refresh
             </Button>
           </div>
@@ -586,7 +441,7 @@ const Activity = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 shrink-0">
         <div className="flex flex-col sm:flex-row gap-3 items-center">
           <TextField
             size="small"
@@ -595,15 +450,8 @@ const Activity = () => {
             onChange={onQuickFilterChange}
             sx={{
               minWidth: 220,
-              '.dark & .MuiOutlinedInput-root': {
-                backgroundColor: 'rgb(55 65 81)',
-                color: 'white',
-                '& input': { color: 'white' },
-                '& input::placeholder': { color: 'rgb(156 163 175)' },
-              },
-              '.dark & .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgb(75 85 99)',
-              },
+              '.dark & .MuiOutlinedInput-root': { backgroundColor: 'rgb(55 65 81)', color: 'white', '& input': { color: 'white' }, '& input::placeholder': { color: 'rgb(156 163 175)' } },
+              '.dark & .MuiOutlinedInput-notchedOutline': { borderColor: 'rgb(75 85 99)' },
             }}
             InputProps={{
               startAdornment: <FilterIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20, '.dark &': { color: 'rgb(156 163 175)' } }} />,
@@ -619,20 +467,10 @@ const Activity = () => {
             InputLabelProps={{ shrink: true }}
             sx={{
               width: 150,
-              '.dark & .MuiOutlinedInput-root': {
-                backgroundColor: 'rgb(55 65 81)',
-                color: 'white',
-                '& input': { color: 'white' },
-              },
-              '.dark & .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgb(75 85 99)',
-              },
-              '.dark & .MuiInputLabel-root': {
-                color: 'rgb(156 163 175)',
-              },
-              '.dark & .MuiInputLabel-root.Mui-focused': {
-                color: '#3b82f6',
-              },
+              '.dark & .MuiOutlinedInput-root': { backgroundColor: 'rgb(55 65 81)', color: 'white', '& input': { color: 'white' } },
+              '.dark & .MuiOutlinedInput-notchedOutline': { borderColor: 'rgb(75 85 99)' },
+              '.dark & .MuiInputLabel-root': { color: 'rgb(156 163 175)' },
+              '.dark & .MuiInputLabel-root.Mui-focused': { color: '#3b82f6' },
             }}
           />
           <TextField
@@ -644,20 +482,10 @@ const Activity = () => {
             InputLabelProps={{ shrink: true }}
             sx={{
               width: 150,
-              '.dark & .MuiOutlinedInput-root': {
-                backgroundColor: 'rgb(55 65 81)',
-                color: 'white',
-                '& input': { color: 'white' },
-              },
-              '.dark & .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgb(75 85 99)',
-              },
-              '.dark & .MuiInputLabel-root': {
-                color: 'rgb(156 163 175)',
-              },
-              '.dark & .MuiInputLabel-root.Mui-focused': {
-                color: '#3b82f6',
-              },
+              '.dark & .MuiOutlinedInput-root': { backgroundColor: 'rgb(55 65 81)', color: 'white', '& input': { color: 'white' } },
+              '.dark & .MuiOutlinedInput-notchedOutline': { borderColor: 'rgb(75 85 99)' },
+              '.dark & .MuiInputLabel-root': { color: 'rgb(156 163 175)' },
+              '.dark & .MuiInputLabel-root.Mui-focused': { color: '#3b82f6' },
             }}
           />
 
@@ -679,8 +507,8 @@ const Activity = () => {
       )}
 
       {/* AG Grid */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px]">
-        <div className="ag-theme-quartz" style={{ height: 500, width: '100%' }}>
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+        <div className="ag-theme-quartz flex-1 min-h-0 w-full">
           <AgGridReact
             ref={gridRef}
             theme={themeQuartz}
@@ -716,29 +544,32 @@ const Activity = () => {
       </div>
 
       {/* Statistics Summary */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 shrink-0">
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
-            Summary:
-          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Summary:</span>
           {Object.entries(stats.actionCounts).map(([action, count]) => (
             <Chip
               key={action}
               label={`${ACTION_CONFIG[action]?.label || action}: ${count}`}
               size="small"
               variant="outlined"
-              sx={{
-                fontSize: '0.7rem',
-                height: 24,
-                '.dark &': {
-                  borderColor: 'rgb(75 85 99)',
-                  color: 'rgb(209 213 219)',
-                },
-              }}
+              sx={{ fontSize: '0.7rem', height: 24, '.dark &': { borderColor: 'rgb(75 85 99)', color: 'rgb(209 213 219)' } }}
             />
           ))}
         </div>
       </div>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

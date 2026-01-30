@@ -5,6 +5,7 @@ boto3==1.35.0
 django-ses==4.3.1
 black==23.11.0
 celery==5.3.6
+cryptography==42.0.0
 click==8.3.0
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2

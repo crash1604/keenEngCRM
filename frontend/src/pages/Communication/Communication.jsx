@@ -1,73 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  Tabs,
-  Tab,
-  Snackbar,
-  Alert,
-} from '@mui/material';
+import { Tabs, Tab, Snackbar, Alert } from '@mui/material';
 import { communicationStore } from '../../stores/communication.store';
 import EmailTemplates from '../../components/communication/EmailTemplates';
 import EmailComposer from '../../components/communication/EmailComposer';
 import EmailHistory from '../../components/communication/EmailHistory';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
-function TabPanel({ children, value, index, ...other }) {
+const TabPanel = ({ children, value, index }) => {
+  if (value !== index) return null;
+
   return (
     <div
       role="tabpanel"
-      hidden={value !== index}
       id={`communication-tabpanel-${index}`}
       aria-labelledby={`communication-tab-${index}`}
-      {...other}
+      className="flex-1 min-h-0 flex flex-col"
     >
-      {value === index && <div className="p-4 sm:p-6">{children}</div>}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-auto">{children}</div>
     </div>
   );
-}
+};
 
 const Communication = observer(() => {
   const [activeTab, setActiveTab] = useState(0);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
 
   useEffect(() => {
-    // Clean up on unmount
     return () => {
       communicationStore.clearAll();
     };
   }, []);
 
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = useCallback((event, newValue) => {
     setActiveTab(newValue);
     communicationStore.clearError();
-  };
+  }, []);
 
-  const handleShowSnackbar = (message, severity = 'success') => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
+  const handleShowSnackbar = useCallback((message, severity = 'success') => {
+    if (severity === 'success') {
+      showSuccess(message);
+    } else {
+      showError(message);
+    }
+  }, [showSuccess, showError]);
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const handleEmailSent = () => {
-    handleShowSnackbar('Email sent successfully!', 'success');
-    // Switch to history tab to see the sent email
+  const handleEmailSent = useCallback(() => {
+    showSuccess('Email sent successfully!');
     setActiveTab(0);
     communicationStore.fetchEmailLogs();
-  };
+  }, [showSuccess]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 min-h-0 flex flex-col gap-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 shrink-0">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Communication Center
         </h1>
@@ -76,8 +63,8 @@ const Communication = observer(() => {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 shrink-0">
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -100,9 +87,9 @@ const Communication = observer(() => {
               },
             }}
           >
-            <Tab label="Email History" id="communication-tab-0" />
-            <Tab label="Compose Email" id="communication-tab-1" />
-            <Tab label="Email Templates" id="communication-tab-2" />
+            <Tab label="Email History" id="communication-tab-0" aria-controls="communication-tabpanel-0" />
+            <Tab label="Compose Email" id="communication-tab-1" aria-controls="communication-tabpanel-1" />
+            <Tab label="Email Templates" id="communication-tab-2" aria-controls="communication-tabpanel-2" />
           </Tabs>
         </div>
 
@@ -126,11 +113,11 @@ const Communication = observer(() => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={handleCloseSnackbar}
+          onClose={closeSnackbar}
           severity={snackbar.severity}
           variant="filled"
           sx={{ width: '100%' }}

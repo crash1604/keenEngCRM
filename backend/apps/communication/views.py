@@ -124,17 +124,16 @@ class CommunicationViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def send_email(self, request):
-        """Send email from template asynchronously using Celery"""
+        """Send email from template - sync by default, async if Celery available"""
         serializer = SendEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            # Check if async sending should be used
-            use_async = request.query_params.get('async', 'true').lower() == 'true'
+            # Default to sync mode unless explicitly set to async
+            use_async = request.query_params.get('async', 'false').lower() == 'true'
 
             project_id = serializer.validated_data['project_id']
             template_id = serializer.validated_data['template_id']
-            sent_by_id = request.user.id
 
             # Build kwargs for optional parameters
             kwargs = {}
@@ -151,30 +150,37 @@ class CommunicationViewSet(viewsets.ViewSet):
 
             if use_async:
                 # Send email asynchronously via Celery
-                task = send_email_async.delay(
-                    project_id=project_id,
-                    template_id=template_id,
-                    sent_by_id=sent_by_id,
-                    **kwargs
-                )
+                try:
+                    sent_by_id = request.user.id
+                    task = send_email_async.delay(
+                        project_id=project_id,
+                        template_id=template_id,
+                        sent_by_id=sent_by_id,
+                        **kwargs
+                    )
 
-                return Response({
-                    'success': True,
-                    'message': 'Email queued for sending',
-                    'task_id': task.id,
-                    'status': 'queued'
-                }, status=status.HTTP_202_ACCEPTED)
-            else:
-                # Send email synchronously (fallback)
-                result = CommunicationEmailService.send_email_from_template(
-                    project_id=project_id,
-                    template_id=template_id,
-                    sent_by=request.user,
-                    **kwargs
-                )
-                return Response(result, status=status.HTTP_200_OK)
+                    return Response({
+                        'success': True,
+                        'message': 'Email queued for sending',
+                        'task_id': task.id,
+                        'status': 'queued'
+                    }, status=status.HTTP_202_ACCEPTED)
+                except Exception as celery_error:
+                    # Celery not available, fall back to sync
+                    print(f"Celery not available, falling back to sync: {celery_error}")
+
+            # Send email synchronously
+            result = CommunicationEmailService.send_email_from_template(
+                project_id=project_id,
+                template_id=template_id,
+                sent_by=request.user,
+                **kwargs
+            )
+            return Response(result, status=status.HTTP_200_OK)
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import User
+from .models import User, EmailSettings
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -68,3 +68,66 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'updated_at')
         read_only_fields = ('id', 'email', 'created_at', 'updated_at')
+
+
+class EmailSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for user email settings."""
+    email_password = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        help_text="App password for email authentication"
+    )
+    has_password = serializers.SerializerMethodField()
+    provider_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailSettings
+        fields = (
+            'id',
+            'provider',
+            'provider_display',
+            'smtp_host',
+            'smtp_port',
+            'use_tls',
+            'email_address',
+            'email_password',
+            'has_password',
+            'display_name',
+            'is_verified',
+            'last_verified_at',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('id', 'is_verified', 'last_verified_at', 'created_at', 'updated_at')
+
+    def get_has_password(self, obj):
+        """Check if password is set without exposing it."""
+        return obj._email_password is not None
+
+    def get_provider_display(self, obj):
+        """Return human-readable provider name."""
+        return obj.get_provider_display()
+
+    def create(self, validated_data):
+        password = validated_data.pop('email_password', None)
+        instance = EmailSettings.objects.create(**validated_data)
+        if password:
+            instance.email_password = password
+            instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('email_password', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Only update password if provided
+        if password:
+            instance.email_password = password
+            # Reset verification status when credentials change
+            instance.is_verified = False
+
+        instance.save()
+        return instance

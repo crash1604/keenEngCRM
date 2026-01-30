@@ -157,12 +157,12 @@ const ProjectsGrid = forwardRef(({ projects, loading, onFilterChanged }, ref) =>
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex flex-1 min-h-0 bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
       <Tooltip content={tooltipContent} position={tooltipPosition} />
 
       {/* AG Grid */}
-      <div className={`${selectedProject ? 'w-1/3' : 'w-full'}`}>
-        <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+      <div className={`${selectedProject ? 'w-1/3' : 'w-full'} h-full`}>
+        <div className="ag-theme-quartz h-full w-full">
           <AgGridReact
             ref={gridRef}
             theme={themeQuartz}

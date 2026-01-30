@@ -1,87 +1,62 @@
-// src/pages/Architects/Architects.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { observer } from 'mobx-react-lite';
-import {
-  Button,
-  Snackbar,
-  Alert,
-  Chip
-} from '@mui/material';
+import { Button, Snackbar, Alert, Chip } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
-
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ArchitectForm from "../../components/architects/ArchitectForm";
 import ArchitectsGrid from "../../components/architects/ArchitectsGrid";
 import { architectStore } from "../../stores/architect.store";
+import { useSnackbar } from "../../hooks/useSnackbar";
 
 const Architects = observer(() => {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedArchitect, setSelectedArchitect] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
 
   // Fetch architects on mount
   useEffect(() => {
     const loadArchitects = async () => {
       try {
         await architectStore.fetchArchitects(1);
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Failed to load architects',
-          severity: 'error'
-        });
+      } catch {
+        showError('Failed to load architects');
       }
     };
     loadArchitects();
-  }, []);
+  }, [showError]);
 
   // Handlers
-  const handleAddArchitect = () => {
+  const handleAddArchitect = useCallback(() => {
     setSelectedArchitect(null);
     setEditMode(false);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleFormSuccess = async () => {
+  const handleFormSuccess = useCallback(async () => {
     setShowForm(false);
     setSelectedArchitect(null);
-    setSnackbar({
-      open: true,
-      message: `Architect ${editMode ? 'updated' : 'created'} successfully`,
-      severity: 'success'
-    });
+    showSuccess(`Architect ${editMode ? 'updated' : 'created'} successfully`);
     await architectStore.fetchArchitects(architectStore.currentPage);
-  };
+  }, [editMode, showSuccess]);
 
-  const handleFormError = (error) => {
-    setSnackbar({
-      open: true,
-      message: error || 'An error occurred',
-      severity: 'error'
-    });
-  };
+  const handleFormError = useCallback((error) => {
+    showError(error || 'An error occurred');
+  }, [showError]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     try {
       await architectStore.fetchArchitects(architectStore.currentPage);
-      setSnackbar({
-        open: true,
-        message: 'Architects refreshed',
-        severity: 'success'
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to refresh architects',
-        severity: 'error'
-      });
+      showSuccess('Architects refreshed');
+    } catch {
+      showError('Failed to refresh architects');
     }
-  };
+  }, [showSuccess, showError]);
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
+  const handleCloseForm = useCallback(() => {
+    setShowForm(false);
+    setSelectedArchitect(null);
+  }, []);
 
   if (architectStore.loading && architectStore.architects.length === 0) {
     return (
@@ -145,10 +120,7 @@ const Architects = observer(() => {
       {/* Architect Form Modal */}
       <ArchitectForm
         open={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setSelectedArchitect(null);
-        }}
+        onClose={handleCloseForm}
         architect={selectedArchitect}
         editMode={editMode}
         onSuccess={handleFormSuccess}
@@ -159,11 +131,11 @@ const Architects = observer(() => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={handleCloseSnackbar}
+          onClose={closeSnackbar}
           severity={snackbar.severity}
           variant="filled"
           sx={{ width: '100%' }}

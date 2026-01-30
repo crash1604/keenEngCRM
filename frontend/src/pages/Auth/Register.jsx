@@ -1,8 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { validateEmail, getPasswordStrength } from '../../utils/validators';
+
+const PasswordToggleButton = ({ showPassword, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="absolute inset-y-0 right-0 z-20 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+    aria-label={showPassword ? 'Hide password' : 'Show password'}
+  >
+    {showPassword ? (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+      </svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    )}
+  </button>
+);
+
+const PasswordRequirementIcon = ({ status }) => {
+  if (status === 'empty') {
+    return <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>;
+  }
+  if (status === 'valid') {
+    return <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
+  }
+  return <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>;
+};
+
+const PasswordRequirement = ({ label, isEmpty, isValid }) => {
+  const status = isEmpty ? 'empty' : isValid ? 'valid' : 'invalid';
+  const colorClass = isEmpty ? 'text-gray-500' : isValid ? 'text-green-600' : 'text-red-500';
+
+  return (
+    <li className={`flex items-center ${colorClass}`}>
+      <PasswordRequirementIcon status={status} />
+      {label}
+    </li>
+  );
+};
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -17,28 +61,11 @@ export const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
 
-  // Common passwords list (subset for client-side validation)
-  const commonPasswords = [
-    'password', 'password1', 'password123', '123456', '12345678', '123456789',
-    'qwerty', 'abc123', 'monkey', 'master', 'dragon', 'letmein', 'login',
-    'admin', 'welcome', 'iloveyou', 'sunshine', 'princess', 'football', 'baseball'
-  ];
-
-  // Password validation checks
-  const passwordChecks = {
-    minLength: formData.password.length >= 8,
-    notSimilarToUser: formData.password.length > 0 &&
-      !formData.password.toLowerCase().includes(formData.email.split('@')[0].toLowerCase()) &&
-      !formData.password.toLowerCase().includes(formData.first_name.toLowerCase()) &&
-      !formData.password.toLowerCase().includes(formData.last_name.toLowerCase()) &&
-      !formData.email.toLowerCase().includes(formData.password.toLowerCase()) &&
-      (formData.first_name.length === 0 || !formData.first_name.toLowerCase().includes(formData.password.toLowerCase())) &&
-      (formData.last_name.length === 0 || !formData.last_name.toLowerCase().includes(formData.password.toLowerCase())),
-    notCommon: formData.password.length > 0 &&
-      !commonPasswords.includes(formData.password.toLowerCase()),
-    notNumericOnly: formData.password.length > 0 &&
-      !/^\d+$/.test(formData.password),
-  };
+  const passwordChecks = useMemo(() => getPasswordStrength(formData.password, {
+    email: formData.email,
+    firstName: formData.first_name,
+    lastName: formData.last_name,
+  }), [formData.password, formData.email, formData.first_name, formData.last_name]);
 
   const { register, error, clearError, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -52,25 +79,18 @@ export const Register = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear field-specific error when user starts typing
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-    
-    if (error) clearError();
-  };
+    setFormData(prev => ({ ...prev, [name]: value }));
 
-  const validateForm = () => {
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+
+    if (error) clearError();
+  }, [formErrors, error, clearError]);
+
+  const validateForm = useCallback(() => {
     const errors = {};
 
     if (!formData.first_name.trim()) {
@@ -83,7 +103,7 @@ export const Register = () => {
 
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!validateEmail(formData.email)) {
       errors.email = 'Email is invalid';
     }
 
@@ -101,21 +121,30 @@ export const Register = () => {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [formData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     const result = await register(formData);
-    
+
     if (result.success) {
       navigate(from, { replace: true });
     }
   };
+
+  const formatError = (err) => {
+    if (typeof err === 'object') {
+      return JSON.stringify(err);
+    }
+    return err;
+  };
+
+  const isEmpty = formData.password.length === 0;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 py-12 px-4 sm:px-6 lg:px-8">
@@ -130,10 +159,10 @@ export const Register = () => {
         </div>
 
         {error && (
-          <Alert 
-            type="error" 
-            message={typeof error === 'object' ? JSON.stringify(error) : error} 
-            onClose={clearError} 
+          <Alert
+            type="error"
+            message={formatError(error)}
+            onClose={clearError}
           />
         )}
 
@@ -255,24 +284,7 @@ export const Register = () => {
                     placeholder="Create password"
                     disabled={isLoading}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 z-20 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
+                  <PasswordToggleButton showPassword={showPassword} onClick={() => setShowPassword(!showPassword)} />
                 </div>
                 {formErrors.password && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
@@ -298,24 +310,7 @@ export const Register = () => {
                     placeholder="Confirm password"
                     disabled={isLoading}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword2(!showPassword2)}
-                    className="absolute inset-y-0 right-0 z-20 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                    tabIndex={-1}
-                  >
-                    {showPassword2 ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
+                  <PasswordToggleButton showPassword={showPassword2} onClick={() => setShowPassword2(!showPassword2)} />
                 </div>
                 {formErrors.password2 && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.password2}</p>
@@ -327,46 +322,10 @@ export const Register = () => {
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
               <ul className="text-xs space-y-1.5">
-                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.minLength ? 'text-green-600' : 'text-red-500'}`}>
-                  {formData.password.length === 0 ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
-                  ) : passwordChecks.minLength ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                  ) : (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  )}
-                  At least 8 characters
-                </li>
-                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notSimilarToUser ? 'text-green-600' : 'text-red-500'}`}>
-                  {formData.password.length === 0 ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
-                  ) : passwordChecks.notSimilarToUser ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                  ) : (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  )}
-                  Not similar to your email or name
-                </li>
-                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notCommon ? 'text-green-600' : 'text-red-500'}`}>
-                  {formData.password.length === 0 ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
-                  ) : passwordChecks.notCommon ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                  ) : (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  )}
-                  Not a common password
-                </li>
-                <li className={`flex items-center ${formData.password.length === 0 ? 'text-gray-500' : passwordChecks.notNumericOnly ? 'text-green-600' : 'text-red-500'}`}>
-                  {formData.password.length === 0 ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
-                  ) : passwordChecks.notNumericOnly ? (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                  ) : (
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  )}
-                  Not entirely numeric
-                </li>
+                <PasswordRequirement label="At least 8 characters" isEmpty={isEmpty} isValid={passwordChecks.minLength} />
+                <PasswordRequirement label="Not similar to your email or name" isEmpty={isEmpty} isValid={passwordChecks.notSimilarToUser} />
+                <PasswordRequirement label="Not a common password" isEmpty={isEmpty} isValid={passwordChecks.notCommon} />
+                <PasswordRequirement label="Not entirely numeric" isEmpty={isEmpty} isValid={passwordChecks.notNumericOnly} />
               </ul>
             </div>
           </div>

@@ -1,87 +1,62 @@
-// src/pages/Clients/Clients.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { observer } from 'mobx-react-lite';
-import {
-  Button,
-  Snackbar,
-  Alert,
-  Chip
-} from '@mui/material';
+import { Button, Snackbar, Alert, Chip } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
-
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ClientForm from "../../components/clients/ClientForm";
 import ClientsGrid from "../../components/clients/ClientsGrid";
 import { clientStore } from "../../stores/client.store";
+import { useSnackbar } from "../../hooks/useSnackbar";
 
 const Clients = observer(() => {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
 
   // Fetch clients on mount
   useEffect(() => {
     const loadClients = async () => {
       try {
         await clientStore.fetchClients(1);
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Failed to load clients',
-          severity: 'error'
-        });
+      } catch {
+        showError('Failed to load clients');
       }
     };
     loadClients();
-  }, []);
+  }, [showError]);
 
   // Handlers
-  const handleAddClient = () => {
+  const handleAddClient = useCallback(() => {
     setSelectedClient(null);
     setEditMode(false);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleFormSuccess = async () => {
+  const handleFormSuccess = useCallback(async () => {
     setShowForm(false);
     setSelectedClient(null);
-    setSnackbar({
-      open: true,
-      message: `Client ${editMode ? 'updated' : 'created'} successfully`,
-      severity: 'success'
-    });
+    showSuccess(`Client ${editMode ? 'updated' : 'created'} successfully`);
     await clientStore.fetchClients(clientStore.currentPage);
-  };
+  }, [editMode, showSuccess]);
 
-  const handleFormError = (error) => {
-    setSnackbar({
-      open: true,
-      message: error || 'An error occurred',
-      severity: 'error'
-    });
-  };
+  const handleFormError = useCallback((error) => {
+    showError(error || 'An error occurred');
+  }, [showError]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     try {
       await clientStore.fetchClients(clientStore.currentPage);
-      setSnackbar({
-        open: true,
-        message: 'Clients refreshed',
-        severity: 'success'
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to refresh clients',
-        severity: 'error'
-      });
+      showSuccess('Clients refreshed');
+    } catch {
+      showError('Failed to refresh clients');
     }
-  };
+  }, [showSuccess, showError]);
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
+  const handleCloseForm = useCallback(() => {
+    setShowForm(false);
+    setSelectedClient(null);
+  }, []);
 
   if (clientStore.loading && clientStore.clients.length === 0) {
     return (
@@ -145,10 +120,7 @@ const Clients = observer(() => {
       {/* Client Form Modal */}
       <ClientForm
         open={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setSelectedClient(null);
-        }}
+        onClose={handleCloseForm}
         client={selectedClient}
         editMode={editMode}
         onSuccess={handleFormSuccess}
@@ -159,11 +131,11 @@ const Clients = observer(() => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={handleCloseSnackbar}
+          onClose={closeSnackbar}
           severity={snackbar.severity}
           variant="filled"
           sx={{ width: '100%' }}
