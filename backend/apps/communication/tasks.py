@@ -74,3 +74,87 @@ def send_bulk_emails_async(email_data_list):
             results.append({'error': str(e), 'status': 'failed'})
 
     return results
+
+
+# =============================================================================
+# Email Sync Tasks
+# =============================================================================
+
+
+@shared_task(bind=True, max_retries=2, default_retry_delay=30)
+def sync_email_account(self, account_id):
+    """
+    Sync a single email account via IMAP.
+
+    Args:
+        account_id: UUID of the EmailAccount to sync
+
+    Returns:
+        dict: Sync result with counts and errors
+    """
+    from .models import EmailAccount
+    from .sync_service import IMAPSyncService
+    from .linking_service import EmailLinkingService
+
+    try:
+        account = EmailAccount.objects.get(
+            id=account_id, is_active=True, sync_enabled=True
+        )
+    except EmailAccount.DoesNotExist:
+        logger.warning('Email account %s not found or disabled', account_id)
+        return {'success': False, 'error': 'Account not found or disabled'}
+
+    try:
+        service = IMAPSyncService(account)
+        result = service.sync()
+
+        # Auto-link newly synced emails
+        if result.get('new_emails', 0) > 0:
+            linked = EmailLinkingService.bulk_link_unlinked(
+                account_id=account_id
+            )
+            result['linked_emails'] = linked
+
+        logger.info(
+            'Sync complete for %s: %d new emails',
+            account.email_address, result.get('new_emails', 0),
+        )
+        return result
+
+    except Exception as exc:
+        logger.error('Sync failed for %s: %s', account_id, exc)
+        raise self.retry(exc=exc)
+
+
+@shared_task
+def sync_all_active_accounts():
+    """
+    Periodic task: Sync all active email accounts.
+    Called by Celery Beat on schedule.
+    """
+    from .models import EmailAccount
+
+    accounts = EmailAccount.objects.filter(
+        is_active=True, sync_enabled=True
+    )
+
+    queued = 0
+    for account in accounts:
+        sync_email_account.delay(str(account.id))
+        queued += 1
+
+    logger.info('Queued sync for %d active email accounts', queued)
+    return {'queued': queued}
+
+
+@shared_task
+def link_unlinked_emails():
+    """
+    Periodic task: Attempt to link any unlinked synced emails.
+    Useful when new projects/clients are added after emails were synced.
+    """
+    from .linking_service import EmailLinkingService
+
+    linked = EmailLinkingService.bulk_link_unlinked()
+    logger.info('Periodic linking: %d emails linked', linked)
+    return {'linked': linked}

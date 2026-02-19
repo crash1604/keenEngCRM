@@ -5,13 +5,17 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Count
 
-from .models import EmailTemplate, EmailLog
+from .models import EmailTemplate, EmailLog, EmailAccount, EmailThread, SyncedEmail
 from .serializers import (
     EmailTemplateSerializer, EmailLogSerializer,
-    SendEmailSerializer, PreviewEmailSerializer
+    SendEmailSerializer, PreviewEmailSerializer,
+    EmailAccountSerializer, EmailAccountCreateSerializer, EmailAccountListSerializer,
+    EmailThreadSerializer, EmailThreadDetailSerializer,
+    SyncedEmailSerializer, SyncedEmailListSerializer,
+    LinkEmailSerializer, SyncAccountSerializer,
 )
 from .email_service import CommunicationEmailService
-from .tasks import send_email_async
+from .tasks import send_email_async, sync_email_account
 
 
 class EmailTemplateViewSet(viewsets.ModelViewSet):
@@ -199,3 +203,279 @@ class CommunicationViewSet(viewsets.ViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# =============================================================================
+# Email Sync ViewSets
+# =============================================================================
+
+
+class EmailAccountViewSet(viewsets.ModelViewSet):
+    """
+    Manage email accounts for IMAP sync.
+    Users can only see/manage their own accounts.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return EmailAccountCreateSerializer
+        if self.action == 'list':
+            return EmailAccountListSerializer
+        return EmailAccountSerializer
+
+    def get_queryset(self):
+        return EmailAccount.objects.filter(user=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def test_connection(self, request, pk=None):
+        """Test IMAP connection for an account"""
+        account = self.get_object()
+        from .sync_service import IMAPSyncService
+        service = IMAPSyncService(account)
+        result = service.test_connection()
+        return Response(result)
+
+    @action(detail=True, methods=['post'])
+    def sync_now(self, request, pk=None):
+        """Trigger an immediate sync for this account"""
+        account = self.get_object()
+        if not account.sync_enabled:
+            return Response(
+                {'error': 'Sync is disabled for this account'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        task = sync_email_account.delay(str(account.id))
+        return Response({
+            'success': True,
+            'message': 'Sync queued',
+            'task_id': task.id,
+        }, status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=True, methods=['get'])
+    def folders(self, request, pk=None):
+        """List available IMAP folders for this account"""
+        account = self.get_object()
+        from .sync_service import IMAPSyncService
+        service = IMAPSyncService(account)
+        try:
+            folders = service.list_folders()
+            return Response({'folders': folders})
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Get sync statistics for this account"""
+        account = self.get_object()
+        stats = {
+            'total_synced': account.total_synced,
+            'last_sync_at': account.last_sync_at,
+            'last_sync_status': account.last_sync_status,
+            'threads': account.threads.count(),
+            'unread': SyncedEmail.objects.filter(
+                account=account, is_read=False
+            ).count(),
+            'inbound': SyncedEmail.objects.filter(
+                account=account, direction='inbound'
+            ).count(),
+            'outbound': SyncedEmail.objects.filter(
+                account=account, direction='outbound'
+            ).count(),
+            'linked_to_projects': SyncedEmail.objects.filter(
+                account=account, project__isnull=False
+            ).count(),
+        }
+        return Response(stats)
+
+
+class EmailThreadViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    View email threads from synced accounts.
+    Supports filtering by account, project, client, and starred/archived status.
+    """
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['account', 'project', 'client', 'is_starred', 'is_archived']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return EmailThreadDetailSerializer
+        return EmailThreadSerializer
+
+    def get_queryset(self):
+        return EmailThread.objects.filter(
+            account__user=self.request.user
+        ).select_related('project', 'client')
+
+    def get_queryset_for_list(self):
+        queryset = self.get_queryset()
+
+        # Filter by search
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(subject__icontains=search) |
+                Q(participants__contains=search)
+            )
+
+        # Filter unread only
+        unread = self.request.query_params.get('unread')
+        if unread and unread.lower() == 'true':
+            queryset = queryset.filter(unread_count__gt=0)
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset_for_list())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def star(self, request, pk=None):
+        """Toggle thread starred status"""
+        thread = self.get_object()
+        thread.is_starred = not thread.is_starred
+        thread.save(update_fields=['is_starred'])
+        return Response({'is_starred': thread.is_starred})
+
+    @action(detail=True, methods=['post'])
+    def archive(self, request, pk=None):
+        """Toggle thread archived status"""
+        thread = self.get_object()
+        thread.is_archived = not thread.is_archived
+        thread.save(update_fields=['is_archived'])
+        return Response({'is_archived': thread.is_archived})
+
+    @action(detail=True, methods=['post'])
+    def link(self, request, pk=None):
+        """Manually link a thread to a project/client"""
+        thread = self.get_object()
+        serializer = LinkEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        updated = []
+        project_id = serializer.validated_data.get('project_id')
+        client_id = serializer.validated_data.get('client_id')
+
+        if project_id is not None:
+            from apps.projects.models import Project
+            if project_id:
+                thread.project = Project.objects.get(id=project_id)
+            else:
+                thread.project = None
+            updated.append('project')
+
+        if client_id is not None:
+            from apps.clients.models import Client
+            if client_id:
+                thread.client = Client.objects.get(id=client_id)
+            else:
+                thread.client = None
+            updated.append('client')
+
+        if updated:
+            thread.save(update_fields=updated)
+            # Propagate to all messages in thread
+            thread.messages.update(
+                project=thread.project, client=thread.client
+            )
+
+        return Response(EmailThreadSerializer(thread).data)
+
+    @action(detail=True, methods=['post'])
+    def mark_read(self, request, pk=None):
+        """Mark all messages in a thread as read"""
+        thread = self.get_object()
+        thread.messages.filter(is_read=False).update(is_read=True)
+        thread.unread_count = 0
+        thread.save(update_fields=['unread_count'])
+        return Response({'unread_count': 0})
+
+
+class SyncedEmailViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    View individual synced emails.
+    Supports filtering by account, folder, direction, project, client, read status.
+    """
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = [
+        'account', 'folder', 'direction',
+        'project', 'client', 'is_read', 'is_starred',
+    ]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SyncedEmailListSerializer
+        return SyncedEmailSerializer
+
+    def get_queryset(self):
+        queryset = SyncedEmail.objects.filter(
+            account__user=self.request.user
+        ).select_related('project', 'client')
+
+        # Search
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(subject__icontains=search) |
+                Q(from_address__icontains=search) |
+                Q(from_name__icontains=search) |
+                Q(snippet__icontains=search)
+            )
+
+        # Date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def mark_read(self, request, pk=None):
+        """Mark this email as read"""
+        email_obj = self.get_object()
+        email_obj.is_read = True
+        email_obj.save(update_fields=['is_read'])
+        if email_obj.thread:
+            email_obj.thread.update_counts()
+        return Response({'is_read': True})
+
+    @action(detail=True, methods=['post'])
+    def toggle_star(self, request, pk=None):
+        """Toggle starred status"""
+        email_obj = self.get_object()
+        email_obj.is_starred = not email_obj.is_starred
+        email_obj.save(update_fields=['is_starred'])
+        return Response({'is_starred': email_obj.is_starred})
+
+    @action(detail=True, methods=['post'])
+    def link(self, request, pk=None):
+        """Manually link this email to a project/client"""
+        email_obj = self.get_object()
+        serializer = LinkEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        from .linking_service import EmailLinkingService
+        result = EmailLinkingService.manually_link_email(
+            synced_email_id=email_obj.id,
+            project_id=serializer.validated_data.get('project_id'),
+            client_id=serializer.validated_data.get('client_id'),
+        )
+
+        if result['success']:
+            email_obj.refresh_from_db()
+            return Response(SyncedEmailSerializer(email_obj).data)
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
