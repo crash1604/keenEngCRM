@@ -253,3 +253,23 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat schedule for periodic tasks
+CELERY_BEAT_SCHEDULE = {
+    'sync-all-email-accounts': {
+        'task': 'apps.communication.tasks.sync_all_active_accounts',
+        'schedule': int(os.environ.get('EMAIL_SYNC_INTERVAL_SECONDS', 300)),  # 5 min default
+    },
+    'link-unlinked-emails': {
+        'task': 'apps.communication.tasks.link_unlinked_emails',
+        'schedule': int(os.environ.get('EMAIL_LINK_INTERVAL_SECONDS', 900)),  # 15 min default
+    },
+}
+
+# =============================================================================
+# Email Sync Configuration
+# =============================================================================
+EMAIL_SYNC_MAX_AGE_DAYS = int(os.environ.get('EMAIL_SYNC_MAX_AGE_DAYS', 30))
+EMAIL_SYNC_DEFAULT_FOLDERS = os.environ.get(
+    'EMAIL_SYNC_DEFAULT_FOLDERS', 'INBOX,[Gmail]/Sent Mail'
+).split(',')

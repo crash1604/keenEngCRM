@@ -2,10 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tabs, Tab, Snackbar, Alert } from '@mui/material';
 import { communicationStore } from '../../stores/communication.store';
+import { emailSyncStore } from '../../stores/emailSync.store';
 import EmailTemplates from '../../components/communication/EmailTemplates';
 import EmailComposer from '../../components/communication/EmailComposer';
 import EmailHistory from '../../components/communication/EmailHistory';
 import { useSnackbar } from '../../hooks/useSnackbar';
+import EmailAccountSetup from '../../components/communication/EmailAccountSetup';
+import SyncInbox from '../../components/communication/SyncInbox';
+import ThreadView from '../../components/communication/ThreadView';
 
 const TabPanel = ({ children, value, index }) => {
   if (value !== index) return null;
@@ -25,16 +29,20 @@ const TabPanel = ({ children, value, index }) => {
 const Communication = observer(() => {
   const [activeTab, setActiveTab] = useState(0);
   const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
+  const [selectedThread, setSelectedThread] = useState(null);
 
   useEffect(() => {
     return () => {
       communicationStore.clearAll();
+      emailSyncStore.clearAll();
     };
   }, []);
 
   const handleTabChange = useCallback((event, newValue) => {
     setActiveTab(newValue);
     communicationStore.clearError();
+    emailSyncStore.clearError();
+    setSelectedThread(null);
   }, []);
 
   const handleShowSnackbar = useCallback((message, severity = 'success') => {
@@ -51,6 +59,15 @@ const Communication = observer(() => {
     communicationStore.fetchEmailLogs();
   }, [showSuccess]);
 
+  const handleSelectThread = (thread) => {
+    setSelectedThread(thread);
+  };
+
+  const handleBackToInbox = () => {
+    setSelectedThread(null);
+    emailSyncStore.clearCurrentThread();
+  };
+
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-6">
       {/* Header */}
@@ -59,7 +76,7 @@ const Communication = observer(() => {
           Communication Center
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Manage email templates, send emails to clients, and view communication history
+          Manage email templates, send emails to clients, sync and track all project communications
         </p>
       </div>
 
@@ -69,7 +86,8 @@ const Communication = observer(() => {
             value={activeTab}
             onChange={handleTabChange}
             aria-label="communication tabs"
-            variant="fullWidth"
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
                 textTransform: 'none',
@@ -90,6 +108,8 @@ const Communication = observer(() => {
             <Tab label="Email History" id="communication-tab-0" aria-controls="communication-tabpanel-0" />
             <Tab label="Compose Email" id="communication-tab-1" aria-controls="communication-tabpanel-1" />
             <Tab label="Email Templates" id="communication-tab-2" aria-controls="communication-tabpanel-2" />
+            <Tab label="Synced Inbox" id="communication-tab-3" aria-controls="communication-tabpanel-3" />
+            <Tab label="Email Accounts" id="communication-tab-4" aria-controls="communication-tabpanel-4" />
           </Tabs>
         </div>
 
@@ -106,6 +126,25 @@ const Communication = observer(() => {
 
         <TabPanel value={activeTab} index={2}>
           <EmailTemplates onShowSnackbar={handleShowSnackbar} />
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={3}>
+          {selectedThread ? (
+            <ThreadView
+              thread={selectedThread}
+              onBack={handleBackToInbox}
+              onShowSnackbar={handleShowSnackbar}
+            />
+          ) : (
+            <SyncInbox
+              onSelectThread={handleSelectThread}
+              onShowSnackbar={handleShowSnackbar}
+            />
+          )}
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={4}>
+          <EmailAccountSetup onShowSnackbar={handleShowSnackbar} />
         </TabPanel>
       </div>
 
