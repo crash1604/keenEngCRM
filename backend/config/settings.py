@@ -273,3 +273,21 @@ EMAIL_SYNC_MAX_AGE_DAYS = int(os.environ.get('EMAIL_SYNC_MAX_AGE_DAYS', 30))
 EMAIL_SYNC_DEFAULT_FOLDERS = os.environ.get(
     'EMAIL_SYNC_DEFAULT_FOLDERS', 'INBOX,[Gmail]/Sent Mail'
 ).split(',')
+
+# =============================================================================
+# Microsoft OAuth2 Configuration (Outlook Email Sync)
+# =============================================================================
+MICROSOFT_OAUTH2 = {
+    'CLIENT_ID': os.environ.get('MICROSOFT_OAUTH2_CLIENT_ID', ''),
+    'CLIENT_SECRET': os.environ.get('MICROSOFT_OAUTH2_CLIENT_SECRET', ''),
+    'AUTHORITY': 'https://login.microsoftonline.com/consumers',
+    'REDIRECT_URI': os.environ.get(
+        'MICROSOFT_OAUTH2_REDIRECT_URI',
+        'http://localhost:8000/api/communication/sync/accounts/oauth2/callback/'
+    ),
+    'SCOPES': [
+        'https://outlook.office365.com/IMAP.AccessAsUser.All',
+        'https://outlook.office365.com/SMTP.Send',
+        'offline_access',
+    ],
+}

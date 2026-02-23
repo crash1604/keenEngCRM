@@ -36,7 +36,7 @@ class IMAPSyncService:
     # ------------------------------------------------------------------
 
     def connect(self):
-        """Establish IMAP connection"""
+        """Establish IMAP connection with password or OAuth2 auth."""
         config = self.account.get_imap_config()
         try:
             if config['ssl']:
@@ -48,10 +48,14 @@ class IMAPSyncService:
                     config['host'], config['port']
                 )
 
-            self.connection.login(
-                self.account.email_address,
-                self.account.password,
-            )
+            if self.account.auth_method == 'oauth2':
+                self._authenticate_oauth2()
+            else:
+                self.connection.login(
+                    self.account.email_address,
+                    self.account.password,
+                )
+
             logger.info("Connected to IMAP: %s", self.account.email_address)
             return True
         except imaplib.IMAP4.error as exc:
@@ -60,6 +64,43 @@ class IMAPSyncService:
                 self.account.email_address, exc,
             )
             raise ConnectionError(f"IMAP login failed: {exc}") from exc
+
+    def _authenticate_oauth2(self):
+        """Authenticate via XOAUTH2 SASL mechanism, refreshing token if needed."""
+        if self.account.is_oauth2_token_expired():
+            self._refresh_oauth2_token()
+
+        access_token = self.account.get_oauth2_access_token()
+        if not access_token:
+            raise ConnectionError("No valid OAuth2 access token available")
+
+        auth_string = (
+            f"user={self.account.email_address}\x01"
+            f"auth=Bearer {access_token}\x01\x01"
+        )
+        self.connection.authenticate('XOAUTH2', lambda x: auth_string.encode())
+
+    def _refresh_oauth2_token(self):
+        """Use the refresh token to obtain a fresh access token."""
+        from .oauth2_service import refresh_access_token
+
+        refresh_token = self.account.get_oauth2_refresh_token()
+        if not refresh_token:
+            raise ConnectionError(
+                "No OAuth2 refresh token stored -- re-authorize required"
+            )
+
+        result = refresh_access_token(refresh_token)
+        if 'error' in result:
+            raise ConnectionError(
+                f"OAuth2 token refresh failed: {result['error']}"
+            )
+
+        self.account.set_oauth2_tokens(
+            access_token=result['access_token'],
+            refresh_token=result.get('refresh_token', refresh_token),
+            expires_in=result.get('expires_in', 3600),
+        )
 
     def disconnect(self):
         """Close IMAP connection"""

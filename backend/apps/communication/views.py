@@ -1,9 +1,13 @@
+import json
+
+from django.core.cache import cache
+from django.db.models import Q, Count
+from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q, Count
 
 from .models import EmailTemplate, EmailLog, EmailAccount, EmailThread, SyncedEmail
 from .serializers import (
@@ -297,6 +301,141 @@ class EmailAccountViewSet(viewsets.ModelViewSet):
             ).count(),
         }
         return Response(stats)
+
+    # ------------------------------------------------------------------
+    # OAuth2 endpoints
+    # ------------------------------------------------------------------
+
+    @action(detail=False, methods=['post'], url_path='oauth2/authorize')
+    def oauth2_authorize(self, request):
+        """Generate Microsoft OAuth2 authorization URL."""
+        from .oauth2_service import get_auth_url
+
+        account_id = request.data.get('account_id', '')
+        state_data = json.dumps({
+            'user_id': request.user.id,
+            'account_id': str(account_id) if account_id else '',
+            'email_address': request.data.get('email_address', ''),
+        })
+
+        flow = get_auth_url(state=state_data)
+        cache.set(f"oauth2_flow:{state_data}", flow, timeout=600)
+
+        return Response({'auth_url': flow['auth_uri']})
+
+    @action(detail=False, methods=['get'], url_path='oauth2/callback',
+            permission_classes=[AllowAny])
+    def oauth2_callback(self, request):
+        """Handle Microsoft OAuth2 callback redirect."""
+        from .oauth2_service import exchange_code_for_tokens
+
+        state = request.query_params.get('state', '')
+        cache_key = f"oauth2_flow:{state}"
+        flow = cache.get(cache_key)
+
+        if not flow:
+            return HttpResponse(
+                self._oauth_popup_html(
+                    success=False,
+                    error='OAuth session expired. Please try again.',
+                ),
+                content_type='text/html',
+            )
+
+        auth_response = dict(request.query_params)
+        result = exchange_code_for_tokens(flow, auth_response)
+
+        if 'error' in result:
+            cache.delete(cache_key)
+            return HttpResponse(
+                self._oauth_popup_html(success=False, error=result['error']),
+                content_type='text/html',
+            )
+
+        try:
+            state_data = json.loads(state)
+        except (json.JSONDecodeError, TypeError):
+            return HttpResponse(
+                self._oauth_popup_html(
+                    success=False, error='Invalid state parameter.',
+                ),
+                content_type='text/html',
+            )
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        try:
+            user = User.objects.get(id=state_data['user_id'])
+        except User.DoesNotExist:
+            return HttpResponse(
+                self._oauth_popup_html(success=False, error='User not found.'),
+                content_type='text/html',
+            )
+
+        account_id = state_data.get('account_id')
+        email_address = state_data.get('email_address', '')
+        claims = result.get('id_token_claims', {})
+        oauth_email = claims.get('preferred_username', '') or email_address
+
+        if account_id:
+            try:
+                account = EmailAccount.objects.get(id=account_id, user=user)
+            except EmailAccount.DoesNotExist:
+                return HttpResponse(
+                    self._oauth_popup_html(
+                        success=False, error='Account not found.',
+                    ),
+                    content_type='text/html',
+                )
+        else:
+            account, _ = EmailAccount.objects.get_or_create(
+                user=user,
+                email_address=oauth_email,
+                defaults={
+                    'provider': 'outlook',
+                    'auth_method': 'oauth2',
+                    'sync_enabled': True,
+                    'sync_folders': ['INBOX', 'Sent'],
+                },
+            )
+
+        account.auth_method = 'oauth2'
+        account.provider = 'outlook'
+        account.set_oauth2_tokens(
+            access_token=result['access_token'],
+            refresh_token=result.get('refresh_token', ''),
+            expires_in=result.get('expires_in', 3600),
+        )
+
+        cache.delete(cache_key)
+
+        return HttpResponse(
+            self._oauth_popup_html(success=True, email=oauth_email),
+            content_type='text/html',
+        )
+
+    @staticmethod
+    def _oauth_popup_html(success, error='', email=''):
+        """Return HTML that posts a message to the opener and closes the popup."""
+        message = json.dumps({
+            'type': 'OAUTH2_CALLBACK',
+            'success': success,
+            'error': error,
+            'email': email,
+        })
+        return f"""<!DOCTYPE html>
+<html>
+<body>
+    <p>{'Connected successfully!' if success else f'Error: {error}'}</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({message}, '*');
+            window.close();
+        }}
+    </script>
+</body>
+</html>"""
 
 
 class EmailThreadViewSet(viewsets.ReadOnlyModelViewSet):

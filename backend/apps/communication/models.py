@@ -1,5 +1,8 @@
+import base64
+import hashlib
 import uuid
 
+from cryptography.fernet import Fernet
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -272,6 +275,59 @@ class EmailAccount(models.Model):
             'port': self.smtp_port,
             'tls': self.smtp_use_tls,
         }
+
+    # ------------------------------------------------------------------
+    # OAuth2 token encryption (reuses pattern from users/models.py)
+    # ------------------------------------------------------------------
+
+    def _get_encryption_key(self):
+        """Get Fernet encryption key from settings."""
+        key = getattr(settings, 'EMAIL_ENCRYPTION_KEY', None)
+        if not key:
+            key = base64.urlsafe_b64encode(
+                hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+            )
+        return key
+
+    def set_oauth2_tokens(self, access_token, refresh_token=None, expires_in=None):
+        """Encrypt and store OAuth2 tokens."""
+        from datetime import timedelta
+        f = Fernet(self._get_encryption_key())
+        self.oauth2_access_token = f.encrypt(access_token.encode()).decode()
+        if refresh_token:
+            self.oauth2_refresh_token = f.encrypt(refresh_token.encode()).decode()
+        if expires_in:
+            self.oauth2_token_expiry = timezone.now() + timedelta(seconds=expires_in)
+        self.save(update_fields=[
+            'oauth2_access_token', 'oauth2_refresh_token', 'oauth2_token_expiry',
+        ])
+
+    def get_oauth2_access_token(self):
+        """Decrypt and return the access token."""
+        if not self.oauth2_access_token:
+            return None
+        try:
+            f = Fernet(self._get_encryption_key())
+            return f.decrypt(self.oauth2_access_token.encode()).decode()
+        except Exception:
+            return None
+
+    def get_oauth2_refresh_token(self):
+        """Decrypt and return the refresh token."""
+        if not self.oauth2_refresh_token:
+            return None
+        try:
+            f = Fernet(self._get_encryption_key())
+            return f.decrypt(self.oauth2_refresh_token.encode()).decode()
+        except Exception:
+            return None
+
+    def is_oauth2_token_expired(self):
+        """Check if the access token is expired (5-min buffer)."""
+        from datetime import timedelta
+        if not self.oauth2_token_expiry:
+            return True
+        return timezone.now() >= self.oauth2_token_expiry - timedelta(minutes=5)
 
 
 class EmailThread(models.Model):

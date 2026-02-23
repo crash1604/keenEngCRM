@@ -83,6 +83,17 @@ export const emailSyncService = {
     }
   },
 
+  // ========== OAuth2 ==========
+
+  getOAuth2AuthUrl: async (data = {}) => {
+    try {
+      const response = await api.post('/communication/sync/accounts/oauth2/authorize/', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // ========== Email Threads ==========
 
   getThreads: async (params = {}) => {

@@ -18,6 +18,7 @@ class EmailSyncStore {
   // UI State
   loading = false;
   syncLoading = false;
+  oauthLoading = false;
   error = null;
 
   // Pagination
@@ -157,6 +158,26 @@ class EmailSyncStore {
       runInAction(() => {
         this.error = error.detail || 'Failed to fetch statistics';
       });
+    }
+  }
+
+  // ========== OAuth2 Actions ==========
+
+  async initiateOAuth2(data = {}) {
+    this.oauthLoading = true;
+    this.error = null;
+    try {
+      const result = await emailSyncService.getOAuth2AuthUrl(data);
+      runInAction(() => {
+        this.oauthLoading = false;
+      });
+      return result;
+    } catch (error) {
+      runInAction(() => {
+        this.error = error.detail || 'Failed to initiate OAuth2';
+        this.oauthLoading = false;
+      });
+      throw error;
     }
   }
 

@@ -61,6 +61,25 @@ const EmailAccountSetup = observer(({ onShowSnackbar }) => {
   const [formData, setFormData] = useState({ ...defaultFormData });
   const [testResult, setTestResult] = useState(null);
   const [folderInput, setFolderInput] = useState('');
+  const [oauthConnected, setOauthConnected] = useState(false);
+
+  // Listen for OAuth2 popup callback
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'OAUTH2_CALLBACK') {
+        if (event.data.success) {
+          setOauthConnected(true);
+          onShowSnackbar?.(`Connected ${event.data.email} successfully`, 'success');
+          emailSyncStore.fetchAccounts();
+          handleClose();
+        } else {
+          onShowSnackbar?.(`OAuth2 failed: ${event.data.error}`, 'error');
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     emailSyncStore.fetchAccounts();
@@ -70,11 +89,13 @@ const EmailAccountSetup = observer(({ onShowSnackbar }) => {
     setEditingAccount(null);
     setFormData({ ...defaultFormData });
     setTestResult(null);
+    setOauthConnected(false);
     setDialogOpen(true);
   };
 
   const handleOpenEdit = (account) => {
     setEditingAccount(account);
+    setOauthConnected(account.oauth2_connected || false);
     setFormData({
       email_address: account.email_address,
       display_name: account.display_name || '',
@@ -153,9 +174,33 @@ const EmailAccountSetup = observer(({ onShowSnackbar }) => {
     }
   };
 
+  const handleConnectMicrosoft = async () => {
+    try {
+      const result = await emailSyncStore.initiateOAuth2({
+        account_id: editingAccount?.id || '',
+        email_address: formData.email_address,
+      });
+      const popup = window.open(
+        result.auth_url,
+        'microsoft_oauth',
+        'width=600,height=700,left=200,top=100'
+      );
+      if (!popup) {
+        onShowSnackbar?.('Please allow popups for this site', 'error');
+      }
+    } catch {
+      onShowSnackbar?.('Failed to start Microsoft connection', 'error');
+    }
+  };
+
   const handleSave = async () => {
     try {
       const payload = { ...formData };
+      // For OAuth2 Outlook accounts, skip password
+      if (payload.provider === 'outlook') {
+        payload.auth_method = 'oauth2';
+        delete payload.password;
+      }
       // Don't send empty password on edit
       if (editingAccount && !payload.password) {
         delete payload.password;
@@ -337,21 +382,52 @@ const EmailAccountSetup = observer(({ onShowSnackbar }) => {
               </Select>
             </FormControl>
 
-            <TextField
-              fullWidth
-              label={editingAccount ? 'App Password (leave blank to keep current)' : 'App Password'}
-              value={formData.password}
-              onChange={handleChange('password')}
-              type="password"
-              size="small"
-              helperText={
-                formData.provider === 'gmail'
-                  ? 'Use a Google App Password (not your regular password)'
-                  : formData.provider === 'outlook'
-                  ? 'Use an Outlook App Password'
-                  : 'Enter your email password'
-              }
-            />
+            {formData.provider === 'outlook' ? (
+              <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Outlook requires OAuth2 authentication. Click below to sign in with your Microsoft account.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="contained"
+                    onClick={handleConnectMicrosoft}
+                    disabled={emailSyncStore.oauthLoading || !formData.email_address}
+                    startIcon={emailSyncStore.oauthLoading ? <CircularProgress size={16} /> : null}
+                    sx={{
+                      backgroundColor: '#0078d4',
+                      '&:hover': { backgroundColor: '#106ebe' },
+                      textTransform: 'none',
+                    }}
+                  >
+                    {(editingAccount?.oauth2_connected || oauthConnected)
+                      ? 'Reconnect with Microsoft'
+                      : 'Connect with Microsoft'}
+                  </Button>
+                  {(editingAccount?.oauth2_connected || oauthConnected) && (
+                    <Chip
+                      icon={<CheckCircleIcon />}
+                      label="OAuth2 Connected"
+                      color="success"
+                      size="small"
+                    />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <TextField
+                fullWidth
+                label={editingAccount ? 'App Password (leave blank to keep current)' : 'App Password'}
+                value={formData.password}
+                onChange={handleChange('password')}
+                type="password"
+                size="small"
+                helperText={
+                  formData.provider === 'gmail'
+                    ? 'Use a Google App Password (not your regular password)'
+                    : 'Enter your email password'
+                }
+              />
+            )}
 
             {showCustomFields && (
               <>

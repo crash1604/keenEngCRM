@@ -86,6 +86,7 @@ class EmailAccountSerializer(serializers.ModelSerializer):
     """Full serializer for email account CRUD"""
     provider_display = serializers.CharField(source='get_provider_display', read_only=True)
     auth_method_display = serializers.CharField(source='get_auth_method_display', read_only=True)
+    oauth2_connected = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailAccount
@@ -93,6 +94,7 @@ class EmailAccountSerializer(serializers.ModelSerializer):
             'id', 'email_address', 'display_name',
             'provider', 'provider_display',
             'auth_method', 'auth_method_display',
+            'oauth2_connected',
             'imap_host', 'imap_port', 'imap_use_ssl',
             'smtp_host', 'smtp_port', 'smtp_use_tls',
             'is_active', 'sync_enabled',
@@ -106,6 +108,9 @@ class EmailAccountSerializer(serializers.ModelSerializer):
             'last_sync_error', 'total_synced',
             'created_at', 'updated_at',
         ]
+
+    def get_oauth2_connected(self, obj):
+        return bool(obj.oauth2_refresh_token)
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
@@ -136,16 +141,21 @@ class EmailAccountCreateSerializer(serializers.ModelSerializer):
 class EmailAccountListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for listing accounts (no credentials)"""
     provider_display = serializers.CharField(source='get_provider_display', read_only=True)
+    oauth2_connected = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailAccount
         fields = [
             'id', 'email_address', 'display_name',
             'provider', 'provider_display',
+            'oauth2_connected',
             'is_active', 'sync_enabled',
             'last_sync_at', 'last_sync_status',
             'total_synced', 'created_at',
         ]
+
+    def get_oauth2_connected(self, obj):
+        return bool(obj.oauth2_refresh_token)
 
 
 class SyncedEmailAttachmentSerializer(serializers.ModelSerializer):
